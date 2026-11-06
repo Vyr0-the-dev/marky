@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Marky</string>
+    <string name="shortcut_add_short">Add</string>
+    <string name="shortcut_add_long">Add link</string>
+    <string name="shortcut_search_short">Search</string>
+    <string name="shortcut_search_long">Search bookmarks</string>
+    <string name="shortcut_unread_short">Unread</string>
+    <string name="shortcut_unread_long">Open unread links</string>
+    <string name="shortcut_reminders_short">Reminders</string>
+    <string name="shortcut_reminders_long">Open reminders</string>
+    <string name="widget_feed_description">Marky feed snippets</string>
+</resources>

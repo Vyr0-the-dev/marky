@@ -1,0 +1,4 @@
+storeFile=../release/marky-upload-key.jks
+storePassword=replace-with-store-password
+keyAlias=marky-upload
+keyPassword=replace-with-key-password

@@ -1,0 +1,54 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_link"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_add_short"
+        android:shortcutLongLabel="@string/shortcut_add_long">
+        <intent
+            android:action="com.marky.app.marky.action.OPEN_ROUTE"
+            android:targetPackage="com.marky.app.marky"
+            android:targetClass="com.marky.app.marky.MainActivity">
+            <extra android:name="route" android:value="/add" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="search"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_search_short"
+        android:shortcutLongLabel="@string/shortcut_search_long">
+        <intent
+            android:action="com.marky.app.marky.action.OPEN_ROUTE"
+            android:targetPackage="com.marky.app.marky"
+            android:targetClass="com.marky.app.marky.MainActivity">
+            <extra android:name="route" android:value="/search" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="unread"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_unread_short"
+        android:shortcutLongLabel="@string/shortcut_unread_long">
+        <intent
+            android:action="com.marky.app.marky.action.OPEN_ROUTE"
+            android:targetPackage="com.marky.app.marky"
+            android:targetClass="com.marky.app.marky.MainActivity">
+            <extra android:name="route" android:value="/home/unread" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="reminders"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_reminders_short"
+        android:shortcutLongLabel="@string/shortcut_reminders_long">
+        <intent
+            android:action="com.marky.app.marky.action.OPEN_ROUTE"
+            android:targetPackage="com.marky.app.marky"
+            android:targetClass="com.marky.app.marky.MainActivity">
+            <extra android:name="route" android:value="/reminders" />
+        </intent>
+    </shortcut>
+</shortcuts>

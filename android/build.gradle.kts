@@ -16,6 +16,18 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
+    plugins.withId("com.android.library") {
+        val androidExtension = project.extensions.findByName("android")
+        if (androidExtension is com.android.build.gradle.BaseExtension && androidExtension.namespace == null) {
+            androidExtension.namespace = if (project.name == "isar_flutter_libs") {
+                "dev.isar.isar_flutter_libs"
+            } else {
+                "com.marky.thirdparty.${project.name.replace('-', '_')}"
+            }
+        }
+    }
+}
+subprojects {
     afterEvaluate {
         if (project.extensions.findByName("android") != null) {
             @Suppress("UNCHECKED_CAST")
