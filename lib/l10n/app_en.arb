@@ -6,7 +6,6 @@
   "captureTitle": "Add Link",
   "collectionsTitle": "Collections",
   "settingsTitle": "Settings",
-  "vaultTitle": "Vault",
   "dashboardTitle": "Dashboard",
   "notesTitle": "Notes",
   "tagsTitle": "Tags",
@@ -32,6 +31,7 @@
   "actionRetry": "Retry",
   "actionClose": "Close",
   "actionShare": "Share",
+  "actionUndo": "Undo",
   "actionArchive": "Archive",
   "actionCopy": "Copy",
   "actionOpen": "Open",
@@ -77,7 +77,6 @@
   "labelFavorite": "Favorite",
   "labelArchived": "Archived",
   "labelReadLater": "Read later",
-  "labelPrivate": "Private",
   "dialogDeleteTitle": "Delete bookmark?",
   "dialogDeleteMessage": "This action cannot be undone.",
   "dialogUnsavedChangesTitle": "Discard changes?",
@@ -91,10 +90,359 @@
   "themeDark": "Dark",
   "themeLight": "Light",
   "themeSystem": "System",
+  "themeOled": "OLED black",
+  "exitWarning": "Press back again to exit",
+  "settingsAnimationsLabel": "Animations",
+  "settingsDashboardLabel": "Dashboard",
+  "settingsBackupLabel": "Backup",
+  "settingsAutomationLabel": "Automation rules",
+  "navigationHome": "Home",
+  "navigationLibrary": "Library",
+  "homeEmptyTitle": "Your library is quiet",
+  "homeEmptyBody": "Save a link from anywhere — paste, share, or add manually.",
+  "homeAddLinkAction": "Add a link",
+  "homeNoFavoritesTitle": "No favorites yet",
+  "homeNoFavoritesBody": "Tap the heart on any bookmark to save it here.",
+  "homeBrowseAllAction": "Browse all",
+  "homeAllCaughtUpTitle": "All caught up",
+  "homeAllCaughtUpBody": "Everything has been read.",
+  "homeArchiveEmptyTitle": "Archive is empty",
+  "homeArchiveEmptyBody": "Swipe to archive bookmarks you want to keep but hide.",
+  "homeGridTooltip": "Grid",
+  "homeListTooltip": "List",
+  "homeSortTooltip": "Sort",
+  "homeSelectAllTooltip": "Select all",
+  "homeSelectionCount": "{count, plural, one {1 selected} other {{count} selected}}",
+  "@homeSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchSavedSnackbar": "Search saved",
+  "searchRemovedSnackbar": "Search removed",
+  "searchRemoveSavedTooltip": "Remove saved search",
+  "searchLandingTitle": "Find anything",
+  "searchLandingBody": "Search titles, domains, tags, and operators like tag:dart or is:favorite.",
+  "searchSavedSearchesTitle": "Saved searches",
+  "searchSavedSearchesEmpty": "Save useful searches with the star button.",
+  "searchRecentSearchesTitle": "Recent searches",
+  "searchRecentSearchesEmpty": "Recent searches appear after you search.",
+  "searchOperatorsHelp": "Operators: tag:, is:favorite, domain:, before:, after:",
+  "addIntroTitle": "Paste, share, or type a link",
+  "addPasteTooltip": "Paste from clipboard",
+  "addViewDetailTooltip": "View detail",
+  "addSavedTitle": "Saved!",
+  "addSavedSubtitle": "New bookmark captured.",
+  "addDuplicateTitle": "Already saved",
+  "addDuplicateSubtitle": "This URL is in your library.",
+  "addInvalidTitle": "Invalid URL",
+  "addInvalidSubtitle": "Could not find a valid link in the input.",
+  "addErrorTitle": "Error",
+  "addErrorSubtitle": "Something went wrong.",
+  "libraryTitle": "Library",
+  "librarySettingsTooltip": "Settings",
+  "libraryTagsTitle": "Tags",
+  "libraryCollectionsTitle": "Collections",
+  "libraryNoTags": "No tags yet. Tap + to create one.",
+  "libraryLoadingTags": "Loading tags...",
+  "libraryCouldNotLoadTags": "Could not load tags.",
+  "libraryNoCollections": "No collections yet. Tap + to create one.",
+  "libraryLoadingCollections": "Loading collections...",
+  "libraryCouldNotLoadCollections": "Could not load collections.",
+  "librarySmartBadge": "SMART",
+  "libraryLiveSmartCollection": "Live smart collection",
+  "libraryCollectionItemCount": "{count, plural, one {1 item} other {{count} items}}",
+  "@libraryCollectionItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryCollectionActionsTooltip": "Collection actions",
+  "libraryDeleteTagTitle": "Delete \"{name}\"?",
+  "@libraryDeleteTagTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "libraryDeleteTagMessage": "This removes the tag from all bookmarks.",
+  "libraryDeleteCollectionTitle": "Delete \"{title}\"?",
+  "@libraryDeleteCollectionTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "libraryDeleteCollectionMessage": "Bookmarks inside will not be deleted.",
+  "settingsSectionAppearance": "Appearance",
+  "settingsSectionBehaviour": "Behaviour",
+  "settingsSectionData": "Data",
+  "settingsSectionAutomation": "Automation",
+  "settingsSectionInsights": "Insights",
+  "settingsSectionAbout": "About",
+  "settingsExportBackupTitle": "Export backup (JSON)",
+  "settingsRestoreBackupTitle": "Restore backup (JSON)",
+  "settingsRestoreBackupSubtitle": "Duplicates are merged safely",
+  "settingsAutomationSubtitle": "Auto-tag, archive, and more",
+  "settingsOnLabel": "On",
+  "settingsOffLabel": "Off",
+  "settingsEnabledState": "enabled",
+  "settingsDisabledState": "disabled",
+  "settingsChangedSnackbar": "{label} {state}",
+  "@settingsChangedSnackbar": {
+    "placeholders": {
+      "label": {},
+      "state": {}
+    }
+  },
+  "automationGuideTooltip": "Automation guide",
+  "automationGuideCardTitle": "How rules work",
+  "automationGuideCardBody": "Rules run after a link is saved. Pick one “When” trigger, then chain one or more “Then” actions. Start narrow, keep rules named clearly, and check Debug logs if a rule did not fire.",
+  "automationGuideTitle": "Automation guide",
+  "automationGuideTriggerTitle": "1. Choose a trigger",
+  "automationGuideTriggerBody": "Use domain equals for exact sites like youtube.com, domain contains for broader matches like github, or URL contains for folders such as /blog/.",
+  "automationGuideActionTitle": "2. Chain actions",
+  "automationGuideActionBody": "Add a tag, add to a collection, favorite, archive, pin, or add a reminder. Actions run top-to-bottom inside each rule.",
+  "automationGuideTestTitle": "3. Test with one link",
+  "automationGuideTestBody": "Save a matching link, then open Debug logs from this screen to see whether the rule matched and what it changed.",
+  "automationGuideExamplesTitle": "Examples",
+  "automationGuideExamplesBody": "github → add tag “Code” + pin; youtube.com → add to collection “Watch later” + reminder in 2 days; /pricing → archive; unread for 30 days → add tag “Review”.",
+  "automationRulesEmpty": "No automation rules yet.\nTap + to create one.",
+  "settingsDashboardSubtitle": "Stats & analytics",
+  "settingsResetDefaultsTitle": "Reset to defaults",
+  "settingsResetDialogTitle": "Reset settings?",
+  "settingsResetDialogBody": "This only resets preferences (theme, language, etc.) — your bookmarks and data stay intact.",
+  "settingsResetAction": "Reset",
+  "settingsExportFailed": "Export failed: {error}",
+  "@settingsExportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsImportFailed": "Import failed: {error}",
+  "@settingsImportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsImportSummary": "Imported {bookmarksImported} bookmarks ({bookmarksMerged} merged, {bookmarksSkipped} skipped), {tagsImported} tags, {collectionsImported} collections.",
+  "@settingsImportSummary": {
+    "placeholders": {
+      "bookmarksImported": {
+        "type": "int"
+      },
+      "bookmarksMerged": {
+        "type": "int"
+      },
+      "bookmarksSkipped": {
+        "type": "int"
+      },
+      "tagsImported": {
+        "type": "int"
+      },
+      "collectionsImported": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsBackupShareText": "Marky backup",
+  "shareLinkSaved": "Shared link saved",
+  "shareLinkAlreadySaved": "Link already saved",
+  "shareNoLinkFound": "No link found to save",
+  "shareCouldNotSave": "Could not save shared link",
+  "shareOverlaySavingTitle": "Saving",
+  "shareOverlaySavingMessage": "Sending the shared item to Marky.",
+  "shareOverlaySavedTitle": "Saved",
+  "shareOverlaySavedMessage": "1 shared item was saved to Marky.",
+  "shareOverlayDuplicateTitle": "Already saved",
+  "shareOverlayDuplicateMessage": "This shared item is already in your library.",
+  "shareOverlayInvalidTitle": "Could not save",
+  "shareOverlayInvalidMessage": "No saveable link was found in the shared item.",
+  "shareOverlayErrorTitle": "Something went wrong",
+  "shareOverlayErrorMessage": "Could not save this shared item. Please try again.",
+  "shareOverlayErrorMessageWithDetail": "Could not save this shared item: {detail}",
+  "@shareOverlayErrorMessageWithDetail": {
+    "placeholders": {
+      "detail": {}
+    }
+  },
+  "shareOverlayOpenApp": "Open app",
+  "detailBookmarkDeleted": "Bookmark deleted",
+  "detailCouldNotLoadBookmark": "Could not load bookmark",
+  "detailDescriptionLabel": "Description",
+  "detailPreviewImageLabel": "Preview image for {title}",
+  "@detailPreviewImageLabel": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "detailFilterByDomainLabel": "Filter by domain {domain}",
+  "@detailFilterByDomainLabel": {
+    "placeholders": {
+      "domain": {}
+    }
+  },
+  "detailActionUnfavorite": "Unfav",
+  "detailActionUnarchive": "Unarchive",
+  "detailActionRead": "Read",
+  "detailActionUnread": "Unread",
+  "detailActionPin": "Pin",
+  "detailActionUnpin": "Unpin",
+  "detailLinkCopied": "Link copied",
+  "detailDeleteMessage": "This cannot be undone.",
+  "detailMetadataTitle": "Metadata",
+  "detailMetaAuthor": "Author",
+  "detailMetaSite": "Site",
+  "detailMetaPublisher": "Publisher",
+  "detailMetaCanonical": "Canonical",
+  "detailMetaSaved": "Saved",
+  "detailMetaPublished": "Published",
+  "detailMetaLastOpened": "Last opened",
+  "detailMetaOpened": "Opened",
+  "detailMetaSource": "Source",
+  "detailMetaType": "Type",
+  "detailMetaScraping": "Scraping",
+  "detailOpenedTimes": "{count, plural, one {1 time} other {{count} times}}",
+  "@detailOpenedTimes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailRemindersTitle": "Reminders",
+  "detailAddReminderTooltip": "Add reminder",
+  "detailNoReminders": "No reminders set.",
+  "detailInlineError": "Error: {error}",
+  "@detailInlineError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "detailTagsEmpty": "Tap + to add tags",
+  "detailAddTagTitle": "Add tag",
+  "detailAllTagsAlreadyAdded": "All tags already added.",
+  "detailCollectionsEmpty": "Tap + to add to a collection",
+  "detailAddToCollectionTitle": "Add to collection",
+  "detailNoCollectionsLeft": "No collections left to add to.",
+  "detailNotesTitle": "Notes",
+  "detailAddNoteTooltip": "Add note",
+  "detailNoNotes": "Tap + to add a personal note.",
+  "detailCouldNotLoadNotes": "Could not load notes: {error}",
+  "@detailCouldNotLoadNotes": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "detailAddNoteTitle": "Add note",
+  "detailEditNoteTitle": "Edit note",
+  "detailDeleteNoteTitle": "Delete this note?",
+  "detailNoteHint": "Type your note…",
+  "detailNoteEdited": "· edited",
+  "detailLegacyNote": "Legacy note",
+  "detailConvertToNote": "Convert to note",
+  "detailMissingTagLabel": "Tag #{id}",
+  "@detailMissingTagLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "detailMissingCollectionLabel": "Collection #{id}",
+  "@detailMissingCollectionLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
   "statusLoading": "Loading...",
   "statusSaving": "Saving...",
   "statusEmpty": "Nothing here yet",
   "statusOffline": "Offline",
   "statusOnline": "Online",
-  "feedMainContentLabel": "Bookmarks feed content"
+  "feedMainContentLabel": "Bookmarks feed content",
+
+  "reminderSheetTitle": "Remind me",
+  "reminderTonight": "Tonight (20:00)",
+  "reminderTomorrow": "Tomorrow (09:00)",
+  "reminderThisWeekend": "This weekend (Sat 10:00)",
+  "reminderPickDateTime": "Pick a date & time…",
+  "reminderFutureTimeRequired": "Choose a future reminder time",
+  "reminderPermissionRequired": "Notification permission is required",
+  "reminderExactAlarmUnavailable": "Exact alarms are not available",
+  "reminderSet": "Reminder set",
+
+  "detailActionRefetch": "Refetch",
+  "detailRefetchingMetadata": "Refetching metadata…",
+  "detailMetadataRefreshed": "Metadata refreshed",
+
+  "colorPickerCustomColor": "Custom color",
+  "colorPickerHexLabel": "Hex color",
+  "colorPickerHexError": "Use #RRGGBB or #AARRGGBB",
+  "colorPickerUseColor": "Use color",
+
+  "tagNameHint": "Tag name",
+  "collectionNameHint": "Collection name",
+  "collectionDescriptionHint": "Description (optional)",
+  "pinToTop": "Pin to top",
+  "actionCreate": "Create",
+  "actionUpdate": "Update",
+
+  "automationWhen": "When…",
+  "automationThen": "Then…",
+  "automationAllFieldsRequired": "All fields are required.",
+  "automationSaveFailed": "Save failed: {error}",
+  "@automationSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "automationNoLogs": "No automation logs yet.",
+  "automationDeleteRuleTitle": "Delete \"{name}\"?",
+  "@automationDeleteRuleTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "automationEditRule": "Edit Rule",
+  "automationNewRule": "New Rule",
+  "automationRuleName": "Rule name",
+  "automationRuleDescription": "Description (optional)",
+  "automationRuleEnabled": "Enabled",
+  "automationRulePriority": "Priority",
+  "automationRulePriorityHint": "Lower numbers run first.",
+  "automationTriggerType": "Trigger type",
+  "automationActionType": "Action type",
+  "automationAddAction": "Add action",
+
+  "batchDeleteTitle": "Delete bookmarks?",
+  "batchDeleteMessage": "{count, plural, one {This will permanently delete 1 bookmark.} other {This will permanently delete {count} bookmarks.}}",
+  "@batchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "homeFilteredLabel": "Filtered: {label}",
+  "@homeFilteredLabel": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+
+  "remindersAppBarTitle": "Reminders",
+
+  "newTag": "New Tag",
+  "editTag": "Edit Tag",
+  "newCollection": "New Collection",
+  "editCollection": "Edit Collection",
+
+  "shareOpenBookmark": "Open"
 }
+

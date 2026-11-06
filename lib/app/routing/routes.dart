@@ -1,56 +1,62 @@
-/// Route path constants for the Marky app.
+/// All route paths used by Marky v2's GoRouter configuration.
+///
+/// Keeping these as compile-time constants rather than strings scattered
+/// across feature code means the compiler catches typos, and renaming a
+/// route is a single-file operation. Feature code must never hand-write
+/// `'/detail/$id'` — always go through these constants (+ helpers).
 abstract final class Routes {
-  /// Home / Feed tab path.
+  // ─── Shell branches (bottom nav tabs) ──────────────────────────────
+  /// Home / Feed — the default landing tab.
   static const String home = '/home';
 
-  /// Search tab path.
+  static const String homeUnread = '/home/unread';
+
+  /// Instant search.
   static const String search = '/search';
 
-  /// Add / Capture tab path.
+  /// Add / Capture — paste or share a new bookmark.
   static const String add = '/add';
 
-  /// Collections tab path.
-  static const String collections = '/collections';
+  /// QR scan capture screen.
+  static const String addQr = '/add/qr';
 
-  /// Profile / Settings tab path.
-  static const String profile = '/profile';
+  /// Library — tags + collections + archive, all saved content.
+  static const String library = '/library';
 
-  /// Vault auth screen path.
-  static const String vault = '/vault';
-
-  /// Vault auth screen path (explicit).
-  static const String vaultAuth = '/vault/auth';
-
-  /// Vault feed screen path.
-  static const String vaultFeed = '/vault/feed';
-
-  /// Bookmark detail screen path.
+  // ─── Root-level (stacked above shell, hide bottom nav) ─────────────
+  /// Bookmark detail. Use [bookmarkDetailPath] to build with an id.
   static const String bookmarkDetail = '/detail/:id';
 
-  /// Tags manager screen path.
-  static const String tags = '/tags';
+  /// Settings root — theme, language, backup, automation.
+  static const String settings = '/settings';
 
-  /// Tag detail screen path.
-  static const String tagDetail = '/tag/:id';
+  /// Dashboard / statistics — reached from Settings.
+  static const String stats = '/settings/stats';
 
-  /// Collection detail screen path.
-  static const String collectionDetail = '/collection/:id';
+  /// Backup + restore + Google Drive config — reached from Settings.
+  static const String backup = '/settings/backup';
 
-  /// Note edit screen path (create mode).
-  static const String noteEdit = '/note/edit';
+  /// Automation rules list — reached from Settings.
+  static const String automationRules = '/settings/automation';
 
-  /// Note edit screen path (edit mode with ID).
-  static const String noteEditWithId = '/note/edit/:id';
+  /// Automation rule editor (create).
+  static const String automationRuleNew = '/settings/automation/new';
 
-  /// Dashboard analytics screen path.
-  static const String dashboard = '/dashboard';
+  /// Automation rule editor (edit). Use [automationRuleEditPath].
+  static const String automationRuleEdit = '/settings/automation/:id';
 
-  /// Automation rules list screen path.
-  static const String automationRules = '/automation-rules';
+  static const String reminders = '/reminders';
 
-  /// Automation rule edit screen path.
-  static const String automationRuleEdit = '/automation-rule/edit';
+  /// Tag manager.
+  static const String tags = '/library/tags';
 
-  /// Automation rule edit screen path with ID.
-  static const String automationRuleEditWithId = '/automation-rule/edit/:id';
+  /// Collection manager.
+  static const String collections = '/library/collections';
+
+  // ─── Path builders ─────────────────────────────────────────────────
+  /// Builds a concrete detail path: `/detail/42`.
+  static String bookmarkDetailPath(int id) => '/detail/$id';
+
+  /// Builds a concrete automation rule edit path.
+  static String automationRuleEditPath(int id) => '/settings/automation/$id';
 }

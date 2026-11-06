@@ -1,212 +1,238 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
-import 'package:marky/core/network/dio_client.dart';
-import 'package:marky/core/scraping/models/parsed_metadata.dart';
-import 'package:marky/core/scraping/parsers/source_parser.dart';
 
-/// Extracts metadata from Reddit links via the `.json` endpoint.
-///
-/// Supported hosts:
-/// - reddit.com / www.reddit.com
-/// - old.reddit.com
-/// - np.reddit.com
-/// - redd.it
-///
-/// The parser appends `.json` to the post URL and reads
-/// `[0].data.children[0].data` for title, subreddit, author,
-/// thumbnail, and selftext.
-///
-/// Returns `null` on all failure paths — network errors, invalid JSON,
-/// missing fields, or non-2xx responses. Never throws.
-class RedditParser extends SourceParser {
-  RedditParser({required this.dio});
+import 'package:marky/core/scraping/metadata_result.dart';
+import 'package:marky/core/scraping/source_parser.dart';
 
-  /// Lazy singleton using a default [Dio] from [DioClient].
-  static RedditParser? _instance;
-  static RedditParser get instance {
-    _instance ??= RedditParser(dio: DioClient.create());
-    return _instance!;
+/// Reddit-specific metadata parser.
+///
+/// Uses the `.json` endpoint appended to the post URL (no API key
+/// required) to extract post metadata. Falls back gracefully when
+/// the endpoint is blocked or rate-limited.
+class RedditParser implements SourceParser {
+  RedditParser({Dio? dio})
+      : _dio = dio ??
+            Dio(BaseOptions(
+              connectTimeout: const Duration(seconds: 8),
+              receiveTimeout: const Duration(seconds: 8),
+              headers: <String, dynamic>{
+                'User-Agent':
+                    'Mozilla/5.0 (Android 13; Mobile) Marky/1.0 link-vault',
+                'Accept': 'application/json,text/plain,*/*',
+              },
+            ));
+
+  final Dio _dio;
+
+  static const String _faviconUrl = 'https://www.reddit.com/favicon.ico';
+
+  @override
+  bool canHandle(String url) {
+    final Uri? uri = Uri.tryParse(url);
+    if (uri == null) return false;
+    final String host = uri.host.toLowerCase();
+    return host == 'redd.it' ||
+        host == 'reddit.com' ||
+        host.endsWith('.reddit.com');
   }
 
-  final Dio dio;
-
-  /// Request-level timeout (send + receive).
-  static const Duration _requestTimeout = Duration(seconds: 5);
-
-  /// Overall timeout wrapping the entire fetch + parse operation.
-  static const Duration _overallTimeout = Duration(seconds: 10);
-
   @override
-  Set<String> get hosts => const <String>{
-        'reddit.com',
-        'www.reddit.com',
-        'old.reddit.com',
-        'np.reddit.com',
-        'redd.it',
-      };
+  Future<MetadataResult> parse(String url, {String? html}) async {
+    final MetadataResult jsonResult = await _parseJsonEndpoint(url);
+    if (!jsonResult.isEmpty) return jsonResult;
+    final MetadataResult embedResult = await _parseOEmbed(url);
+    if (!embedResult.isEmpty) return embedResult;
+    return const MetadataResult(
+      siteName: 'Reddit',
+      faviconUrl: _faviconUrl,
+    );
+  }
 
-  @override
-  Future<ParsedMetadata?> parse(String url) async {
-    if (url.isEmpty) return null;
-
-    final Uri? uri = Uri.tryParse(url.trim());
-    if (uri == null) return null;
-
-    final String normalizedHost = _normalizeHost(uri.host);
-    if (normalizedHost.isEmpty) return null;
-
-    // Validate scheme.
-    if (uri.scheme != 'http' && uri.scheme != 'https') return null;
-
-    // Ensure the URL is actually a Reddit link we claim to handle.
-    final String bareHost = _stripWww(normalizedHost);
-    if (!hosts.any((h) => _stripWww(h) == bareHost)) return null;
-
-    // Build the .json URL.
-    final String jsonUrl = _buildJsonUrl(url);
-
+  Future<MetadataResult> _parseJsonEndpoint(String url) async {
     try {
-      final Response<String> response = await dio
-          .get<String>(
-            jsonUrl,
-            options: Options(
-              responseType: ResponseType.plain,
-              validateStatus: (_) => true,
-              sendTimeout: _requestTimeout,
-              receiveTimeout: _requestTimeout,
-            ),
-          )
-          .timeout(_overallTimeout);
+      final Response<dynamic> response =
+          await _dio.getUri<dynamic>(_jsonUriFor(url));
 
-      if (response.statusCode == null ||
-          response.statusCode! < 200 ||
-          response.statusCode! >= 300) {
-        return null;
-      }
+      final dynamic data = response.data;
+      final Map<String, dynamic>? postData = _firstPostData(data);
+      if (postData == null) return const MetadataResult();
 
-      final String? jsonText = response.data;
-      if (jsonText == null || jsonText.isEmpty) return null;
-
-      final List<dynamic> json;
-      try {
-        json = jsonDecode(jsonText) as List<dynamic>;
-      } on FormatException {
-        return null;
-      } on TypeError {
-        return null;
-      }
-
-      if (json.isEmpty) return null;
-
-      final Map<String, dynamic>? listing = json[0] as Map<String, dynamic>?;
-      if (listing == null) return null;
-
-      final Map<String, dynamic>? data = listing['data'] as Map<String, dynamic>?;
-      if (data == null) return null;
-
-      final List<dynamic>? children = data['children'] as List<dynamic>?;
-      if (children == null || children.isEmpty) return null;
-
-      final Map<String, dynamic>? child =
-          children[0] as Map<String, dynamic>?;
-      if (child == null) return null;
-
-      final Map<String, dynamic>? postData =
-          child['data'] as Map<String, dynamic>?;
-      if (postData == null) return null;
-
-      final String? title = _readString(postData, 'title');
-      if (title == null || title.isEmpty) return null;
-
-      final String? subreddit = _readString(postData, 'subreddit_name_prefixed') ??
-          _readString(postData, 'subreddit');
-      final String? author = _readString(postData, 'author');
-      final String? thumbnail = _readString(postData, 'thumbnail');
+      final String? subredditName = _readString(postData, 'subreddit');
+      final String? subredditPrefixed =
+          _readString(postData, 'subreddit_name_prefixed');
       final String? selftext = _readString(postData, 'selftext');
-      final String? postUrl = _readString(postData, 'url');
-
-      // Reddit returns 'self' or empty string as thumbnail for text posts.
-      final String? cleanThumbnail =
-          (thumbnail == null || thumbnail == 'self' || thumbnail == 'default')
-              ? null
-              : thumbnail;
-
-      // If the post links to an external image, use it as hero image.
-      final String? heroImage = _isImageUrl(postUrl) ? postUrl : cleanThumbnail;
-
-      return ParsedMetadata(
-        title: title,
-        description: selftext,
-        thumbnailUrl: cleanThumbnail,
-        heroImageUrl: heroImage,
-        siteName: subreddit,
-        author: author,
-        publisher: 'Reddit',
-        contentType: 'article',
+      final String? outboundUrl = _readString(
+            postData,
+            'url_overridden_by_dest',
+          ) ??
+          _readString(postData, 'url');
+      final String? thumbnail = _cleanThumbnail(
+        _readString(postData, 'thumbnail'),
       );
-    } on DioException {
-      return null;
-    } on TimeoutException {
-      return null;
-    } on Exception {
-      return null;
+      final String? heroImageUrl =
+          _imageUrl(outboundUrl) ?? _previewImageUrl(postData) ?? thumbnail;
+      final String? canonicalUrl = _canonicalUrl(postData);
+      final String? title = _readString(postData, 'title');
+      final String? author = _readString(postData, 'author');
+      final DateTime? publishDate = _publishDate(postData);
+      final String? description =
+          selftext == null ? null : _truncate(selftext, 300);
+
+      if (title == null &&
+          description == null &&
+          canonicalUrl == null &&
+          author == null &&
+          heroImageUrl == null &&
+          publishDate == null) {
+        return const MetadataResult();
+      }
+
+      return MetadataResult(
+        title: title,
+        description: description,
+        canonicalUrl: canonicalUrl,
+        author: author,
+        siteName: subredditPrefixed ??
+            (subredditName == null ? 'Reddit' : 'r/$subredditName'),
+        publisher: 'Reddit',
+        publishDate: publishDate,
+        heroImageUrl: heroImageUrl,
+        faviconUrl: _faviconUrl,
+        snippet: description,
+      );
+    } catch (_) {
+      return const MetadataResult();
     }
   }
 
-  /// Appends `.json` to the given [url].
-  ///
-  /// If the URL already ends with `.json`, it is returned as-is.
-  /// For redd.it short links, the URL is returned as-is since they
-  /// already redirect to the canonical post URL.
-  static String _buildJsonUrl(String url) {
-    if (url.endsWith('.json')) return url;
-    // Append .json before any query or fragment.
-    final int queryIndex = url.indexOf('?');
-    final int fragmentIndex = url.indexOf('#');
-    final int cutIndex = queryIndex != -1
-        ? (fragmentIndex != -1 ? queryIndex : queryIndex)
-        : fragmentIndex;
-
-    if (cutIndex != -1) {
-      return '${url.substring(0, cutIndex)}.json${url.substring(cutIndex)}';
+  Future<MetadataResult> _parseOEmbed(String url) async {
+    try {
+      final Response<dynamic> response = await _dio.get<dynamic>(
+        'https://www.reddit.com/oembed',
+        queryParameters: <String, dynamic>{'url': url},
+      );
+      final dynamic data = response.data;
+      if (data is! Map<String, dynamic>) return const MetadataResult();
+      final String? thumbnail = data['thumbnail_url'] as String?;
+      final String? title = data['title'] as String?;
+      if (title == null || title.trim().isEmpty) return const MetadataResult();
+      return MetadataResult(
+        title: title,
+        author: data['author_name'] as String?,
+        siteName: 'Reddit',
+        publisher: 'Reddit',
+        heroImageUrl: thumbnail != null && thumbnail.startsWith('http')
+            ? thumbnail
+            : null,
+        faviconUrl: _faviconUrl,
+      );
+    } catch (_) {
+      return const MetadataResult();
     }
-    return '$url.json';
   }
 
-  /// Checks whether [url] looks like a direct image link.
-  static bool _isImageUrl(String? url) {
-    if (url == null || url.isEmpty) return false;
-    final String lower = url.toLowerCase();
-    return lower.endsWith('.jpg') ||
-        lower.endsWith('.jpeg') ||
-        lower.endsWith('.png') ||
-        lower.endsWith('.gif') ||
-        lower.endsWith('.webp');
+  static Uri _jsonUriFor(String url) {
+    final Uri uri = Uri.parse(url);
+    final String path = uri.path.endsWith('/') && uri.path.length > 1
+        ? uri.path.substring(0, uri.path.length - 1)
+        : uri.path;
+    final String jsonPath = path.endsWith('.json') ? path : '$path.json';
+    final Map<String, String> queryParameters =
+        Map<String, String>.from(uri.queryParameters);
+    queryParameters['limit'] = '1';
+    queryParameters['raw_json'] = '1';
+    return uri.replace(
+      path: jsonPath,
+      queryParameters: queryParameters,
+      fragment: '',
+    );
   }
 
-  /// Reads a string value from [json] by [key], returning `null` if the
-  /// value is missing or not a string.
-  static String? _readString(Map<String, dynamic> json, String key) {
-    final dynamic value = json[key];
-    if (value is String) {
-      final String trimmed = value.trim();
-      return trimmed.isEmpty ? null : trimmed;
+  static Map<String, dynamic>? _firstPostData(dynamic data) {
+    final Map<String, dynamic>? listing = switch (data) {
+      <dynamic>[final Map<String, dynamic> first, ...] => first,
+      final Map<String, dynamic> map => map,
+      _ => null,
+    };
+    final Map<String, dynamic>? listingData =
+        listing?['data'] as Map<String, dynamic>?;
+    final List<dynamic>? children = listingData?['children'] as List<dynamic>?;
+    final Map<String, dynamic>? firstChild =
+        children?.firstOrNull as Map<String, dynamic>?;
+    return firstChild?['data'] as Map<String, dynamic>?;
+  }
+
+  static String? _readString(Map<String, dynamic> data, String key) {
+    final dynamic value = data[key];
+    if (value is! String) return null;
+    final String trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  static String? _cleanThumbnail(String? value) {
+    if (value == null || !value.startsWith('http')) return null;
+    if (value.endsWith('/self') ||
+        value.endsWith('/default') ||
+        value.endsWith('/nsfw') ||
+        value.endsWith('/spoiler')) {
+      return null;
+    }
+    return _decodeRedditUrl(value);
+  }
+
+  static String? _imageUrl(String? value) {
+    if (value == null || !value.startsWith('http')) return null;
+    final String lower = value.toLowerCase();
+    if (!lower.endsWith('.jpg') &&
+        !lower.endsWith('.jpeg') &&
+        !lower.endsWith('.png') &&
+        !lower.endsWith('.gif') &&
+        !lower.endsWith('.webp')) {
+      return null;
+    }
+    return _decodeRedditUrl(value);
+  }
+
+  static String? _previewImageUrl(Map<String, dynamic> data) {
+    final Map<String, dynamic>? preview =
+        data['preview'] as Map<String, dynamic>?;
+    final List<dynamic>? images = preview?['images'] as List<dynamic>?;
+    final Map<String, dynamic>? firstImage =
+        images?.firstOrNull as Map<String, dynamic>?;
+    final Map<String, dynamic>? source =
+        firstImage?['source'] as Map<String, dynamic>?;
+    return _decodeRedditUrl(source?['url'] as String?);
+  }
+
+  static String? _canonicalUrl(Map<String, dynamic> data) {
+    final String? permalink = _readString(data, 'permalink');
+    if (permalink == null) return null;
+    final Uri? uri = Uri.tryParse(permalink);
+    if (uri == null) return null;
+    if (uri.hasScheme) return uri.toString();
+    return 'https://www.reddit.com$permalink';
+  }
+
+  static DateTime? _publishDate(Map<String, dynamic> data) {
+    final dynamic value = data['created_utc'];
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value * 1000, isUtc: true);
+    }
+    if (value is double) {
+      return DateTime.fromMillisecondsSinceEpoch(
+        (value * 1000).round(),
+        isUtc: true,
+      );
     }
     return null;
   }
 
-  /// Normalizes a host to lower-case with `www.` stripped.
-  static String _normalizeHost(String host) {
-    return _stripWww(host.toLowerCase().trim());
+  static String? _decodeRedditUrl(String? value) {
+    return value?.replaceAll('&amp;', '&');
   }
 
-  /// Strips the leading `www.` prefix from a host.
-  static String _stripWww(String host) {
-    if (host.startsWith('www.')) {
-      return host.substring(4);
-    }
-    return host;
+  static String _truncate(String text, int maxLength) {
+    if (text.length <= maxLength) return text;
+    return '${text.substring(0, maxLength)}…';
   }
 }

@@ -6,7 +6,6 @@
   "captureTitle": "Bağlantı Ekle",
   "collectionsTitle": "Koleksiyonlar",
   "settingsTitle": "Ayarlar",
-  "vaultTitle": "Kasa",
   "dashboardTitle": "Panel",
   "notesTitle": "Notlar",
   "tagsTitle": "Etiketler",
@@ -32,6 +31,7 @@
   "actionRetry": "Tekrar dene",
   "actionClose": "Kapat",
   "actionShare": "Paylaş",
+  "actionUndo": "Geri al",
   "actionArchive": "Arşivle",
   "actionCopy": "Kopyala",
   "actionOpen": "Aç",
@@ -77,7 +77,6 @@
   "labelFavorite": "Favori",
   "labelArchived": "Arşivlendi",
   "labelReadLater": "Sonra oku",
-  "labelPrivate": "Özel",
   "dialogDeleteTitle": "Yer imi silinsin mi?",
   "dialogDeleteMessage": "Bu işlem geri alınamaz.",
   "dialogUnsavedChangesTitle": "Değişiklikler silinsin mi?",
@@ -91,10 +90,359 @@
   "themeDark": "Koyu",
   "themeLight": "Açık",
   "themeSystem": "Sistem",
+  "themeOled": "OLED siyah",
+  "exitWarning": "Çıkmak için tekrar basın",
+  "settingsAnimationsLabel": "Animasyonlar",
+  "settingsDashboardLabel": "Panel",
+  "settingsBackupLabel": "Yedekleme",
+  "settingsAutomationLabel": "Otomasyon kuralları",
+  "navigationHome": "Ana sayfa",
+  "navigationLibrary": "Kitaplık",
+  "homeEmptyTitle": "Kitaplığınız sessiz",
+  "homeEmptyBody": "Her yerden bağlantı kaydedin — yapıştırın, paylaşın veya elle ekleyin.",
+  "homeAddLinkAction": "Bağlantı ekle",
+  "homeNoFavoritesTitle": "Henüz favori yok",
+  "homeNoFavoritesBody": "Bir yer imini buraya kaydetmek için kalp simgesine dokunun.",
+  "homeBrowseAllAction": "Tümüne göz at",
+  "homeAllCaughtUpTitle": "Hepsi tamam",
+  "homeAllCaughtUpBody": "Her şey okundu.",
+  "homeArchiveEmptyTitle": "Arşiv boş",
+  "homeArchiveEmptyBody": "Saklamak ama gizlemek istediğiniz yer imlerini arşivlemek için kaydırın.",
+  "homeGridTooltip": "Izgara",
+  "homeListTooltip": "Liste",
+  "homeSortTooltip": "Sırala",
+  "homeSelectAllTooltip": "Tümünü seç",
+  "homeSelectionCount": "{count, plural, one {1 seçili} other {{count} seçili}}",
+  "@homeSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchSavedSnackbar": "Arama kaydedildi",
+  "searchRemovedSnackbar": "Arama kaldırıldı",
+  "searchRemoveSavedTooltip": "Kaydedilen aramayı kaldır",
+  "searchLandingTitle": "Her şeyi bulun",
+  "searchLandingBody": "Başlıklarda, alan adlarında, etiketlerde ve tag:dart ya da is:favorite gibi operatörlerde arayın.",
+  "searchSavedSearchesTitle": "Kaydedilen aramalar",
+  "searchSavedSearchesEmpty": "Yararlı aramaları yıldız düğmesiyle kaydedin.",
+  "searchRecentSearchesTitle": "Son aramalar",
+  "searchRecentSearchesEmpty": "Arama yaptıktan sonra son aramalar burada görünür.",
+  "searchOperatorsHelp": "Operatörler: tag:, is:favorite, domain:, before:, after:",
+  "addIntroTitle": "Bağlantı yapıştırın, paylaşın veya yazın",
+  "addPasteTooltip": "Panodan yapıştır",
+  "addViewDetailTooltip": "Ayrıntıyı görüntüle",
+  "addSavedTitle": "Kaydedildi!",
+  "addSavedSubtitle": "Yeni yer imi yakalandı.",
+  "addDuplicateTitle": "Zaten kaydedilmiş",
+  "addDuplicateSubtitle": "Bu URL kitaplığınızda var.",
+  "addInvalidTitle": "Geçersiz URL",
+  "addInvalidSubtitle": "Girdide geçerli bir bağlantı bulunamadı.",
+  "addErrorTitle": "Hata",
+  "addErrorSubtitle": "Bir şeyler ters gitti.",
+  "libraryTitle": "Kitaplık",
+  "librarySettingsTooltip": "Ayarlar",
+  "libraryTagsTitle": "Etiketler",
+  "libraryCollectionsTitle": "Koleksiyonlar",
+  "libraryNoTags": "Henüz etiket yok. Oluşturmak için + düğmesine dokunun.",
+  "libraryLoadingTags": "Etiketler yükleniyor...",
+  "libraryCouldNotLoadTags": "Etiketler yüklenemedi.",
+  "libraryNoCollections": "Henüz koleksiyon yok. Oluşturmak için + düğmesine dokunun.",
+  "libraryLoadingCollections": "Koleksiyonlar yükleniyor...",
+  "libraryCouldNotLoadCollections": "Koleksiyonlar yüklenemedi.",
+  "librarySmartBadge": "AKILLI",
+  "libraryLiveSmartCollection": "Canlı akıllı koleksiyon",
+  "libraryCollectionItemCount": "{count, plural, one {1 öğe} other {{count} öğe}}",
+  "@libraryCollectionItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryCollectionActionsTooltip": "Koleksiyon işlemleri",
+  "libraryDeleteTagTitle": "\"{name}\" silinsin mi?",
+  "@libraryDeleteTagTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "libraryDeleteTagMessage": "Bu işlem etiketi tüm yer imlerinden kaldırır.",
+  "libraryDeleteCollectionTitle": "\"{title}\" silinsin mi?",
+  "@libraryDeleteCollectionTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "libraryDeleteCollectionMessage": "İçindeki yer imleri silinmez.",
+  "settingsSectionAppearance": "Görünüm",
+  "settingsSectionBehaviour": "Davranış",
+  "settingsSectionData": "Veri",
+  "settingsSectionAutomation": "Otomasyon",
+  "settingsSectionInsights": "İçgörüler",
+  "settingsSectionAbout": "Hakkında",
+  "settingsExportBackupTitle": "Yedeği dışa aktar (JSON)",
+  "settingsRestoreBackupTitle": "Yedeği geri yükle (JSON)",
+  "settingsRestoreBackupSubtitle": "Kopyalar güvenle birleştirilir",
+  "settingsAutomationSubtitle": "Otomatik etiketleme, arşivleme ve daha fazlası",
+  "settingsOnLabel": "Açık",
+  "settingsOffLabel": "Kapalı",
+  "settingsEnabledState": "açıldı",
+  "settingsDisabledState": "kapatıldı",
+  "settingsChangedSnackbar": "{label} {state}",
+  "@settingsChangedSnackbar": {
+    "placeholders": {
+      "label": {},
+      "state": {}
+    }
+  },
+  "automationGuideTooltip": "Otomasyon rehberi",
+  "automationGuideCardTitle": "Kurallar nasıl çalışır",
+  "automationGuideCardBody": "Kurallar bir bağlantı kaydedildikten sonra çalışır. Bir “Ne zaman” tetikleyicisi ve ardından bir “O zaman” aksiyonu seçin. Dar başlayın, kuralları net adlandırın ve kural çalışmadıysa Hata ayıklama kayıtlarını kontrol edin.",
+  "automationGuideTitle": "Otomasyon rehberi",
+  "automationGuideTriggerTitle": "1. Tetikleyici seçin",
+  "automationGuideTriggerBody": "youtube.com gibi tam siteler için alan adı eşittir, github gibi geniş eşleşmeler için alan adı içerir veya /blog/ gibi klasörler için URL içerir kullanın.",
+  "automationGuideActionTitle": "2. Aksiyon seçin",
+  "automationGuideActionBody": "Etiket ekleyin, koleksiyona ekleyin, arşivleyin, okundu işaretleyin, sabitleyin, favorileyin veya hatırlatıcı ekleyin.",
+  "automationGuideTestTitle": "3. Tek bağlantıyla test edin",
+  "automationGuideTestBody": "Eşleşen bir bağlantı kaydedin, ardından kuralın eşleşip eşleşmediğini ve neyi değiştirdiğini görmek için bu ekrandan Hata ayıklama kayıtlarını açın.",
+  "automationGuideExamplesTitle": "Örnekler",
+  "automationGuideExamplesBody": "github → “Kod” etiketi ekle; youtube.com → “Sonra izle” koleksiyonuna ekle; /pricing → arşivle; 30 gündür okunmamış → “İncele” etiketi ekle.",
+  "automationRulesEmpty": "Henüz otomasyon kuralı yok.\nOluşturmak için + düğmesine dokunun.",
+  "settingsDashboardSubtitle": "İstatistikler ve analizler",
+  "settingsResetDefaultsTitle": "Varsayılanlara sıfırla",
+  "settingsResetDialogTitle": "Ayarlar sıfırlansın mı?",
+  "settingsResetDialogBody": "Bu işlem yalnızca tercihleri sıfırlar (tema, dil vb.) — yer imleriniz ve verileriniz korunur.",
+  "settingsResetAction": "Sıfırla",
+  "settingsExportFailed": "Dışa aktarma başarısız: {error}",
+  "@settingsExportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsImportFailed": "İçe aktarma başarısız: {error}",
+  "@settingsImportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsImportSummary": "{bookmarksImported} yer imi içe aktarıldı ({bookmarksMerged} birleştirildi, {bookmarksSkipped} atlandı), {tagsImported} etiket, {collectionsImported} koleksiyon.",
+  "@settingsImportSummary": {
+    "placeholders": {
+      "bookmarksImported": {
+        "type": "int"
+      },
+      "bookmarksMerged": {
+        "type": "int"
+      },
+      "bookmarksSkipped": {
+        "type": "int"
+      },
+      "tagsImported": {
+        "type": "int"
+      },
+      "collectionsImported": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsBackupShareText": "Marky yedeği",
+  "shareLinkSaved": "Paylaşılan bağlantı kaydedildi",
+  "shareLinkAlreadySaved": "Bağlantı zaten kaydedilmiş",
+  "shareNoLinkFound": "Kaydedilecek bağlantı bulunamadı",
+  "shareCouldNotSave": "Paylaşılan bağlantı kaydedilemedi",
+  "shareOverlaySavingTitle": "Kaydediliyor",
+  "shareOverlaySavingMessage": "Paylaşım Marky’ye aktarılıyor.",
+  "shareOverlaySavedTitle": "Kaydedildi",
+  "shareOverlaySavedMessage": "1 paylaşım başarıyla Marky’ye kaydedildi.",
+  "shareOverlayDuplicateTitle": "Zaten kayıtlı",
+  "shareOverlayDuplicateMessage": "Bu paylaşım kütüphanende zaten bulunuyor.",
+  "shareOverlayInvalidTitle": "Kaydedilemedi",
+  "shareOverlayInvalidMessage": "Paylaşım içinde kaydedilebilir bir bağlantı bulunamadı.",
+  "shareOverlayErrorTitle": "Bir sorun oluştu",
+  "shareOverlayErrorMessage": "Paylaşım şu anda kaydedilemedi. Lütfen tekrar dene.",
+  "shareOverlayErrorMessageWithDetail": "Paylaşım şu anda kaydedilemedi: {detail}",
+  "@shareOverlayErrorMessageWithDetail": {
+    "placeholders": {
+      "detail": {}
+    }
+  },
+  "shareOverlayOpenApp": "Uygulamayı aç",
+  "detailBookmarkDeleted": "Yer imi silindi",
+  "detailCouldNotLoadBookmark": "Yer imi yüklenemedi",
+  "detailDescriptionLabel": "Açıklama",
+  "detailPreviewImageLabel": "{title} için önizleme görseli",
+  "@detailPreviewImageLabel": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "detailFilterByDomainLabel": "{domain} alan adına göre filtrele",
+  "@detailFilterByDomainLabel": {
+    "placeholders": {
+      "domain": {}
+    }
+  },
+  "detailActionUnfavorite": "Favoriden çıkar",
+  "detailActionUnarchive": "Arşivden çıkar",
+  "detailActionRead": "Okundu",
+  "detailActionUnread": "Okunmadı",
+  "detailActionPin": "Sabitle",
+  "detailActionUnpin": "Sabitlemeyi kaldır",
+  "detailLinkCopied": "Bağlantı kopyalandı",
+  "detailDeleteMessage": "Bu işlem geri alınamaz.",
+  "detailMetadataTitle": "Meta veri",
+  "detailMetaAuthor": "Yazar",
+  "detailMetaSite": "Site",
+  "detailMetaPublisher": "Yayıncı",
+  "detailMetaCanonical": "Kanonik",
+  "detailMetaSaved": "Kaydedildi",
+  "detailMetaPublished": "Yayınlandı",
+  "detailMetaLastOpened": "Son açılma",
+  "detailMetaOpened": "Açıldı",
+  "detailMetaSource": "Kaynak",
+  "detailMetaType": "Tür",
+  "detailMetaScraping": "Kazıma",
+  "detailOpenedTimes": "{count, plural, one {1 kez} other {{count} kez}}",
+  "@detailOpenedTimes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailRemindersTitle": "Hatırlatıcılar",
+  "detailAddReminderTooltip": "Hatırlatıcı ekle",
+  "detailNoReminders": "Ayarlanmış hatırlatıcı yok.",
+  "detailInlineError": "Hata: {error}",
+  "@detailInlineError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "detailTagsEmpty": "+ düğmesine dokunarak etiket ekleyin",
+  "detailAddTagTitle": "Etiket ekle",
+  "detailAllTagsAlreadyAdded": "Tüm etiketler zaten eklendi.",
+  "detailCollectionsEmpty": "+ düğmesine dokunarak koleksiyona ekleyin",
+  "detailAddToCollectionTitle": "Koleksiyona ekle",
+  "detailNoCollectionsLeft": "Eklenecek başka koleksiyon yok.",
+  "detailNotesTitle": "Notlar",
+  "detailAddNoteTooltip": "Not ekle",
+  "detailNoNotes": "+ düğmesine dokunarak kişisel not ekleyin.",
+  "detailCouldNotLoadNotes": "Notlar yüklenemedi: {error}",
+  "@detailCouldNotLoadNotes": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "detailAddNoteTitle": "Not ekle",
+  "detailEditNoteTitle": "Notu düzenle",
+  "detailDeleteNoteTitle": "Bu not silinsin mi?",
+  "detailNoteHint": "Notunuzu yazın…",
+  "detailNoteEdited": "· düzenlendi",
+  "detailLegacyNote": "Eski not",
+  "detailConvertToNote": "Nota dönüştür",
+  "detailMissingTagLabel": "Etiket #{id}",
+  "@detailMissingTagLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "detailMissingCollectionLabel": "Koleksiyon #{id}",
+  "@detailMissingCollectionLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
   "statusLoading": "Yükleniyor...",
   "statusSaving": "Kaydediliyor...",
   "statusEmpty": "Henüz burada bir şey yok",
   "statusOffline": "Çevrimdışı",
   "statusOnline": "Çevrimiçi",
-  "feedMainContentLabel": "Yer imi akışı içeriği"
+  "feedMainContentLabel": "Yer imi akışı içeriği",
+
+  "reminderSheetTitle": "Hatırlat",
+  "reminderTonight": "Bu akşam (20:00)",
+  "reminderTomorrow": "Yarın (09:00)",
+  "reminderThisWeekend": "Bu hafta sonu (Cmt 10:00)",
+  "reminderPickDateTime": "Tarih ve saat seç…",
+  "reminderFutureTimeRequired": "Gelecekte bir hatırlatma zamanı seçin",
+  "reminderPermissionRequired": "Bildirim izni gereklidir",
+  "reminderExactAlarmUnavailable": "Kesin alarmlar kullanılamıyor",
+  "reminderSet": "Hatırlatıcı ayarlandı",
+
+  "detailActionRefetch": "Yenile",
+  "detailRefetchingMetadata": "Meta veri yenileniyor…",
+  "detailMetadataRefreshed": "Meta veri yenilendi",
+
+  "colorPickerCustomColor": "Özel renk",
+  "colorPickerHexLabel": "Hex renk",
+  "colorPickerHexError": "#RRGGBB veya #AARRGGBB kullanın",
+  "colorPickerUseColor": "Rengi kullan",
+
+  "tagNameHint": "Etiket adı",
+  "collectionNameHint": "Koleksiyon adı",
+  "collectionDescriptionHint": "Açıklama (isteğe bağlı)",
+  "pinToTop": "Üste sabitle",
+  "actionCreate": "Oluştur",
+  "actionUpdate": "Güncelle",
+
+  "automationWhen": "Ne zaman…",
+  "automationThen": "O zaman…",
+  "automationAllFieldsRequired": "Tüm alanlar zorunludur.",
+  "automationSaveFailed": "Kayıt başarısız: {error}",
+  "@automationSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "automationNoLogs": "Henüz otomasyon günlüğü yok.",
+  "automationDeleteRuleTitle": "\"{name}\" silinsin mi?",
+  "@automationDeleteRuleTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "automationEditRule": "Kuralı Düzenle",
+  "automationNewRule": "Yeni Kural",
+  "automationRuleName": "Kural adı",
+  "automationRuleDescription": "Açıklama (isteğe bağlı)",
+  "automationRuleEnabled": "Etkin",
+  "automationRulePriority": "Öncelik",
+  "automationRulePriorityHint": "Düşük sayılar önce çalışır.",
+  "automationTriggerType": "Tetikleyici türü",
+  "automationActionType": "Aksiyon türü",
+  "automationAddAction": "Aksiyon ekle",
+
+  "batchDeleteTitle": "Yer imleri silinsin mi?",
+  "batchDeleteMessage": "{count, plural, one {1 yer imi kalıcı olarak silinecek.} other {{count} yer imi kalıcı olarak silinecek.}}",
+  "@batchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "homeFilteredLabel": "Filtrelendi: {label}",
+  "@homeFilteredLabel": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+
+  "remindersAppBarTitle": "Hatırlatıcılar",
+
+  "newTag": "Yeni Etiket",
+  "editTag": "Etiketi Düzenle",
+  "newCollection": "Yeni Koleksiyon",
+  "editCollection": "Koleksiyonu Düzenle",
+
+  "shareOpenBookmark": "Aç"
 }
+

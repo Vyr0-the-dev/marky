@@ -134,12 +134,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
-  /// No description provided for @vaultTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Vault'**
-  String get vaultTitle;
-
   /// No description provided for @dashboardTitle.
   ///
   /// In en, this message translates to:
@@ -289,6 +283,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Share'**
   String get actionShare;
+
+  /// No description provided for @actionUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get actionUndo;
 
   /// No description provided for @actionArchive.
   ///
@@ -560,12 +560,6 @@ abstract class AppLocalizations {
   /// **'Read later'**
   String get labelReadLater;
 
-  /// No description provided for @labelPrivate.
-  ///
-  /// In en, this message translates to:
-  /// **'Private'**
-  String get labelPrivate;
-
   /// No description provided for @dialogDeleteTitle.
   ///
   /// In en, this message translates to:
@@ -644,6 +638,991 @@ abstract class AppLocalizations {
   /// **'System'**
   String get themeSystem;
 
+  /// No description provided for @themeOled.
+  ///
+  /// In en, this message translates to:
+  /// **'OLED black'**
+  String get themeOled;
+
+  /// No description provided for @exitWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Press back again to exit'**
+  String get exitWarning;
+
+  /// No description provided for @settingsAnimationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Animations'**
+  String get settingsAnimationsLabel;
+
+  /// No description provided for @settingsDashboardLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get settingsDashboardLabel;
+
+  /// No description provided for @settingsBackupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get settingsBackupLabel;
+
+  /// No description provided for @settingsAutomationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Automation rules'**
+  String get settingsAutomationLabel;
+
+  /// No description provided for @navigationHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navigationHome;
+
+  /// No description provided for @navigationLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get navigationLibrary;
+
+  /// No description provided for @homeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your library is quiet'**
+  String get homeEmptyTitle;
+
+  /// No description provided for @homeEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a link from anywhere — paste, share, or add manually.'**
+  String get homeEmptyBody;
+
+  /// No description provided for @homeAddLinkAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a link'**
+  String get homeAddLinkAction;
+
+  /// No description provided for @homeNoFavoritesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get homeNoFavoritesTitle;
+
+  /// No description provided for @homeNoFavoritesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the heart on any bookmark to save it here.'**
+  String get homeNoFavoritesBody;
+
+  /// No description provided for @homeBrowseAllAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse all'**
+  String get homeBrowseAllAction;
+
+  /// No description provided for @homeAllCaughtUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All caught up'**
+  String get homeAllCaughtUpTitle;
+
+  /// No description provided for @homeAllCaughtUpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything has been read.'**
+  String get homeAllCaughtUpBody;
+
+  /// No description provided for @homeArchiveEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive is empty'**
+  String get homeArchiveEmptyTitle;
+
+  /// No description provided for @homeArchiveEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to archive bookmarks you want to keep but hide.'**
+  String get homeArchiveEmptyBody;
+
+  /// No description provided for @homeGridTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get homeGridTooltip;
+
+  /// No description provided for @homeListTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get homeListTooltip;
+
+  /// No description provided for @homeSortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get homeSortTooltip;
+
+  /// No description provided for @homeSelectAllTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get homeSelectAllTooltip;
+
+  /// No description provided for @homeSelectionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one {1 selected} other {{count} selected}}'**
+  String homeSelectionCount(int count);
+
+  /// No description provided for @searchSavedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Search saved'**
+  String get searchSavedSnackbar;
+
+  /// No description provided for @searchRemovedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Search removed'**
+  String get searchRemovedSnackbar;
+
+  /// No description provided for @searchRemoveSavedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove saved search'**
+  String get searchRemoveSavedTooltip;
+
+  /// No description provided for @searchLandingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find anything'**
+  String get searchLandingTitle;
+
+  /// No description provided for @searchLandingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Search titles, domains, tags, and operators like tag:dart or is:favorite.'**
+  String get searchLandingBody;
+
+  /// No description provided for @searchSavedSearchesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved searches'**
+  String get searchSavedSearchesTitle;
+
+  /// No description provided for @searchSavedSearchesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Save useful searches with the star button.'**
+  String get searchSavedSearchesEmpty;
+
+  /// No description provided for @searchRecentSearchesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent searches'**
+  String get searchRecentSearchesTitle;
+
+  /// No description provided for @searchRecentSearchesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent searches appear after you search.'**
+  String get searchRecentSearchesEmpty;
+
+  /// No description provided for @searchOperatorsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Operators: tag:, is:favorite, domain:, before:, after:'**
+  String get searchOperatorsHelp;
+
+  /// No description provided for @addIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste, share, or type a link'**
+  String get addIntroTitle;
+
+  /// No description provided for @addPasteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste from clipboard'**
+  String get addPasteTooltip;
+
+  /// No description provided for @addViewDetailTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View detail'**
+  String get addViewDetailTooltip;
+
+  /// No description provided for @addSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved!'**
+  String get addSavedTitle;
+
+  /// No description provided for @addSavedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New bookmark captured.'**
+  String get addSavedSubtitle;
+
+  /// No description provided for @addDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Already saved'**
+  String get addDuplicateTitle;
+
+  /// No description provided for @addDuplicateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This URL is in your library.'**
+  String get addDuplicateSubtitle;
+
+  /// No description provided for @addInvalidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid URL'**
+  String get addInvalidTitle;
+
+  /// No description provided for @addInvalidSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not find a valid link in the input.'**
+  String get addInvalidSubtitle;
+
+  /// No description provided for @addErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get addErrorTitle;
+
+  /// No description provided for @addErrorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong.'**
+  String get addErrorSubtitle;
+
+  /// No description provided for @libraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get libraryTitle;
+
+  /// No description provided for @librarySettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get librarySettingsTooltip;
+
+  /// No description provided for @libraryTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get libraryTagsTitle;
+
+  /// No description provided for @libraryCollectionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get libraryCollectionsTitle;
+
+  /// No description provided for @libraryNoTags.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet. Tap + to create one.'**
+  String get libraryNoTags;
+
+  /// No description provided for @libraryLoadingTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading tags...'**
+  String get libraryLoadingTags;
+
+  /// No description provided for @libraryCouldNotLoadTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load tags.'**
+  String get libraryCouldNotLoadTags;
+
+  /// No description provided for @libraryNoCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'No collections yet. Tap + to create one.'**
+  String get libraryNoCollections;
+
+  /// No description provided for @libraryLoadingCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading collections...'**
+  String get libraryLoadingCollections;
+
+  /// No description provided for @libraryCouldNotLoadCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load collections.'**
+  String get libraryCouldNotLoadCollections;
+
+  /// No description provided for @librarySmartBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'SMART'**
+  String get librarySmartBadge;
+
+  /// No description provided for @libraryLiveSmartCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Live smart collection'**
+  String get libraryLiveSmartCollection;
+
+  /// No description provided for @libraryCollectionItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one {1 item} other {{count} items}}'**
+  String libraryCollectionItemCount(int count);
+
+  /// No description provided for @libraryCollectionActionsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection actions'**
+  String get libraryCollectionActionsTooltip;
+
+  /// No description provided for @libraryDeleteTagTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?'**
+  String libraryDeleteTagTitle(Object name);
+
+  /// No description provided for @libraryDeleteTagMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the tag from all bookmarks.'**
+  String get libraryDeleteTagMessage;
+
+  /// No description provided for @libraryDeleteCollectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{title}\"?'**
+  String libraryDeleteCollectionTitle(Object title);
+
+  /// No description provided for @libraryDeleteCollectionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks inside will not be deleted.'**
+  String get libraryDeleteCollectionMessage;
+
+  /// No description provided for @settingsSectionAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsSectionAppearance;
+
+  /// No description provided for @settingsSectionBehaviour.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour'**
+  String get settingsSectionBehaviour;
+
+  /// No description provided for @settingsSectionData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsSectionData;
+
+  /// No description provided for @settingsSectionAutomation.
+  ///
+  /// In en, this message translates to:
+  /// **'Automation'**
+  String get settingsSectionAutomation;
+
+  /// No description provided for @settingsSectionInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'Insights'**
+  String get settingsSectionInsights;
+
+  /// No description provided for @settingsSectionAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsSectionAbout;
+
+  /// No description provided for @settingsExportBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup (JSON)'**
+  String get settingsExportBackupTitle;
+
+  /// No description provided for @settingsRestoreBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup (JSON)'**
+  String get settingsRestoreBackupTitle;
+
+  /// No description provided for @settingsRestoreBackupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicates are merged safely'**
+  String get settingsRestoreBackupSubtitle;
+
+  /// No description provided for @settingsAutomationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-tag, archive, and more'**
+  String get settingsAutomationSubtitle;
+
+  /// No description provided for @settingsOnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get settingsOnLabel;
+
+  /// No description provided for @settingsOffLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get settingsOffLabel;
+
+  /// No description provided for @settingsEnabledState.
+  ///
+  /// In en, this message translates to:
+  /// **'enabled'**
+  String get settingsEnabledState;
+
+  /// No description provided for @settingsDisabledState.
+  ///
+  /// In en, this message translates to:
+  /// **'disabled'**
+  String get settingsDisabledState;
+
+  /// No description provided for @settingsChangedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} {state}'**
+  String settingsChangedSnackbar(Object label, Object state);
+
+  /// No description provided for @automationGuideTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Automation guide'**
+  String get automationGuideTooltip;
+
+  /// No description provided for @automationGuideCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How rules work'**
+  String get automationGuideCardTitle;
+
+  /// No description provided for @automationGuideCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules run after a link is saved. Pick one “When” trigger, then chain one or more “Then” actions. Start narrow, keep rules named clearly, and check Debug logs if a rule did not fire.'**
+  String get automationGuideCardBody;
+
+  /// No description provided for @automationGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automation guide'**
+  String get automationGuideTitle;
+
+  /// No description provided for @automationGuideTriggerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Choose a trigger'**
+  String get automationGuideTriggerTitle;
+
+  /// No description provided for @automationGuideTriggerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use domain equals for exact sites like youtube.com, domain contains for broader matches like github, or URL contains for folders such as /blog/.'**
+  String get automationGuideTriggerBody;
+
+  /// No description provided for @automationGuideActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Chain actions'**
+  String get automationGuideActionTitle;
+
+  /// No description provided for @automationGuideActionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a tag, add to a collection, favorite, archive, pin, or add a reminder. Actions run top-to-bottom inside each rule.'**
+  String get automationGuideActionBody;
+
+  /// No description provided for @automationGuideTestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Test with one link'**
+  String get automationGuideTestTitle;
+
+  /// No description provided for @automationGuideTestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a matching link, then open Debug logs from this screen to see whether the rule matched and what it changed.'**
+  String get automationGuideTestBody;
+
+  /// No description provided for @automationGuideExamplesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Examples'**
+  String get automationGuideExamplesTitle;
+
+  /// No description provided for @automationGuideExamplesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'github → add tag “Code” + pin; youtube.com → add to collection “Watch later” + reminder in 2 days; /pricing → archive; unread for 30 days → add tag “Review”.'**
+  String get automationGuideExamplesBody;
+
+  /// No description provided for @automationRulesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No automation rules yet.\nTap + to create one.'**
+  String get automationRulesEmpty;
+
+  /// No description provided for @settingsDashboardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats & analytics'**
+  String get settingsDashboardSubtitle;
+
+  /// No description provided for @settingsResetDefaultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get settingsResetDefaultsTitle;
+
+  /// No description provided for @settingsResetDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset settings?'**
+  String get settingsResetDialogTitle;
+
+  /// No description provided for @settingsResetDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This only resets preferences (theme, language, etc.) — your bookmarks and data stay intact.'**
+  String get settingsResetDialogBody;
+
+  /// No description provided for @settingsResetAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get settingsResetAction;
+
+  /// No description provided for @settingsExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed: {error}'**
+  String settingsExportFailed(Object error);
+
+  /// No description provided for @settingsImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed: {error}'**
+  String settingsImportFailed(Object error);
+
+  /// No description provided for @settingsImportSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {bookmarksImported} bookmarks ({bookmarksMerged} merged, {bookmarksSkipped} skipped), {tagsImported} tags, {collectionsImported} collections.'**
+  String settingsImportSummary(int bookmarksImported, int bookmarksMerged,
+      int bookmarksSkipped, int tagsImported, int collectionsImported);
+
+  /// No description provided for @settingsBackupShareText.
+  ///
+  /// In en, this message translates to:
+  /// **'Marky backup'**
+  String get settingsBackupShareText;
+
+  /// No description provided for @shareLinkSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared link saved'**
+  String get shareLinkSaved;
+
+  /// No description provided for @shareLinkAlreadySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Link already saved'**
+  String get shareLinkAlreadySaved;
+
+  /// No description provided for @shareNoLinkFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No link found to save'**
+  String get shareNoLinkFound;
+
+  /// No description provided for @shareCouldNotSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save shared link'**
+  String get shareCouldNotSave;
+
+  /// No description provided for @shareOverlaySavingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get shareOverlaySavingTitle;
+
+  /// No description provided for @shareOverlaySavingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending the shared item to Marky.'**
+  String get shareOverlaySavingMessage;
+
+  /// No description provided for @shareOverlaySavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get shareOverlaySavedTitle;
+
+  /// No description provided for @shareOverlaySavedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'1 shared item was saved to Marky.'**
+  String get shareOverlaySavedMessage;
+
+  /// No description provided for @shareOverlayDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Already saved'**
+  String get shareOverlayDuplicateTitle;
+
+  /// No description provided for @shareOverlayDuplicateMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This shared item is already in your library.'**
+  String get shareOverlayDuplicateMessage;
+
+  /// No description provided for @shareOverlayInvalidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save'**
+  String get shareOverlayInvalidTitle;
+
+  /// No description provided for @shareOverlayInvalidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No saveable link was found in the shared item.'**
+  String get shareOverlayInvalidMessage;
+
+  /// No description provided for @shareOverlayErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get shareOverlayErrorTitle;
+
+  /// No description provided for @shareOverlayErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this shared item. Please try again.'**
+  String get shareOverlayErrorMessage;
+
+  /// No description provided for @shareOverlayErrorMessageWithDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this shared item: {detail}'**
+  String shareOverlayErrorMessageWithDetail(Object detail);
+
+  /// No description provided for @shareOverlayOpenApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Open app'**
+  String get shareOverlayOpenApp;
+
+  /// No description provided for @detailBookmarkDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark deleted'**
+  String get detailBookmarkDeleted;
+
+  /// No description provided for @detailCouldNotLoadBookmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load bookmark'**
+  String get detailCouldNotLoadBookmark;
+
+  /// No description provided for @detailDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get detailDescriptionLabel;
+
+  /// No description provided for @detailPreviewImageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview image for {title}'**
+  String detailPreviewImageLabel(Object title);
+
+  /// No description provided for @detailFilterByDomainLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by domain {domain}'**
+  String detailFilterByDomainLabel(Object domain);
+
+  /// No description provided for @detailActionUnfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfav'**
+  String get detailActionUnfavorite;
+
+  /// No description provided for @detailActionUnarchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive'**
+  String get detailActionUnarchive;
+
+  /// No description provided for @detailActionRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get detailActionRead;
+
+  /// No description provided for @detailActionUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get detailActionUnread;
+
+  /// No description provided for @detailActionPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get detailActionPin;
+
+  /// No description provided for @detailActionUnpin.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get detailActionUnpin;
+
+  /// No description provided for @detailLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get detailLinkCopied;
+
+  /// No description provided for @detailDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone.'**
+  String get detailDeleteMessage;
+
+  /// No description provided for @detailMetadataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata'**
+  String get detailMetadataTitle;
+
+  /// No description provided for @detailMetaAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Author'**
+  String get detailMetaAuthor;
+
+  /// No description provided for @detailMetaSite.
+  ///
+  /// In en, this message translates to:
+  /// **'Site'**
+  String get detailMetaSite;
+
+  /// No description provided for @detailMetaPublisher.
+  ///
+  /// In en, this message translates to:
+  /// **'Publisher'**
+  String get detailMetaPublisher;
+
+  /// No description provided for @detailMetaCanonical.
+  ///
+  /// In en, this message translates to:
+  /// **'Canonical'**
+  String get detailMetaCanonical;
+
+  /// No description provided for @detailMetaSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get detailMetaSaved;
+
+  /// No description provided for @detailMetaPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Published'**
+  String get detailMetaPublished;
+
+  /// No description provided for @detailMetaLastOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'Last opened'**
+  String get detailMetaLastOpened;
+
+  /// No description provided for @detailMetaOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened'**
+  String get detailMetaOpened;
+
+  /// No description provided for @detailMetaSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get detailMetaSource;
+
+  /// No description provided for @detailMetaType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get detailMetaType;
+
+  /// No description provided for @detailMetaScraping.
+  ///
+  /// In en, this message translates to:
+  /// **'Scraping'**
+  String get detailMetaScraping;
+
+  /// No description provided for @detailOpenedTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one {1 time} other {{count} times}}'**
+  String detailOpenedTimes(int count);
+
+  /// No description provided for @detailRemindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get detailRemindersTitle;
+
+  /// No description provided for @detailAddReminderTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add reminder'**
+  String get detailAddReminderTooltip;
+
+  /// No description provided for @detailNoReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminders set.'**
+  String get detailNoReminders;
+
+  /// No description provided for @detailInlineError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String detailInlineError(Object error);
+
+  /// No description provided for @detailTagsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add tags'**
+  String get detailTagsEmpty;
+
+  /// No description provided for @detailAddTagTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag'**
+  String get detailAddTagTitle;
+
+  /// No description provided for @detailAllTagsAlreadyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'All tags already added.'**
+  String get detailAllTagsAlreadyAdded;
+
+  /// No description provided for @detailCollectionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add to a collection'**
+  String get detailCollectionsEmpty;
+
+  /// No description provided for @detailAddToCollectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to collection'**
+  String get detailAddToCollectionTitle;
+
+  /// No description provided for @detailNoCollectionsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'No collections left to add to.'**
+  String get detailNoCollectionsLeft;
+
+  /// No description provided for @detailNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get detailNotesTitle;
+
+  /// No description provided for @detailAddNoteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add note'**
+  String get detailAddNoteTooltip;
+
+  /// No description provided for @detailNoNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add a personal note.'**
+  String get detailNoNotes;
+
+  /// No description provided for @detailCouldNotLoadNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load notes: {error}'**
+  String detailCouldNotLoadNotes(Object error);
+
+  /// No description provided for @detailAddNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add note'**
+  String get detailAddNoteTitle;
+
+  /// No description provided for @detailEditNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get detailEditNoteTitle;
+
+  /// No description provided for @detailDeleteNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this note?'**
+  String get detailDeleteNoteTitle;
+
+  /// No description provided for @detailNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type your note…'**
+  String get detailNoteHint;
+
+  /// No description provided for @detailNoteEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'· edited'**
+  String get detailNoteEdited;
+
+  /// No description provided for @detailLegacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy note'**
+  String get detailLegacyNote;
+
+  /// No description provided for @detailConvertToNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert to note'**
+  String get detailConvertToNote;
+
+  /// No description provided for @detailMissingTagLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag #{id}'**
+  String detailMissingTagLabel(int id);
+
+  /// No description provided for @detailMissingCollectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection #{id}'**
+  String detailMissingCollectionLabel(int id);
+
   /// No description provided for @statusLoading.
   ///
   /// In en, this message translates to:
@@ -679,6 +1658,288 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bookmarks feed content'**
   String get feedMainContentLabel;
+
+  /// No description provided for @reminderSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me'**
+  String get reminderSheetTitle;
+
+  /// No description provided for @reminderTonight.
+  ///
+  /// In en, this message translates to:
+  /// **'Tonight (20:00)'**
+  String get reminderTonight;
+
+  /// No description provided for @reminderTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow (09:00)'**
+  String get reminderTomorrow;
+
+  /// No description provided for @reminderThisWeekend.
+  ///
+  /// In en, this message translates to:
+  /// **'This weekend (Sat 10:00)'**
+  String get reminderThisWeekend;
+
+  /// No description provided for @reminderPickDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date & time…'**
+  String get reminderPickDateTime;
+
+  /// No description provided for @reminderFutureTimeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a future reminder time'**
+  String get reminderFutureTimeRequired;
+
+  /// No description provided for @reminderPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission is required'**
+  String get reminderPermissionRequired;
+
+  /// No description provided for @reminderExactAlarmUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact alarms are not available'**
+  String get reminderExactAlarmUnavailable;
+
+  /// No description provided for @reminderSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder set'**
+  String get reminderSet;
+
+  /// No description provided for @detailActionRefetch.
+  ///
+  /// In en, this message translates to:
+  /// **'Refetch'**
+  String get detailActionRefetch;
+
+  /// No description provided for @detailRefetchingMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Refetching metadata…'**
+  String get detailRefetchingMetadata;
+
+  /// No description provided for @detailMetadataRefreshed.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata refreshed'**
+  String get detailMetadataRefreshed;
+
+  /// No description provided for @colorPickerCustomColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom color'**
+  String get colorPickerCustomColor;
+
+  /// No description provided for @colorPickerHexLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hex color'**
+  String get colorPickerHexLabel;
+
+  /// No description provided for @colorPickerHexError.
+  ///
+  /// In en, this message translates to:
+  /// **'Use #RRGGBB or #AARRGGBB'**
+  String get colorPickerHexError;
+
+  /// No description provided for @colorPickerUseColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Use color'**
+  String get colorPickerUseColor;
+
+  /// No description provided for @tagNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get tagNameHint;
+
+  /// No description provided for @collectionNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection name'**
+  String get collectionNameHint;
+
+  /// No description provided for @collectionDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get collectionDescriptionHint;
+
+  /// No description provided for @pinToTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin to top'**
+  String get pinToTop;
+
+  /// No description provided for @actionCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get actionCreate;
+
+  /// No description provided for @actionUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get actionUpdate;
+
+  /// No description provided for @automationWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'When…'**
+  String get automationWhen;
+
+  /// No description provided for @automationThen.
+  ///
+  /// In en, this message translates to:
+  /// **'Then…'**
+  String get automationThen;
+
+  /// No description provided for @automationAllFieldsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'All fields are required.'**
+  String get automationAllFieldsRequired;
+
+  /// No description provided for @automationSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Save failed: {error}'**
+  String automationSaveFailed(Object error);
+
+  /// No description provided for @automationNoLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'No automation logs yet.'**
+  String get automationNoLogs;
+
+  /// No description provided for @automationDeleteRuleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?'**
+  String automationDeleteRuleTitle(Object name);
+
+  /// No description provided for @automationEditRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Rule'**
+  String get automationEditRule;
+
+  /// No description provided for @automationNewRule.
+  ///
+  /// In en, this message translates to:
+  /// **'New Rule'**
+  String get automationNewRule;
+
+  /// No description provided for @automationRuleName.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule name'**
+  String get automationRuleName;
+
+  /// No description provided for @automationRuleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get automationRuleDescription;
+
+  /// No description provided for @automationRuleEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get automationRuleEnabled;
+
+  /// No description provided for @automationRulePriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get automationRulePriority;
+
+  /// No description provided for @automationRulePriorityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower numbers run first.'**
+  String get automationRulePriorityHint;
+
+  /// No description provided for @automationTriggerType.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger type'**
+  String get automationTriggerType;
+
+  /// No description provided for @automationActionType.
+  ///
+  /// In en, this message translates to:
+  /// **'Action type'**
+  String get automationActionType;
+
+  /// No description provided for @automationAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add action'**
+  String get automationAddAction;
+
+  /// No description provided for @batchDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete bookmarks?'**
+  String get batchDeleteTitle;
+
+  /// No description provided for @batchDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one {This will permanently delete 1 bookmark.} other {This will permanently delete {count} bookmarks.}}'**
+  String batchDeleteMessage(int count);
+
+  /// No description provided for @homeFilteredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filtered: {label}'**
+  String homeFilteredLabel(Object label);
+
+  /// No description provided for @remindersAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get remindersAppBarTitle;
+
+  /// No description provided for @newTag.
+  ///
+  /// In en, this message translates to:
+  /// **'New Tag'**
+  String get newTag;
+
+  /// No description provided for @editTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Tag'**
+  String get editTag;
+
+  /// No description provided for @newCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'New Collection'**
+  String get newCollection;
+
+  /// No description provided for @editCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Collection'**
+  String get editCollection;
+
+  /// No description provided for @shareOpenBookmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get shareOpenBookmark;
 }
 
 class _AppLocalizationsDelegate
