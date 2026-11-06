@@ -49,6 +49,7 @@ app.*.map.json
 .gsd-id
 .mcp.json
 .bg-shell/
+.artifacts/
 Thumbs.db
 *.swo
 *~
