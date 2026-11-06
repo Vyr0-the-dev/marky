@@ -1,0 +1,12 @@
+appId: com.marky.app.marky
+---
+- extendedWaitUntil:
+    visible: "Saving"
+    timeout: 15000
+- extendedWaitUntil:
+    visible: "Open app"
+    timeout: 30000
+- tapOn: "Open app"
+- extendedWaitUntil:
+    visible: "Marky"
+    timeout: 15000

@@ -1,0 +1,13 @@
+appId: com.marky.app.marky
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Marky"
+    timeout: 15000
+- tapOn: "Quick Add"
+- assertVisible: "Quick add"
+- assertVisible: "(?s)Scan QR.*"
+- assertVisible: "(?s)Manual input.*"
+- assertVisible: "(?s)Paste clipboard.*"
+- back
+- assertVisible: "Marky"

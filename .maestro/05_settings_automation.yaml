@@ -1,0 +1,36 @@
+appId: com.marky.app.marky
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Marky"
+    timeout: 15000
+- tapOn: "Settings"
+- assertVisible: "Settings"
+- scrollUntilVisible:
+    element: "(?s)Automation rules.*"
+    direction: DOWN
+    visibilityPercentage: 50
+- tapOn: "(?s)Automation rules.*"
+- extendedWaitUntil:
+    visible: "Automation rules"
+    timeout: 10000
+- assertVisible: "(?s)How rules work.*"
+- tapOn: "Automation guide"
+- assertVisible: "Automation guide"
+- assertVisible: "(?s)1. Choose a trigger.*"
+- swipe:
+    start: 82%, 73%
+    end: 18%, 73%
+- extendedWaitUntil:
+    visible: "(?s)2. Chain actions.*"
+    timeout: 10000
+- swipe:
+    start: 82%, 73%
+    end: 18%, 73%
+- extendedWaitUntil:
+    visible: "(?s)3. Test with one link.*"
+    timeout: 10000
+- back
+- assertVisible: "Automation rules"
+- back
+- assertVisible: "Settings"

@@ -1,0 +1,14 @@
+appId: com.marky.app.marky
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "All"
+    timeout: 15000
+- assertVisible: "All"
+- swipe:
+    direction: UP
+- assertVisible: "All"
+- tapOn: "Grid"
+- assertVisible: "List"
+- tapOn: "List"
+- assertVisible: "Grid"

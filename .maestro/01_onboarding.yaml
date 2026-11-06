@@ -1,0 +1,18 @@
+appId: com.marky.app.marky
+---
+- clearState
+- launchApp
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "(?s)Save from anywhere.*"
+    timeout: 30000
+- tapOn: "Next"
+- assertVisible: "(?s)Organize with tags.*"
+- tapOn: "Next"
+- assertVisible: "(?s)Automate the busywork.*"
+- tapOn: "Next"
+- assertVisible: "(?s)Never lose a link.*"
+- tapOn: "Get started"
+- extendedWaitUntil:
+    visible: "Marky"
+    timeout: 15000
