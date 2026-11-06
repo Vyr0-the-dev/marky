@@ -7,14 +7,41 @@ import 'package:timezone/timezone.dart' as tz;
 class FakeNotificationService implements NotificationService {
   final List<int> scheduledIds = <int>[];
   final List<int> cancelledIds = <int>[];
-  final Map<int, FakeScheduledNotification> scheduled = <int, FakeScheduledNotification>{};
+  final Map<int, FakeScheduledNotification> scheduled =
+      <int, FakeScheduledNotification>{};
+
+  /// Instant (non-scheduled) notifications captured by
+  /// [showInstantSaveNotification].
+  final List<FakeInstantNotification> instantShown =
+      <FakeInstantNotification>[];
 
   bool shouldThrowOnSchedule = false;
   bool canScheduleExact = true;
+  bool permissionGranted = true;
   int? throwOnId;
 
   @override
   Future<void> initialize() async {}
+
+  @override
+  Future<bool> requestPermission() async => permissionGranted;
+
+  @override
+  Future<void> showInstantSaveNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+    bool isError = false,
+  }) async {
+    instantShown.add(FakeInstantNotification(
+      id: id,
+      title: title,
+      body: body,
+      payload: payload,
+      isError: isError,
+    ));
+  }
 
   @override
   Future<void> scheduleNotification({
@@ -75,4 +102,21 @@ class FakeScheduledNotification {
   final tz.TZDateTime scheduledDate;
   final String? payload;
   final String repeatMode;
+}
+
+/// Record of an instant save notification captured by the fake.
+class FakeInstantNotification {
+  FakeInstantNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.payload,
+    required this.isError,
+  });
+
+  final int id;
+  final String title;
+  final String body;
+  final String? payload;
+  final bool isError;
 }

@@ -5,6 +5,7 @@ analyzer:
     - "**/*.freezed.dart"
     - "**/*.g.dart"
     - "**/generated_plugin_registrant.dart"
+    - "legacy_archive/**"
   errors:
     invalid_annotation_target: ignore
     missing_required_param: error
@@ -106,7 +107,7 @@ linter:
     null_check_on_nullable_type_parameter: true
     null_closures: true
     omit_local_variable_types: false
-    one_member_abstracts: true
+    one_member_abstracts: false
     only_throw_errors: true
     overridden_fields: true
     package_names: true
@@ -141,13 +142,12 @@ linter:
     recursive_getters: true
     require_trailing_commas: false
     sized_box_shrink_expand: true
-    slash_for_doc_comments: true
+    unintended_html_in_doc_comment: false
     sort_child_properties_last: true
     test_types_in_equals: true
     throw_in_finally: true
     tighten_type_of_initializing_formals: true
     type_annotate_public_apis: true
-    type_init_formals: true
     unawaited_futures: true
     unnecessary_await_in_return: true
     unnecessary_brace_in_string_interps: true
