@@ -14,6 +14,7 @@ import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
 import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
 import 'package:marky/features/collections/domain/bookmark_collection.dart';
 import 'package:marky/features/detail/presentation/detail_screen.dart';
+import 'package:marky/features/detail/presentation/widgets/edit_bookmark_sheet.dart';
 import 'package:marky/features/notes/data/note_providers.dart';
 import 'package:marky/features/notes/domain/note.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
@@ -142,7 +143,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(EditBookmarkSheet), findsOneWidget);
     await tester.enterText(
       find.byType(TextField).first,
       'Updated Editorial Title',

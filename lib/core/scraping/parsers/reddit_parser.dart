@@ -1,13 +1,15 @@
 import 'package:dio/dio.dart';
-
 import 'package:marky/core/scraping/metadata_result.dart';
 import 'package:marky/core/scraping/source_parser.dart';
 
-/// Reddit-specific metadata parser.
+/// Enhanced Reddit-specific metadata parser.
 ///
-/// Uses the `.json` endpoint appended to the post URL (no API key
-/// required) to extract post metadata. Falls back gracefully when
-/// the endpoint is blocked or rate-limited.
+/// Features:
+/// 1. Shortlink resolution (`/s/xyz` and `redd.it/xyz`) via redirect tracking.
+/// 2. Whitelisted Reddit User-Agent to prevent 429 rate limiting.
+/// 3. Image gallery (`media_metadata`) and preview decoding (`&amp;` -> `&`).
+/// 4. Full text extraction into snippet for Reader Mode support.
+/// 5. Fallback to Reddit oEmbed when JSON API is blocked.
 class RedditParser implements SourceParser {
   RedditParser({Dio? dio})
       : _dio = dio ??
@@ -16,7 +18,7 @@ class RedditParser implements SourceParser {
               receiveTimeout: const Duration(seconds: 8),
               headers: <String, dynamic>{
                 'User-Agent':
-                    'Mozilla/5.0 (Android 13; Mobile) Marky/1.0 link-manager',
+                    'android:com.marky.app:v1.0.0 (by /u/marky_reader)',
                 'Accept': 'application/json,text/plain,*/*',
               },
             ));
@@ -44,19 +46,51 @@ class RedditParser implements SourceParser {
     if (cancelToken?.isCancelled ?? false) {
       return const MetadataResult(siteName: 'Reddit', faviconUrl: _faviconUrl);
     }
+
+    // 1. Resolve redirect if it's a shortlink (e.g. reddit.com/r/.../s/... or redd.it/...)
+    final String targetUrl = await _resolveShortlink(url, cancelToken: cancelToken);
+
+    // 2. Try JSON endpoint
     final MetadataResult jsonResult =
-        await _parseJsonEndpoint(url, cancelToken: cancelToken);
+        await _parseJsonEndpoint(targetUrl, cancelToken: cancelToken);
     if (!jsonResult.isEmpty) return jsonResult;
+
     if (cancelToken?.isCancelled ?? false) {
       return const MetadataResult(siteName: 'Reddit', faviconUrl: _faviconUrl);
     }
+
+    // 3. Try official Reddit oEmbed
     final MetadataResult embedResult =
-        await _parseOEmbed(url, cancelToken: cancelToken);
+        await _parseOEmbed(targetUrl, cancelToken: cancelToken);
     if (!embedResult.isEmpty) return embedResult;
+
     return const MetadataResult(
       siteName: 'Reddit',
       faviconUrl: _faviconUrl,
     );
+  }
+
+  Future<String> _resolveShortlink(String url, {CancelToken? cancelToken}) async {
+    final Uri? uri = Uri.tryParse(url);
+    if (uri == null) return url;
+    final bool isShort = uri.host.toLowerCase() == 'redd.it' ||
+        uri.path.contains('/s/');
+    if (!isShort) return url;
+
+    try {
+      final Response<dynamic> res = await _dio.head<dynamic>(
+        url,
+        options: Options(
+          followRedirects: true,
+          maxRedirects: 5,
+          validateStatus: (int? s) => s != null && s < 400,
+        ),
+        cancelToken: cancelToken,
+      );
+      return res.realUri.toString();
+    } catch (_) {
+      return url;
+    }
   }
 
   Future<MetadataResult> _parseJsonEndpoint(
@@ -85,8 +119,14 @@ class RedditParser implements SourceParser {
       final String? thumbnail = _cleanThumbnail(
         _readString(postData, 'thumbnail'),
       );
-      final String? heroImageUrl =
-          _imageUrl(outboundUrl) ?? _previewImageUrl(postData) ?? thumbnail;
+
+      // Try gallery images, then preview images, then outbound direct image, then thumbnail
+      final String? galleryImage = _extractGalleryImage(postData);
+      final String? heroImageUrl = galleryImage ??
+          _imageUrl(outboundUrl) ??
+          _previewImageUrl(postData) ??
+          thumbnail;
+
       final String? canonicalUrl = _canonicalUrl(postData);
       final String? title = _readString(postData, 'title');
       final String? author = _readString(postData, 'author');
@@ -106,6 +146,7 @@ class RedditParser implements SourceParser {
       return MetadataResult(
         title: title,
         description: description,
+        snippet: selftext, // Full body for Reader Mode!
         canonicalUrl: canonicalUrl,
         author: author,
         siteName: subredditPrefixed ??
@@ -114,7 +155,6 @@ class RedditParser implements SourceParser {
         publishDate: publishDate,
         heroImageUrl: heroImageUrl,
         faviconUrl: _faviconUrl,
-        snippet: description,
       );
     } catch (_) {
       return const MetadataResult();
@@ -198,14 +238,32 @@ class RedditParser implements SourceParser {
     return _decodeRedditUrl(value);
   }
 
+  static String? _extractGalleryImage(Map<String, dynamic> data) {
+    final Map<String, dynamic>? mediaMetadata =
+        data['media_metadata'] as Map<String, dynamic>?;
+    if (mediaMetadata == null || mediaMetadata.isEmpty) return null;
+
+    for (final dynamic item in mediaMetadata.values) {
+      if (item is Map<String, dynamic>) {
+        final Map<String, dynamic>? s = item['s'] as Map<String, dynamic>?;
+        final String? u = s?['u'] as String?;
+        if (u != null && u.isNotEmpty) {
+          return _decodeRedditUrl(u);
+        }
+      }
+    }
+    return null;
+  }
+
   static String? _imageUrl(String? value) {
     if (value == null || !value.startsWith('http')) return null;
-    final String lower = value.toLowerCase();
-    if (!lower.endsWith('.jpg') &&
-        !lower.endsWith('.jpeg') &&
-        !lower.endsWith('.png') &&
-        !lower.endsWith('.gif') &&
-        !lower.endsWith('.webp')) {
+    final Uri? uri = Uri.tryParse(value);
+    final String path = (uri?.path ?? value).toLowerCase();
+    if (!path.endsWith('.jpg') &&
+        !path.endsWith('.jpeg') &&
+        !path.endsWith('.png') &&
+        !path.endsWith('.gif') &&
+        !path.endsWith('.webp')) {
       return null;
     }
     return _decodeRedditUrl(value);

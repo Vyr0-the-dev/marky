@@ -14,9 +14,12 @@ import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
 import 'package:marky/features/collections/domain/bookmark_collection.dart';
 import 'package:marky/features/detail/presentation/detail_action_controller.dart';
+import 'package:marky/features/detail/presentation/widgets/bookmark_info_sheet.dart';
+import 'package:marky/features/detail/presentation/widgets/edit_bookmark_sheet.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/notes/data/note_providers.dart';
 import 'package:marky/features/notes/domain/note.dart';
+import 'package:marky/features/reader/presentation/reader_screen.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
 import 'package:marky/features/reminders/domain/reminder.dart';
 import 'package:marky/features/reminders/presentation/create_reminder_sheet.dart';
@@ -164,9 +167,9 @@ class _DetailBody extends ConsumerWidget {
                   const SizedBox(height: ReadingRoomSpacing.xl),
                   _RemindersSection(bookmark: bookmark),
 
-                  // ── Metadata block ───────────────────────────
+                  // ── Metadata tile ────────────────────────────
                   const SizedBox(height: ReadingRoomSpacing.xl),
-                  _MetadataBlock(bookmark: bookmark),
+                  _MetadataOpenTile(bookmark: bookmark),
 
                   const SizedBox(height: ReadingRoomSpacing.huge),
                 ],
@@ -192,11 +195,22 @@ class _HeroAppBar extends ConsumerWidget {
     final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
-    final ButtonStyle pillButtonStyle = _pillIconButtonStyle();
+    final ButtonStyle buttonStyle = _iconButtonStyle(theme, hasImage);
+    final List<Shadow>? iconShadows = hasImage
+        ? const <Shadow>[
+            Shadow(color: Colors.black87, blurRadius: 8),
+            Shadow(color: Colors.black54, blurRadius: 4),
+          ]
+        : null;
+
     final Widget leadingButton = Center(
       child: IconButton(
-        style: pillButtonStyle,
-        icon: const BackButtonIcon(),
+        style: buttonStyle,
+        icon: Icon(
+          Icons.arrow_back_rounded,
+          color: hasImage ? Colors.white : theme.colorScheme.onSurface,
+          shadows: iconShadows,
+        ),
         tooltip: MaterialLocalizations.of(context).backButtonTooltip,
         onPressed: () => Navigator.of(context).maybePop(),
       ),
@@ -205,7 +219,9 @@ class _HeroAppBar extends ConsumerWidget {
       context,
       ref,
       l10n,
-      pillButtonStyle,
+      buttonStyle,
+      hasImage,
+      iconShadows,
     );
 
     if (!hasImage) {
@@ -253,11 +269,12 @@ class _HeroAppBar extends ConsumerWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: <Color>[
-                      Colors.black.withValues(alpha: 0.65),
-                      Colors.black.withValues(alpha: 0.25),
+                      Colors.black.withValues(alpha: 0.82),
+                      Colors.black.withValues(alpha: 0.42),
                       Colors.transparent,
+                      Colors.black.withValues(alpha: 0.45),
                     ],
-                    stops: const <double>[0, 0.45, 1],
+                    stops: const <double>[0, 0.38, 0.72, 1],
                   ),
                 ),
               ),
@@ -268,14 +285,17 @@ class _HeroAppBar extends ConsumerWidget {
     );
   }
 
-  static ButtonStyle _pillIconButtonStyle() {
+  static ButtonStyle _iconButtonStyle(ThemeData theme, bool hasImage) {
     return IconButton.styleFrom(
-      backgroundColor: const Color(0x99121210),
-      foregroundColor: const Color(0xFFEDEDEC),
-      side: BorderSide(
-        color: Colors.white.withValues(alpha: 0.14),
-      ),
-      minimumSize: const Size(38, 38),
+      foregroundColor: hasImage ? Colors.white : theme.colorScheme.onSurface,
+      backgroundColor: Colors.transparent,
+      hoverColor: hasImage
+          ? Colors.white.withValues(alpha: 0.15)
+          : theme.colorScheme.onSurface.withValues(alpha: 0.08),
+      highlightColor: hasImage
+          ? Colors.white.withValues(alpha: 0.22)
+          : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+      minimumSize: const Size(40, 40),
       padding: const EdgeInsets.all(8),
     );
   }
@@ -284,14 +304,20 @@ class _HeroAppBar extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppLocalizations? l10n,
-    ButtonStyle pillButtonStyle,
+    ButtonStyle buttonStyle,
+    bool hasImage,
+    List<Shadow>? iconShadows,
   ) {
+    final Color defaultColor =
+        hasImage ? Colors.white : Theme.of(context).colorScheme.onSurface;
+
     return <Widget>[
       IconButton(
-        style: pillButtonStyle,
+        style: buttonStyle,
         icon: Icon(
           bookmark.isFavorite ? Icons.favorite : Icons.favorite_outline,
-          color: bookmark.isFavorite ? const Color(0xFFFF6B6B) : null,
+          color: bookmark.isFavorite ? const Color(0xFFFF6B6B) : defaultColor,
+          shadows: iconShadows,
         ),
         tooltip: bookmark.isFavorite
             ? (l10n?.detailActionUnfavorite ?? 'Unfav')
@@ -305,12 +331,12 @@ class _HeroAppBar extends ConsumerWidget {
           );
         },
       ),
-      const SizedBox(width: ReadingRoomSpacing.xs),
       IconButton(
-        style: pillButtonStyle,
+        style: buttonStyle,
         icon: Icon(
           bookmark.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-          color: bookmark.isPinned ? ReadingRoomColors.darkAccent : null,
+          color: bookmark.isPinned ? ReadingRoomColors.darkAccent : defaultColor,
+          shadows: iconShadows,
         ),
         tooltip: bookmark.isPinned
             ? (l10n?.detailActionUnpin ?? 'Unpin')
@@ -319,19 +345,47 @@ class _HeroAppBar extends ConsumerWidget {
           ref.read(detailActionControllerProvider.notifier).togglePin(bookmark),
         ),
       ),
-      const SizedBox(width: ReadingRoomSpacing.xs),
       IconButton(
-        style: pillButtonStyle,
-        icon: const Icon(Icons.share_outlined),
+        style: buttonStyle,
+        icon: Icon(
+          Icons.chrome_reader_mode_outlined,
+          color: defaultColor,
+          shadows: iconShadows,
+        ),
+        tooltip: 'Reader Mode',
+        onPressed: () {
+          Navigator.of(context).push(ReaderScreen.route(bookmark));
+        },
+      ),
+      IconButton(
+        style: buttonStyle,
+        icon: Icon(
+          Icons.info_outline_rounded,
+          color: defaultColor,
+          shadows: iconShadows,
+        ),
+        tooltip: l10n?.detailMetadataTitle ?? 'Details & Metadata',
+        onPressed: () => BookmarkInfoSheet.show(context, bookmark),
+      ),
+      IconButton(
+        style: buttonStyle,
+        icon: Icon(
+          Icons.share_outlined,
+          color: defaultColor,
+          shadows: iconShadows,
+        ),
         tooltip: l10n?.actionShare ?? 'Share',
         onPressed: _share,
       ),
-      const SizedBox(width: ReadingRoomSpacing.xs),
       Padding(
-        padding: const EdgeInsets.only(right: ReadingRoomSpacing.sm),
+        padding: const EdgeInsets.only(right: ReadingRoomSpacing.xs),
         child: IconButton(
-          style: pillButtonStyle,
-          icon: const Icon(Icons.more_horiz_rounded),
+          style: buttonStyle,
+          icon: Icon(
+            Icons.more_horiz_rounded,
+            color: defaultColor,
+            shadows: iconShadows,
+          ),
           tooltip: MaterialLocalizations.of(context).showMenuTooltip,
           onPressed: () => _showMoreActionsSheet(context, ref, bookmark),
         ),
@@ -423,13 +477,11 @@ class _HeroAppBar extends ConsumerWidget {
   ) async {
     final String initialTitle = bookmark.title?.trim() ?? '';
     final ({String title, String description})? updated =
-        await showDialog<({String title, String description})>(
-      context: context,
-      builder: (_) => _EditBookmarkDialog(
-        initialTitle:
-            initialTitle.isNotEmpty ? initialTitle : bookmark.displayTitle,
-        initialDescription: bookmark.description ?? '',
-      ),
+        await EditBookmarkSheet.show(
+      context,
+      initialTitle:
+          initialTitle.isNotEmpty ? initialTitle : bookmark.displayTitle,
+      initialDescription: bookmark.description ?? '',
     );
     if (updated == null) return;
     await ref
@@ -683,79 +735,6 @@ class _ActionSheetTile extends StatelessWidget {
   }
 }
 
-class _EditBookmarkDialog extends StatefulWidget {
-  const _EditBookmarkDialog({
-    required this.initialTitle,
-    required this.initialDescription,
-  });
-
-  final String initialTitle;
-  final String initialDescription;
-
-  @override
-  State<_EditBookmarkDialog> createState() => _EditBookmarkDialogState();
-}
-
-class _EditBookmarkDialogState extends State<_EditBookmarkDialog> {
-  late final TextEditingController _titleController = TextEditingController(
-    text: widget.initialTitle,
-  );
-  late final TextEditingController _descriptionController =
-      TextEditingController(
-    text: widget.initialDescription,
-  );
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final AppLocalizations? l10n = AppLocalizations.of(context);
-    return AlertDialog(
-      title: Text(l10n?.actionEdit ?? 'Edit'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: l10n?.captureTitleLabel ?? 'Title',
-              ),
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: ReadingRoomSpacing.md),
-            TextField(
-              controller: _descriptionController,
-              decoration: InputDecoration(
-                labelText: l10n?.detailDescriptionLabel ?? 'Description',
-              ),
-              minLines: 3,
-              maxLines: 6,
-            ),
-          ],
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n?.actionCancel ?? 'Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop((
-            title: _titleController.text.trim(),
-            description: _descriptionController.text.trim(),
-          )),
-          child: Text(l10n?.actionSave ?? 'Save'),
-        ),
-      ],
-    );
-  }
-}
 
 // ─── Sticky bottom action bar ───────────────────────────────────
 
@@ -909,105 +888,79 @@ class _DomainRow extends ConsumerWidget {
   }
 }
 
-// ─── Metadata block ─────────────────────────────────────────────
+// ─── Metadata open tile ──────────────────────────────────────────
 
-class _MetadataBlock extends StatelessWidget {
-  const _MetadataBlock({required this.bookmark});
+class _MetadataOpenTile extends StatelessWidget {
+  const _MetadataOpenTile({required this.bookmark});
 
   final Bookmark bookmark;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final TextStyle metaStyle = ReadingRoomTextStyles.metadata(context);
-    final TextStyle valueStyle = theme.textTheme.bodySmall!;
     final AppLocalizations? l10n = AppLocalizations.of(context);
 
-    final List<_MetaRow> rows = <_MetaRow>[
-      if (bookmark.author != null)
-        _MetaRow(l10n?.detailMetaAuthor ?? 'Author', bookmark.author!),
-      if (bookmark.siteName != null)
-        _MetaRow(l10n?.detailMetaSite ?? 'Site', bookmark.siteName!),
-      if (bookmark.publisher != null)
-        _MetaRow(l10n?.detailMetaPublisher ?? 'Publisher', bookmark.publisher!),
-      if (bookmark.canonicalUrl != null)
-        _MetaRow(
-            l10n?.detailMetaCanonical ?? 'Canonical', bookmark.canonicalUrl!),
-      _MetaRow(
-          l10n?.detailMetaSaved ?? 'Saved', _formatDate(bookmark.createdAt)),
-      if (bookmark.publishDate != null)
-        _MetaRow(l10n?.detailMetaPublished ?? 'Published',
-            _formatDate(bookmark.publishDate)),
-      if (bookmark.lastOpenedAt != null)
-        _MetaRow(l10n?.detailMetaLastOpened ?? 'Last opened',
-            _formatDate(bookmark.lastOpenedAt)),
-      _MetaRow(
-        l10n?.detailMetaOpened ?? 'Opened',
-        l10n?.detailOpenedTimes(bookmark.openCount) ??
-            '${bookmark.openCount} times',
-      ),
-      _MetaRow(l10n?.detailMetaSource ?? 'Source', bookmark.sourceType.name),
-      _MetaRow(l10n?.detailMetaType ?? 'Type', bookmark.contentType.name),
-      _MetaRow(
-        l10n?.detailMetaScraping ?? 'Scraping',
-        bookmark.scrapingStatus.name,
-      ),
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(ReadingRoomSpacing.md),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => BookmarkInfoSheet.show(context, bookmark),
         borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-        border: Border.all(color: theme.colorScheme.outline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            l10n?.detailMetadataTitle ?? 'Metadata',
-            style: theme.textTheme.titleSmall,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: ReadingRoomSpacing.md,
+            vertical: ReadingRoomSpacing.md,
           ),
-          const SizedBox(height: ReadingRoomSpacing.sm),
-          ...rows.map((_MetaRow r) => Padding(
-                padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.xs),
-                child: Row(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+            border: Border.all(color: theme.colorScheme.outline),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.info_outline_rounded,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: ReadingRoomSpacing.md),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    SizedBox(
-                      width: 90,
-                      child: Text(r.label, style: metaStyle),
+                    Text(
+                      l10n?.detailMetadataTitle ?? 'Metadata & Info',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    Expanded(
-                      child: Text(
-                        r.value,
-                        style: valueStyle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 2),
+                    Text(
+                      '${bookmark.contentType.name.toUpperCase()} • ${bookmark.sourceType.name} • ${bookmark.openCount} views',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
-              )),
-        ],
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
-
-  static String _formatDate(DateTime? dt) {
-    if (dt == null) return '–';
-    return '${dt.year}-${_pad(dt.month)}-${_pad(dt.day)} '
-        '${_pad(dt.hour)}:${_pad(dt.minute)}';
-  }
-
-  static String _pad(int n) => n.toString().padLeft(2, '0');
-}
-
-class _MetaRow {
-  const _MetaRow(this.label, this.value);
-  final String label;
-  final String value;
 }
 
 // ─── Reminders section ──────────────────────────────────────────
