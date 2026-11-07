@@ -83,10 +83,16 @@ class SettingsScreen extends ConsumerWidget {
               current: settings.leftSwipeAction,
             ),
           ),
-          const _SectionTitle('Geri Dönüş Hatırlatıcıları'),
+          _SectionTitle(
+            _isTurkish(context) ? 'Geri Dönüş Hatırlatıcıları' : 'Reminders',
+          ),
           ListTile(
             leading: const Icon(Icons.auto_awesome_motion_rounded),
-            title: const Text('Okunmamış Bağlantı Hatırlatıcısı'),
+            title: Text(
+              _isTurkish(context)
+                  ? 'Okunmamış Bağlantı Hatırlatıcısı'
+                  : 'Unread reminders',
+            ),
             subtitle: Text(
               _unreadReminderCadenceLabel(
                 context,
@@ -105,7 +111,9 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.access_time_rounded),
-            title: const Text('Hatırlatıcı Zamanı'),
+            title: Text(
+              _isTurkish(context) ? 'Hatırlatıcı Zamanı' : 'Reminder schedule',
+            ),
             subtitle: Text(
               _unreadReminderScheduleLabel(context, settings),
             ),
@@ -118,10 +126,16 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.auto_fix_high),
-            title: Text(l10n?.settingsAutomationLabel ?? 'Otomasyon'),
+            title: Text(
+              _isTurkish(context)
+                  ? 'Otomasyon'
+                  : (l10n?.settingsAutomationLabel ?? 'Automation rules'),
+            ),
             subtitle: Text(
-              l10n?.settingsAutomationSubtitle ??
-                  'Otomatik etiketleme, arşivleme ve kurallar',
+              _isTurkish(context)
+                  ? 'Otomatik etiketleme, arşivleme ve kurallar'
+                  : (l10n?.settingsAutomationSubtitle ??
+                      'Auto-tag, archive, and more'),
             ),
             onTap: () => context.push(Routes.automationRules),
           ),
@@ -133,8 +147,12 @@ class SettingsScreen extends ConsumerWidget {
             shape: const Border(),
             collapsedShape: const Border(),
             leading: const Icon(Icons.tune_rounded),
-            title: const Text('Gelişmiş'),
-            subtitle: const Text('Yedekleme, analiz ve uygulama bilgileri'),
+            title: Text(_isTurkish(context) ? 'Gelişmiş' : 'Advanced'),
+            subtitle: Text(
+              _isTurkish(context)
+                  ? 'Yedekleme, analiz ve uygulama bilgileri'
+                  : 'Backup, analytics, and app details',
+            ),
             children: <Widget>[
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(
@@ -392,7 +410,11 @@ class SettingsScreen extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (BuildContext ctx) => SimpleDialog(
-        title: const Text('Okunmamış Bağlantı Hatırlatıcısı'),
+        title: Text(
+          _isTurkish(context)
+              ? 'Okunmamış Bağlantı Hatırlatıcısı'
+              : 'Unread reminders',
+        ),
         children: <Widget>[
           RadioGroup<UnreadReminderCadence>(
             groupValue: settings.unreadReminderCadence,
