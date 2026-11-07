@@ -27,7 +27,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsTitle => 'Ayarlar';
 
   @override
-  String get dashboardTitle => 'Panel';
+  String get dashboardTitle => 'İstatistikler';
 
   @override
   String get notesTitle => 'Notlar';
@@ -307,13 +307,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsAnimationsLabel => 'Animasyonlar';
 
   @override
-  String get settingsDashboardLabel => 'Panel';
+  String get settingsDashboardLabel => 'İstatistikler';
 
   @override
   String get settingsBackupLabel => 'Yedekleme';
 
   @override
-  String get settingsAutomationLabel => 'Otomasyon kuralları';
+  String get settingsAutomationLabel => 'Otomasyon';
 
   @override
   String get navigationHome => 'Ana sayfa';
