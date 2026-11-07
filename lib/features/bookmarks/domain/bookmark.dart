@@ -149,6 +149,7 @@ class Bookmark {
     BookmarkContentType? contentType,
     BookmarkSourceType? sourceType,
     String? heroImageUrl,
+    bool clearHeroImageUrl = false,
     String? heroImageLocalPath,
     String? faviconUrl,
     String? localFaviconPath,
@@ -188,7 +189,8 @@ class Bookmark {
       languageCode: languageCode ?? this.languageCode,
       contentType: contentType ?? this.contentType,
       sourceType: sourceType ?? this.sourceType,
-      heroImageUrl: heroImageUrl ?? this.heroImageUrl,
+      heroImageUrl:
+          clearHeroImageUrl ? null : (heroImageUrl ?? this.heroImageUrl),
       heroImageLocalPath: heroImageLocalPath ?? this.heroImageLocalPath,
       faviconUrl: faviconUrl ?? this.faviconUrl,
       localFaviconPath: localFaviconPath ?? this.localFaviconPath,

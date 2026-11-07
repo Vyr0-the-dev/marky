@@ -76,3 +76,6 @@ coverage/
 tmp/
 *.zip
 maestro.zip
+.maestro/
+marketing/
+scripts/

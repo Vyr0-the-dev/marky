@@ -230,6 +230,8 @@ class DetailActionController extends StateNotifier<DetailActionState> {
     Bookmark bookmark, {
     required String title,
     required String description,
+    String? heroImageUrl,
+    bool clearHeroImageUrl = false,
   }) {
     return _runGuarded(
       () async {
@@ -237,6 +239,26 @@ class DetailActionController extends StateNotifier<DetailActionState> {
           bookmark.copyWith(
             title: title,
             description: description,
+            heroImageUrl: heroImageUrl,
+            clearHeroImageUrl: clearHeroImageUrl,
+          ),
+        );
+      },
+      successFeedback: DetailActionFeedback.bookmarkUpdated,
+    );
+  }
+
+  Future<void> updateCoverImage(
+    Bookmark bookmark, {
+    String? heroImageUrl,
+  }) {
+    return _runGuarded(
+      () async {
+        final bool clear = heroImageUrl == null || heroImageUrl.trim().isEmpty;
+        await _bookmarks.save(
+          bookmark.copyWith(
+            heroImageUrl: clear ? null : heroImageUrl.trim(),
+            clearHeroImageUrl: clear,
           ),
         );
       },

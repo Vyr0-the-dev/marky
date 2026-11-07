@@ -7,18 +7,23 @@ class EditBookmarkSheet extends StatefulWidget {
   const EditBookmarkSheet({
     required this.initialTitle,
     required this.initialDescription,
+    this.initialHeroImageUrl,
     super.key,
   });
 
   final String initialTitle;
   final String initialDescription;
+  final String? initialHeroImageUrl;
 
-  static Future<({String title, String description})?> show(
+  static Future<({String title, String description, String? heroImageUrl})?>
+      show(
     BuildContext context, {
     required String initialTitle,
     required String initialDescription,
+    String? initialHeroImageUrl,
   }) {
-    return showModalBottomSheet<({String title, String description})>(
+    return showModalBottomSheet<
+        ({String title, String description, String? heroImageUrl})>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -26,6 +31,7 @@ class EditBookmarkSheet extends StatefulWidget {
       builder: (BuildContext ctx) => EditBookmarkSheet(
         initialTitle: initialTitle,
         initialDescription: initialDescription,
+        initialHeroImageUrl: initialHeroImageUrl,
       ),
     );
   }
@@ -42,18 +48,24 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
       TextEditingController(
     text: widget.initialDescription,
   );
+  late final TextEditingController _imageUrlController = TextEditingController(
+    text: widget.initialHeroImageUrl ?? '',
+  );
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _imageUrlController.dispose();
     super.dispose();
   }
 
   void _onSave() {
+    final String trimmedUrl = _imageUrlController.text.trim();
     Navigator.of(context).pop((
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
+      heroImageUrl: trimmedUrl.isNotEmpty ? trimmedUrl : null,
     ));
   }
 
@@ -209,6 +221,61 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
                       vertical: ReadingRoomSpacing.sm,
                     ),
                   ),
+                ),
+                const SizedBox(height: ReadingRoomSpacing.md),
+
+                // ── Cover Image URL Input ─────────────────────
+                Text(
+                  'Kapak Görseli URL',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: ReadingRoomSpacing.xs),
+                TextField(
+                  controller: _imageUrlController,
+                  textInputAction: TextInputAction.done,
+                  keyboardType: TextInputType.url,
+                  style: theme.textTheme.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'https://example.com/image.jpg (isteğe bağlı)',
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceContainerHigh,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(ReadingRoomRadii.standard),
+                      borderSide: BorderSide(color: outlineColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(ReadingRoomRadii.standard),
+                      borderSide: BorderSide(color: outlineColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(ReadingRoomRadii.standard),
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                    suffixIcon: _imageUrlController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 18),
+                            onPressed: () {
+                              setState(() {
+                                _imageUrlController.clear();
+                              });
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: ReadingRoomSpacing.md,
+                      vertical: ReadingRoomSpacing.sm,
+                    ),
+                  ),
+                  onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: ReadingRoomSpacing.xl),
 

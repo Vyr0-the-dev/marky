@@ -603,11 +603,8 @@ class _HeroAppBar extends ConsumerWidget {
     switch (action) {
       case 'edit':
         await _editTitleAndDescription(context, ref);
-      case 'previewImage':
-        final String? img = bookmark.heroImageUrl ?? bookmark.faviconUrl;
-        if (img != null && img.isNotEmpty) {
-          _openImagePreview(context, img, bookmark);
-        }
+      case 'coverOptions':
+        await _showCoverImageOptions(context, ref);
       case 'refetch':
         await _refetchMetadata(ref);
       case 'toggleRead':
@@ -673,12 +670,13 @@ class _HeroAppBar extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final String initialTitle = bookmark.title?.trim() ?? '';
-    final ({String title, String description})? updated =
+    final ({String title, String description, String? heroImageUrl})? updated =
         await EditBookmarkSheet.show(
       context,
       initialTitle:
           initialTitle.isNotEmpty ? initialTitle : bookmark.displayTitle,
       initialDescription: bookmark.description ?? '',
+      initialHeroImageUrl: bookmark.heroImageUrl,
     );
     if (updated == null) return;
     await ref
@@ -687,7 +685,155 @@ class _HeroAppBar extends ConsumerWidget {
           bookmark,
           title: updated.title,
           description: updated.description,
+          heroImageUrl: updated.heroImageUrl,
+          clearHeroImageUrl: updated.heroImageUrl == null,
         );
+  }
+
+  Future<void> _showCoverImageOptions(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final String? img = bookmark.heroImageUrl ?? bookmark.faviconUrl;
+    final ThemeData theme = Theme.of(context);
+    final Color dividerColor = theme.colorScheme.outline.withValues(alpha: 0.4);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext ctx) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(ReadingRoomRadii.sheet),
+          ),
+          border: Border(
+            top: BorderSide(
+              color: theme.colorScheme.outline.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ReadingRoomSpacing.lg,
+              vertical: ReadingRoomSpacing.md,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin:
+                        const EdgeInsets.only(bottom: ReadingRoomSpacing.md),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.onSurfaceVariant
+                          .withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'Kapak Görseli',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: ReadingRoomSpacing.md),
+                if (img != null && img.isNotEmpty) ...<Widget>[
+                  ListTile(
+                    leading: const Icon(Icons.fullscreen_rounded),
+                    title: const Text('Tam Ekran Görüntüle'),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _openImagePreview(context, img, bookmark);
+                    },
+                  ),
+                  Divider(height: 1, thickness: 1, color: dividerColor),
+                ],
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('Görsel URL Değiştir'),
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    await _promptEditCoverImageUrl(context, ref);
+                  },
+                ),
+                if (bookmark.heroImageUrl != null &&
+                    bookmark.heroImageUrl!.isNotEmpty) ...<Widget>[
+                  Divider(height: 1, thickness: 1, color: dividerColor),
+                  ListTile(
+                    leading: Icon(
+                      Icons.delete_outline_rounded,
+                      color: theme.colorScheme.error,
+                    ),
+                    title: Text(
+                      'Kapak Görselini Kaldır',
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                    onTap: () async {
+                      Navigator.of(ctx).pop();
+                      await ref
+                          .read(detailActionControllerProvider.notifier)
+                          .updateCoverImage(bookmark);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Kapak görseli kaldırıldı.'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _promptEditCoverImageUrl(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final TextEditingController urlCtrl = TextEditingController(
+      text: bookmark.heroImageUrl ?? '',
+    );
+    final String? newUrl = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogCtx) => AlertDialog(
+        title: const Text('Kapak Görseli URL'),
+        content: TextField(
+          controller: urlCtrl,
+          keyboardType: TextInputType.url,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'https://example.com/image.jpg',
+            labelText: 'Görsel Bağlantısı',
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(urlCtrl.text.trim()),
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+    if (newUrl == null) return;
+    await ref.read(detailActionControllerProvider.notifier).updateCoverImage(
+        bookmark,
+        heroImageUrl: newUrl.isEmpty ? null : newUrl);
   }
 
   Future<void> _share() async {
@@ -814,8 +960,8 @@ class _DetailMoreActionsSheet extends StatelessWidget {
                         Divider(height: 1, thickness: 1, color: dividerColor),
                         _ActionSheetTile(
                           icon: Icons.image_outlined,
-                          label: 'Kapak Görselini Görüntüle',
-                          onTap: () => _select(context, 'previewImage'),
+                          label: 'Kapak Görseli',
+                          onTap: () => _select(context, 'coverOptions'),
                         ),
                       ],
                       Divider(height: 1, thickness: 1, color: dividerColor),
