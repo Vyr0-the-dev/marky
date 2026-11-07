@@ -82,10 +82,11 @@ void main() {
       );
 
       await tester.pump();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('Could not save'), findsOneWidget);
 
-      await tester.pump(const Duration(milliseconds: 251));
+      await tester.pump(const Duration(milliseconds: 260));
+      await tester.pumpAndSettle();
 
       expect(finishCalls, 1);
     },
@@ -291,10 +292,67 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 800));
 
-      // Should not have triggered a second capture call
+      // Should not have triggered a second capture call within debounce window
       expect(captureCalls, 1);
       expect(find.text('Already saved'), findsOneWidget);
       expect(find.byKey(const ValueKey('error')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'resets state on finish and triggers capture on subsequent share for same payload',
+    (WidgetTester tester) async {
+      final DateTime now = DateTime.now();
+      final Bookmark bookmark = Bookmark(
+        id: 3,
+        originalUrl: 'https://example.com/subsequent',
+        normalizedHost: 'example.com',
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      var captureCalls = 0;
+      var finishCalls = 0;
+      await tester.pumpWidget(
+        ShareOverlayApp(
+          initialPayload: 'https://example.com/subsequent',
+          autoCloseAfter: const Duration(milliseconds: 100),
+          localeChoice: AppLocaleChoice.en,
+          capturePayload: (_) async {
+            captureCalls++;
+            return CaptureResult.saved(bookmark);
+          },
+          finishOverlay: () async {
+            finishCalls++;
+          },
+          openMainApp: () async {},
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(captureCalls, 1);
+      expect(find.text('Saved'), findsOneWidget);
+
+      // Wait for auto-close and finish
+      await tester.pump(const Duration(milliseconds: 110));
+      await tester.pumpAndSettle();
+      expect(finishCalls, 1);
+
+      // Now send the identical payload again (as a subsequent share action)
+      await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+        'marky/share_overlay',
+        const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('newPayload', 'https://example.com/subsequent'),
+        ),
+        (_) {},
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // Should have triggered a second capture call!
+      expect(captureCalls, 2);
     },
   );
 }

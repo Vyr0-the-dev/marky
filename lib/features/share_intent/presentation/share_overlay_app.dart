@@ -35,6 +35,13 @@ Future<void> runShareOverlayApp() async {
     ]).catchError((Object _) {}),
   );
 
+  // Pre-warm the database connection and ProviderContainer ahead of time
+  unawaited(_getOrCreateShareContainer().catchError((Object error) {
+    debugPrint('[ShareOverlay] Warmup container failed: $error');
+    _shareContainerFuture = null;
+    return ProviderContainer();
+  }));
+
   String? payload;
   AppLocaleChoice localeChoice = AppLocaleChoice.system;
   try {
@@ -148,6 +155,8 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
   bool _openAppRequested = false;
   bool _flutterReadyNotified = false;
 
+  DateTime _lastCaptureTime = DateTime.fromMillisecondsSinceEpoch(0);
+
   @override
   void initState() {
     super.initState();
@@ -155,6 +164,7 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
     final String? payload = widget.initialPayload?.trim();
     if (payload != null && payload.isNotEmpty) {
       _activePayload = payload;
+      _lastCaptureTime = DateTime.now();
       unawaited(_executeCapture(payload));
     } else {
       _captureTimeoutTimer = Timer(const Duration(seconds: 4), () {
@@ -184,13 +194,17 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
     final String? trimmed = payload?.trim();
     if (trimmed == null || trimmed.isEmpty) return;
 
-    // Prevent duplicate concurrent execution for the identical payload
-    if (_activePayload == trimmed && (_isCapturing || _resolvedResult != null)) {
+    final int elapsedSinceLastCapture =
+        DateTime.now().difference(_lastCaptureTime).inMilliseconds;
+    // Debounce duplicate calls for the same payload within 400ms (startup burst)
+    if (_activePayload == trimmed &&
+        (_isCapturing || elapsedSinceLastCapture < 400)) {
       return;
     }
 
     _captureTimeoutTimer?.cancel();
     _activePayload = trimmed;
+    _lastCaptureTime = DateTime.now();
 
     setState(() {
       _resolvedResult = null;
@@ -213,12 +227,14 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
       if (!mounted) return;
       setState(() {
         _resolvedResult = result;
+        _closing = false;
       });
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
         _resolvedResult =
             CaptureResult.error('share_overlay_capture_failed: $error');
+        _closing = false;
       });
     } finally {
       _isCapturing = false;
@@ -259,6 +275,15 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
       await (widget.finishOverlay ?? ShareOverlayBridge.finish)();
     } on Object {
       debugPrint('[ShareOverlay] Finish failed');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _activePayload = null;
+          _resolvedResult = null;
+          _closing = false;
+          _openAppRequested = false;
+        });
+      }
     }
   }
 
@@ -268,6 +293,15 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
     } on Object {
       debugPrint('[ShareOverlay] Open main app failed');
       await _finishOverlay();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _activePayload = null;
+          _resolvedResult = null;
+          _closing = false;
+          _openAppRequested = false;
+        });
+      }
     }
   }
 
@@ -336,7 +370,36 @@ class _NoOpNotificationService implements NotificationService {
   Future<bool> canScheduleExactNotifications() async => true;
 }
 
-ProviderContainer? _cachedShareContainer;
+Future<ProviderContainer>? _shareContainerFuture;
+
+Future<ProviderContainer> _getOrCreateShareContainer() {
+  final Future<ProviderContainer>? existing = _shareContainerFuture;
+  if (existing != null) return existing;
+
+  final Future<ProviderContainer> future = () async {
+    final databaseBootstrap = await markyDatabaseBootstrap();
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final SharedPreferencesAppSettingsRepository settingsRepository =
+        SharedPreferencesAppSettingsRepository(prefs);
+    await settingsRepository.load();
+    return ProviderContainer(
+      overrides: <Override>[
+        ...databaseBootstrap.overrides,
+        ...appSettingsBootstrapOverrides(settingsRepository),
+        unreadReminderSchedulerProvider.overrideWith(
+          (Ref ref) => UnreadReminderScheduler(
+            bookmarkRepository: ref.watch(bookmarkRepositoryProvider),
+            notificationService: const _NoOpNotificationService(),
+            payload: Routes.homeUnread,
+          ),
+        ),
+      ],
+    );
+  }();
+
+  _shareContainerFuture = future;
+  return future;
+}
 
 Future<CaptureResult> _captureSharedPayload(String? payload) async {
   final String? text = payload?.trim();
@@ -345,33 +408,12 @@ Future<CaptureResult> _captureSharedPayload(String? payload) async {
   }
 
   try {
-    ProviderContainer? container = _cachedShareContainer;
-    if (container == null) {
-      final databaseBootstrap = await markyDatabaseBootstrap();
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final SharedPreferencesAppSettingsRepository settingsRepository =
-          SharedPreferencesAppSettingsRepository(prefs);
-      await settingsRepository.load();
-      container = ProviderContainer(
-        overrides: <Override>[
-          ...databaseBootstrap.overrides,
-          ...appSettingsBootstrapOverrides(settingsRepository),
-          unreadReminderSchedulerProvider.overrideWith(
-            (Ref ref) => UnreadReminderScheduler(
-              bookmarkRepository: ref.watch(bookmarkRepositoryProvider),
-              notificationService: const _NoOpNotificationService(),
-              payload: Routes.homeUnread,
-            ),
-          ),
-        ],
-      );
-      _cachedShareContainer = container;
-    }
+    final ProviderContainer container = await _getOrCreateShareContainer();
     return await container
         .read(shareCaptureCoordinatorProvider)
         .captureSharedText(text);
   } on Object catch (error) {
-    _cachedShareContainer = null;
+    _shareContainerFuture = null;
     debugPrint('[ShareOverlay] Capture failed: $error');
     return CaptureResult.error('share_overlay_capture_failed: $error');
   }
