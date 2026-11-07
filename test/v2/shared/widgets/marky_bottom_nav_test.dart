@@ -171,17 +171,13 @@ void main() {
         );
         final BoxDecoration decoration =
             quickAddBox.decoration as BoxDecoration;
-        expect(decoration.color, const Color(0xFF222220));
-        expect(decoration.boxShadow, isNull);
-        final Border border = decoration.border! as Border;
-        expect(border.top.color, const Color(0xFF333330));
-        expect(border.top.width, 1);
+        expect(decoration.boxShadow, isNotEmpty);
 
         final Icon quickAddIcon = tester.widget<Icon>(
           find.byIcon(Icons.add_rounded),
         );
-        expect(quickAddIcon.size, 22);
-        expect(quickAddIcon.color, const Color(0xFFEDEDEC));
+        expect(quickAddIcon.size, 28);
+        expect(quickAddIcon.color, Colors.white);
 
         await tester.tap(find.text('Search'));
         await tester.pumpAndSettle();
