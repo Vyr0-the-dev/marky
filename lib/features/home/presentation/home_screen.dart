@@ -20,7 +20,6 @@ import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/home/presentation/feed_state.dart';
 import 'package:marky/features/home/presentation/widgets/batch_action_bar.dart';
 import 'package:marky/features/home/presentation/widgets/bookmark_card.dart';
-import 'package:marky/features/home/presentation/widgets/daily_queue_card.dart';
 import 'package:marky/features/home/presentation/widgets/editorial_grid_card.dart';
 import 'package:marky/features/home/presentation/widgets/feed_filter_bar.dart';
 import 'package:marky/features/home/presentation/widgets/feed_skeleton.dart';
@@ -100,11 +99,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _NarrowingChip(query: query),
 
           const _UnreadReminderNudge(),
-
-          if (feedState.viewMode == FeedViewMode.list &&
-              (query.filter == BookmarkFeedFilter.all ||
-                  query.filter == BookmarkFeedFilter.unread))
-            const DailyQueueCard(),
 
           // ── Feed body ──────────────────────────────────────
           Expanded(
