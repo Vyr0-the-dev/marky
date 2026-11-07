@@ -29,8 +29,9 @@
 
 ## 📚 Documentation / Dokümantasyon
 
-Comprehensive documentation is organized under the [`docs/`](docs/) directory:
+Comprehensive documentation is organized under the [`docs/`](docs/) directory and project root:
 
+- 🎨 **[Interface & System Design Specification](DESIGN.md):** Complete UI/UX design system (Reading Room tokens, palettes, typography, components) and end-to-end system design (Isar database schema, capture pipeline, scrapers, automation, and native Android integration).
 - 🏛️ **[System Architecture Guide](docs/ARCHITECTURE.md):** Clean Architecture layers, Isar schema v1, URL intelligence pipeline, source scraper registry, automation engine, and native Android integration.
 - 🧪 **[Testing & Verification Manual](docs/TESTING.md):** 500+ unit/widget test suite, native Android contract guards, PowerShell release gates, and Maestro human-like UI automation.
 - 🗺️ **[Roadmap & Release Tracker](docs/ROADMAP.md):** Completed hardening milestones (Phases A through G1, J4) and pending Google Play release gates.
