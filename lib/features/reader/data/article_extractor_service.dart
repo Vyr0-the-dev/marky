@@ -574,7 +574,7 @@ class ArticleExtractorService {
         cachedAt: DateTime.now(),
       );
     } catch (_) {
-      return await _extractRedditFromHtml(targetUrl, bookmark);
+      return _extractRedditFromHtml(targetUrl, bookmark);
     }
   }
 
@@ -805,7 +805,7 @@ class ArticleExtractorService {
         cachedAt: DateTime.now(),
       );
     } catch (_) {
-      return await _extractTwitterFromOEmbed(targetUrl, bookmark);
+      return _extractTwitterFromOEmbed(targetUrl, bookmark);
     }
   }
 
