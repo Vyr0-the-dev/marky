@@ -186,12 +186,38 @@ class UnreadReminderScheduler {
   tz.TZDateTime _toTzDateTime(DateTime dateTime, String timezoneName) {
     final tz.Location? preferredLocation = _tryGetLocation(timezoneName);
     if (preferredLocation != null) {
-      return tz.TZDateTime.from(dateTime, preferredLocation);
+      if (dateTime is tz.TZDateTime) {
+        return tz.TZDateTime.from(dateTime, preferredLocation);
+      }
+      return tz.TZDateTime(
+        preferredLocation,
+        dateTime.year,
+        dateTime.month,
+        dateTime.day,
+        dateTime.hour,
+        dateTime.minute,
+        dateTime.second,
+        dateTime.millisecond,
+        dateTime.microsecond,
+      );
     }
 
     final tz.Location? utcLocation = _tryGetLocation('UTC');
     if (utcLocation != null) {
-      return tz.TZDateTime.from(dateTime, utcLocation);
+      if (dateTime is tz.TZDateTime) {
+        return tz.TZDateTime.from(dateTime, utcLocation);
+      }
+      return tz.TZDateTime(
+        utcLocation,
+        dateTime.year,
+        dateTime.month,
+        dateTime.day,
+        dateTime.hour,
+        dateTime.minute,
+        dateTime.second,
+        dateTime.millisecond,
+        dateTime.microsecond,
+      );
     }
 
     return tz.TZDateTime.utc(
