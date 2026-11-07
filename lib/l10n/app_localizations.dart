@@ -482,6 +482,30 @@ abstract class AppLocalizations {
   /// **'Bookmark deleted'**
   String get snackbarBookmarkDeleted;
 
+  /// No description provided for @snackbarBookmarkArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark archived'**
+  String get snackbarBookmarkArchived;
+
+  /// No description provided for @snackbarBookmarkUnarchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark unarchived'**
+  String get snackbarBookmarkUnarchived;
+
+  /// No description provided for @snackbarMarkedAsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as read'**
+  String get snackbarMarkedAsRead;
+
+  /// No description provided for @snackbarMarkedAsUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as unread'**
+  String get snackbarMarkedAsUnread;
+
   /// No description provided for @snackbarCopiedToClipboard.
   ///
   /// In en, this message translates to:

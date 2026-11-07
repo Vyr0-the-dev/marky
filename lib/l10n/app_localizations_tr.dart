@@ -207,6 +207,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get snackbarBookmarkDeleted => 'Yer imi silindi';
 
   @override
+  String get snackbarBookmarkArchived => 'Yer imi arşivlendi';
+
+  @override
+  String get snackbarBookmarkUnarchived => 'Yer imi arşivden çıkarıldı';
+
+  @override
+  String get snackbarMarkedAsRead => 'Okundu olarak işaretlendi';
+
+  @override
+  String get snackbarMarkedAsUnread => 'Okunmadı olarak işaretlendi';
+
+  @override
   String get snackbarCopiedToClipboard => 'Panoya kopyalandı';
 
   @override

@@ -205,6 +205,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get snackbarBookmarkDeleted => 'Bookmark deleted';
 
   @override
+  String get snackbarBookmarkArchived => 'Bookmark archived';
+
+  @override
+  String get snackbarBookmarkUnarchived => 'Bookmark unarchived';
+
+  @override
+  String get snackbarMarkedAsRead => 'Marked as read';
+
+  @override
+  String get snackbarMarkedAsUnread => 'Marked as unread';
+
+  @override
   String get snackbarCopiedToClipboard => 'Copied to clipboard';
 
   @override
