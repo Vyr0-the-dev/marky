@@ -76,7 +76,7 @@ class _DashboardBody extends StatelessWidget {
         if (stats.topHosts.isNotEmpty) ...<Widget>[
           const SizedBox(height: ReadingRoomSpacing.lg),
           _SectionCard(
-            title: 'Top Sources',
+            title: 'En Çok Okunan Kaynaklar',
             icon: Icons.public_rounded,
             accentColor: colors.primary,
             children: <Widget>[
@@ -96,7 +96,7 @@ class _DashboardBody extends StatelessWidget {
         if (stats.sourceBreakdown.isNotEmpty) ...<Widget>[
           const SizedBox(height: ReadingRoomSpacing.lg),
           _SectionCard(
-            title: 'Source Breakdown',
+            title: 'Kaynak Dağılımı',
             icon: Icons.layers_outlined,
             accentColor: colors.secondary,
             children: <Widget>[
@@ -119,7 +119,7 @@ class _DashboardBody extends StatelessWidget {
         if (stats.topTags.isNotEmpty) ...<Widget>[
           const SizedBox(height: ReadingRoomSpacing.lg),
           _SectionCard(
-            title: 'Top Tags',
+            title: 'Popüler Etiketler',
             icon: Icons.sell_outlined,
             accentColor: colors.tertiary,
             children: <Widget>[
@@ -198,7 +198,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        'LIBRARY OVERVIEW',
+                        'KÜTÜPHANE GENEL BAKIŞI',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.w800,
@@ -220,7 +220,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                           ),
                           const SizedBox(width: ReadingRoomSpacing.sm),
                           Text(
-                            'saved links',
+                            'kayıtlı bağlantı',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: colors.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
@@ -253,7 +253,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                       ),
                       const SizedBox(width: ReadingRoomSpacing.xs),
                       Text(
-                        '$percentageText Read',
+                        '%$percentageText Okundu',
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.w800,
@@ -280,7 +280,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                 Expanded(
                   child: _HeroMiniStat(
                     icon: Icons.check_circle_outline_rounded,
-                    label: 'Read',
+                    label: 'Okundu',
                     value: readCount.toString(),
                     color: colors.primary,
                   ),
@@ -289,7 +289,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                 Expanded(
                   child: _HeroMiniStat(
                     icon: Icons.schedule_rounded,
-                    label: 'Unread',
+                    label: 'Okunmadı',
                     value: stats.unreadCount.toString(),
                     color: colors.error,
                   ),
@@ -298,7 +298,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                 Expanded(
                   child: _HeroMiniStat(
                     icon: Icons.favorite_border_rounded,
-                    label: 'Favorites',
+                    label: 'Favoriler',
                     value: stats.favoritesCount.toString(),
                     color: colors.tertiary,
                   ),
@@ -307,7 +307,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                 Expanded(
                   child: _HeroMiniStat(
                     icon: Icons.archive_outlined,
-                    label: 'Archived',
+                    label: 'Arşivlenenler',
                     value: stats.archivedCount.toString(),
                     color: colors.secondary,
                   ),
@@ -396,37 +396,37 @@ class _SummaryCards extends StatelessWidget {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final List<_StatCard> cards = <_StatCard>[
       _StatCard(
-        label: 'Total',
+        label: 'Toplam',
         value: stats.totalBookmarks.toString(),
         icon: Icons.bookmark_outline_rounded,
         color: colors.primary,
       ),
       _StatCard(
-        label: 'Unread',
+        label: 'Okunmamış',
         value: stats.unreadCount.toString(),
         icon: Icons.visibility_off_outlined,
         color: colors.error,
       ),
       _StatCard(
-        label: 'This week',
+        label: 'Bu Hafta',
         value: stats.addedThisWeek.toString(),
         icon: Icons.calendar_today_rounded,
         color: colors.tertiary,
       ),
       _StatCard(
-        label: 'Read %',
-        value: '${(stats.readRatio * 100).toStringAsFixed(0)}%',
+        label: 'Okunma Oranı',
+        value: '%${(stats.readRatio * 100).toStringAsFixed(0)}',
         icon: Icons.pie_chart_outline_rounded,
         color: colors.primary,
       ),
       _StatCard(
-        label: 'Favorites',
+        label: 'Favoriler',
         value: stats.favoritesCount.toString(),
         icon: Icons.favorite_outline_rounded,
         color: colors.tertiary,
       ),
       _StatCard(
-        label: 'Top source',
+        label: 'En Çok Kaynak',
         value: topSource,
         icon: Icons.public_rounded,
         color: colors.secondary,
@@ -579,7 +579,7 @@ class _TimelinePanel extends StatelessWidget {
                 const SizedBox(width: ReadingRoomSpacing.sm),
                 Expanded(
                   child: Text(
-                    '7-day Timeline',
+                    'Son 7 Günlük Hareket',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -595,7 +595,7 @@ class _TimelinePanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '$totalWeek saved',
+                    '$totalWeek kayıt',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: colors.onSurfaceVariant,
                       fontWeight: FontWeight.w700,

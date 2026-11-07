@@ -54,11 +54,11 @@ class SourceTypeCount {
   final int count;
 
   String get label => switch (sourceType) {
-        BookmarkSourceType.manual => 'Manual',
-        BookmarkSourceType.share => 'Share',
-        BookmarkSourceType.clipboard => 'Clipboard',
-        BookmarkSourceType.import => 'Import',
-        BookmarkSourceType.automation => 'Automation',
+        BookmarkSourceType.manual => 'Manuel',
+        BookmarkSourceType.share => 'Paylaşım',
+        BookmarkSourceType.clipboard => 'Pano',
+        BookmarkSourceType.import => 'İçe Aktarma',
+        BookmarkSourceType.automation => 'Otomasyon',
       };
 }
 
@@ -68,5 +68,5 @@ class TimelineBucket {
   final DateTime day;
   final int count;
 
-  String get shortLabel => '${day.month}/${day.day}';
+  String get shortLabel => '${day.day}.${day.month}';
 }

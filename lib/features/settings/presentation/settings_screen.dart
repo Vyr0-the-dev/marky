@@ -76,10 +76,10 @@ class SettingsScreen extends ConsumerWidget {
               current: settings.leftSwipeAction,
             ),
           ),
-          const _SectionTitle('Re-engagement'),
+          const _SectionTitle('Geri Dönüş Hatırlatıcıları'),
           ListTile(
             leading: const Icon(Icons.auto_awesome_motion_rounded),
-            title: const Text('Unread reminders'),
+            title: const Text('Okunmamış Bağlantı Hatırlatıcısı'),
             subtitle: Text(
               _unreadReminderCadenceLabel(
                 context,
@@ -98,7 +98,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.access_time_rounded),
-            title: const Text('Reminder schedule'),
+            title: const Text('Hatırlatıcı Zamanı'),
             subtitle: Text(
               _unreadReminderScheduleLabel(context, settings),
             ),
@@ -111,9 +111,9 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.auto_fix_high),
-            title: Text(l10n?.settingsAutomationLabel ?? 'Automation Rules'),
+            title: Text(l10n?.settingsAutomationLabel ?? 'Otomasyon'),
             subtitle: Text(
-              l10n?.settingsAutomationSubtitle ?? 'Auto-tag, archive, and more',
+              l10n?.settingsAutomationSubtitle ?? 'Otomatik etiketleme, arşivleme ve kurallar',
             ),
             onTap: () => context.push(Routes.automationRules),
           ),
@@ -125,8 +125,8 @@ class SettingsScreen extends ConsumerWidget {
             shape: const Border(),
             collapsedShape: const Border(),
             leading: const Icon(Icons.tune_rounded),
-            title: const Text('Advanced'),
-            subtitle: const Text('Backups, insights, app info'),
+            title: const Text('Gelişmiş'),
+            subtitle: const Text('Yedekleme, analiz ve uygulama bilgileri'),
             children: <Widget>[
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(
@@ -360,7 +360,7 @@ class SettingsScreen extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (BuildContext ctx) => SimpleDialog(
-        title: const Text('Unread reminders'),
+        title: const Text('Okunmamış Bağlantı Hatırlatıcısı'),
         children: <Widget>[
           RadioGroup<UnreadReminderCadence>(
             groupValue: settings.unreadReminderCadence,
@@ -465,13 +465,13 @@ class SettingsScreen extends ConsumerWidget {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Notification permission is required')),
+          const SnackBar(content: Text('Bildirim izni verilmedi')),
         );
     } on ReminderExactAlarmUnavailableException {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Exact alarms are not available')),
+          const SnackBar(content: Text('Kesin alarm izni mevcut değil')),
         );
     }
   }
@@ -517,8 +517,8 @@ class SettingsScreen extends ConsumerWidget {
         ..showSnackBar(
           SnackBar(
             content: Text(
-              'Unread reminder time set to '
-              '${_formatTime(context, hour: picked.hour, minute: picked.minute)}',
+              'Hatırlatıcı zamanı '
+              '${_formatTime(context, hour: picked.hour, minute: picked.minute)} olarak ayarlandı',
             ),
           ),
         );
@@ -554,13 +554,13 @@ class SettingsScreen extends ConsumerWidget {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Notification permission is required')),
+          const SnackBar(content: Text('Bildirim izni verilmedi')),
         );
     } on ReminderExactAlarmUnavailableException {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Exact alarms are not available')),
+          const SnackBar(content: Text('Kesin alarm izni mevcut değil')),
         );
     }
   }
@@ -576,11 +576,11 @@ class SettingsScreen extends ConsumerWidget {
         _formatTime(context, hour: hour, minute: minute);
     switch (cadence) {
       case UnreadReminderCadence.off:
-        return 'Off';
+        return 'Kapalı';
       case UnreadReminderCadence.dailyEvening:
-        return 'Daily at $formattedTime';
+        return 'Her gün saat $formattedTime';
       case UnreadReminderCadence.weekly:
-        return 'Weekly on ${_weekdayLabel(weekday)} at $formattedTime';
+        return 'Her hafta ${_weekdayLabel(weekday)} saat $formattedTime';
     }
   }
 
@@ -596,17 +596,17 @@ class SettingsScreen extends ConsumerWidget {
         _formatTime(context, hour: hour, minute: minute);
     switch (cadence) {
       case UnreadReminderCadence.off:
-        return 'Unread reminders turned off';
+        return 'Okunmamış hatırlatıcıları kapatıldı';
       case UnreadReminderCadence.dailyEvening:
         if (unreadCount == 0) {
-          return 'Unread reminders will start when you save unread links';
+          return 'Okunmamış bağlantılar eklendiğinde hatırlatıcılar başlayacak';
         }
-        return 'Unread reminders set for $formattedTime every day';
+        return 'Her gün saat $formattedTime için ayarlandı';
       case UnreadReminderCadence.weekly:
         if (unreadCount == 0) {
-          return 'Unread reminders will start when you save unread links';
+          return 'Okunmamış bağlantılar eklendiğinde hatırlatıcılar başlayacak';
         }
-        return 'Unread reminders set for ${_weekdayLabel(weekday)}s at $formattedTime';
+        return 'Her ${_weekdayLabel(weekday)} saat $formattedTime için ayarlandı';
     }
   }
 
@@ -620,7 +620,7 @@ class SettingsScreen extends ConsumerWidget {
       minute: settings.unreadReminderMinute,
     );
     if (settings.unreadReminderCadence == UnreadReminderCadence.weekly) {
-      return '${_weekdayLabel(settings.unreadReminderWeekday)} at $formattedTime';
+      return '${_weekdayLabel(settings.unreadReminderWeekday)} saat $formattedTime';
     }
     return formattedTime;
   }
@@ -632,7 +632,7 @@ class SettingsScreen extends ConsumerWidget {
     return showDialog<int>(
       context: context,
       builder: (BuildContext ctx) => SimpleDialog(
-        title: const Text('Reminder day'),
+        title: const Text('Hatırlatıcı Günü'),
         children: <Widget>[
           RadioGroup<int>(
             groupValue: initialWeekday,
@@ -665,21 +665,21 @@ class SettingsScreen extends ConsumerWidget {
   static String _weekdayLabel(int weekday) {
     switch (weekday) {
       case DateTime.monday:
-        return 'Monday';
+        return 'Pazartesi';
       case DateTime.tuesday:
-        return 'Tuesday';
+        return 'Salı';
       case DateTime.wednesday:
-        return 'Wednesday';
+        return 'Çarşamba';
       case DateTime.thursday:
-        return 'Thursday';
+        return 'Perşembe';
       case DateTime.friday:
-        return 'Friday';
+        return 'Cuma';
       case DateTime.saturday:
-        return 'Saturday';
+        return 'Cumartesi';
       case DateTime.sunday:
-        return 'Sunday';
+        return 'Pazar';
       default:
-        return 'Saturday';
+        return 'Cumartesi';
     }
   }
 

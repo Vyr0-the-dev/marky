@@ -61,9 +61,9 @@ class _AutomationRulesScreenState extends ConsumerState<AutomationRulesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          l10n?.settingsAutomationLabel ?? 'Automation Rules',
-          style: const TextStyle(
+        title: const Text(
+          'Otomasyon',
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.4,
@@ -72,17 +72,17 @@ class _AutomationRulesScreenState extends ConsumerState<AutomationRulesScreen> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.help_outline_rounded),
-            tooltip: l10n?.automationGuideTooltip ?? 'Automation guide',
+            tooltip: 'Otomasyon Rehberi',
             onPressed: () => _showGuide(context),
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
-            tooltip: 'Debug logs',
+            tooltip: 'Kayıtlar',
             onPressed: () => _showDebugLogs(context),
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Create rule',
+            tooltip: 'Kural Oluştur',
             onPressed: () => context.push(Routes.automationRuleNew),
           ),
         ],
