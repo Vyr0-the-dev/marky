@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:marky/core/database/enums/bookmark_content_type.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/tags/domain/tag.dart';
@@ -11,33 +12,52 @@ enum SearchStatusOperator {
   archived,
 }
 
+enum SearchHasOperator {
+  notes,
+  image,
+  reminder,
+}
+
 @immutable
 class SearchOperatorQuery {
   const SearchOperatorQuery({
     this.text = '',
     this.tagSlug,
+    this.collectionSlug,
+    this.contentType,
     this.domain,
     this.status,
+    this.has,
     this.createdBefore,
     this.createdAfter,
   });
 
   final String text;
   final String? tagSlug;
+  final String? collectionSlug;
+  final BookmarkContentType? contentType;
   final String? domain;
   final SearchStatusOperator? status;
+  final SearchHasOperator? has;
   final DateTime? createdBefore;
   final DateTime? createdAfter;
 
   bool get hasText => text.trim().isNotEmpty;
   bool get hasOperators =>
       tagSlug != null ||
+      collectionSlug != null ||
+      contentType != null ||
       domain != null ||
       status != null ||
+      has != null ||
       createdBefore != null ||
       createdAfter != null;
 
-  BookmarkFeedQuery toFeedQuery({int? tagId, int limit = 50}) {
+  BookmarkFeedQuery toFeedQuery({
+    int? tagId,
+    int? collectionId,
+    int limit = 50,
+  }) {
     return BookmarkFeedQuery(
       filter: switch (status) {
         SearchStatusOperator.favorite => BookmarkFeedFilter.favorites,
@@ -47,6 +67,8 @@ class SearchOperatorQuery {
         null => BookmarkFeedFilter.all,
       },
       tagId: tagId,
+      collectionId: collectionId,
+      contentType: contentType,
       host: domain,
       createdBefore: createdBefore,
       createdAfter: createdAfter,
@@ -54,14 +76,41 @@ class SearchOperatorQuery {
     );
   }
 
-  bool matches(Bookmark bookmark, {int? tagId}) {
+  bool matches(
+    Bookmark bookmark, {
+    int? tagId,
+    int? collectionId,
+  }) {
     if (tagId != null && !bookmark.tagIds.contains(tagId)) return false;
+    if (collectionId != null &&
+        !bookmark.collectionIds.contains(collectionId)) {
+      return false;
+    }
+    if (contentType != null && bookmark.contentType != contentType) {
+      return false;
+    }
     if (domain != null && bookmark.normalizedHost != domain) return false;
     if (createdBefore != null && bookmark.createdAt.isAfter(createdBefore!)) {
       return false;
     }
     if (createdAfter != null && bookmark.createdAt.isBefore(createdAfter!)) {
       return false;
+    }
+
+    if (has != null) {
+      switch (has!) {
+        case SearchHasOperator.notes:
+          final String? notes = bookmark.inlineNotes;
+          if (notes == null || notes.trim().isEmpty) return false;
+        case SearchHasOperator.image:
+          final bool hasImg = (bookmark.heroImageUrl != null &&
+                  bookmark.heroImageUrl!.isNotEmpty) ||
+              (bookmark.heroImageLocalPath != null &&
+                  bookmark.heroImageLocalPath!.isNotEmpty);
+          if (!hasImg) return false;
+        case SearchHasOperator.reminder:
+          if (bookmark.reminderIds.isEmpty) return false;
+      }
     }
 
     switch (status) {
@@ -84,8 +133,11 @@ class SearchOperatorQuery {
     return other is SearchOperatorQuery &&
         other.text == text &&
         other.tagSlug == tagSlug &&
+        other.collectionSlug == collectionSlug &&
+        other.contentType == contentType &&
         other.domain == domain &&
         other.status == status &&
+        other.has == has &&
         other.createdBefore == createdBefore &&
         other.createdAfter == createdAfter;
   }
@@ -94,8 +146,11 @@ class SearchOperatorQuery {
   int get hashCode => Object.hash(
         text,
         tagSlug,
+        collectionSlug,
+        contentType,
         domain,
         status,
+        has,
         createdBefore,
         createdAfter,
       );
@@ -105,14 +160,17 @@ class SearchOperatorParser {
   const SearchOperatorParser();
 
   static final RegExp _operatorPattern = RegExp(
-    r'''(^|\s)(tag|domain|is|before|after):("[^"]+"|'[^']+'|\S+)''',
+    r'''(^|\s)(tag|collection|domain|type|content|is|has|before|after):("[^"]+"|'[^']+'|\S+)''',
     caseSensitive: false,
   );
 
   SearchOperatorQuery parse(String rawQuery) {
     String? tagSlug;
+    String? collectionSlug;
+    BookmarkContentType? contentType;
     String? domain;
     SearchStatusOperator? status;
+    SearchHasOperator? has;
     DateTime? createdBefore;
     DateTime? createdAfter;
     final StringBuffer freeText = StringBuffer();
@@ -131,16 +189,34 @@ class SearchOperatorParser {
             tagSlug = slug;
             return true;
           }(),
+        'collection' => () {
+            final String slug = Tag.slugify(value);
+            if (slug.isEmpty) return false;
+            collectionSlug = slug;
+            return true;
+          }(),
         'domain' => () {
             final String? normalized = _normalizeDomain(value);
             if (normalized == null) return false;
             domain = normalized;
             return true;
           }(),
+        'type' || 'content' => () {
+            final BookmarkContentType? parsed = _parseContentType(value);
+            if (parsed == null) return false;
+            contentType = parsed;
+            return true;
+          }(),
         'is' => () {
             final SearchStatusOperator? parsed = _parseStatus(value);
             if (parsed == null) return false;
             status = parsed;
+            return true;
+          }(),
+        'has' => () {
+            final SearchHasOperator? parsed = _parseHas(value);
+            if (parsed == null) return false;
+            has = parsed;
             return true;
           }(),
         'before' => () {
@@ -167,11 +243,30 @@ class SearchOperatorParser {
     return SearchOperatorQuery(
       text: _normalizeFreeText(freeText.toString()),
       tagSlug: tagSlug,
+      collectionSlug: collectionSlug,
+      contentType: contentType,
       domain: domain,
       status: status,
+      has: has,
       createdBefore: createdBefore,
       createdAfter: createdAfter,
     );
+  }
+
+  static BookmarkContentType? _parseContentType(String value) {
+    return switch (value.trim().toLowerCase()) {
+      'article' || 'post' || 'reading' => BookmarkContentType.article,
+      'video' || 'movie' || 'clip' => BookmarkContentType.video,
+      'image' || 'photo' || 'picture' => BookmarkContentType.image,
+      'discussion' || 'tweet' || 'twitter' || 'reddit' || 'thread' =>
+        BookmarkContentType.discussion,
+      'audio' || 'podcast' || 'music' => BookmarkContentType.audio,
+      'code' || 'repo' || 'repository' || 'github' => BookmarkContentType.code,
+      'product' || 'item' || 'shop' => BookmarkContentType.product,
+      'document' || 'pdf' || 'doc' => BookmarkContentType.document,
+      'unknown' => BookmarkContentType.unknown,
+      _ => null,
+    };
   }
 
   static SearchStatusOperator? _parseStatus(String value) {
@@ -180,6 +275,15 @@ class SearchOperatorParser {
       'unread' => SearchStatusOperator.unread,
       'read' => SearchStatusOperator.read,
       'archived' || 'archive' => SearchStatusOperator.archived,
+      _ => null,
+    };
+  }
+
+  static SearchHasOperator? _parseHas(String value) {
+    return switch (value.trim().toLowerCase()) {
+      'note' || 'notes' => SearchHasOperator.notes,
+      'image' || 'photo' || 'hero' => SearchHasOperator.image,
+      'reminder' || 'reminders' || 'alarm' => SearchHasOperator.reminder,
       _ => null,
     };
   }

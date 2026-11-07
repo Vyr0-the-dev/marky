@@ -1,8 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:marky/core/database/enums/bookmark_content_type.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
+import 'package:marky/features/collections/domain/bookmark_collection.dart';
+import 'package:marky/features/collections/domain/bookmark_collection_repository.dart';
+import 'package:marky/features/collections/domain/smart_collection_rule.dart';
 import 'package:marky/features/search/domain/bookmark_search_service.dart';
 import 'package:marky/features/tags/domain/tag.dart';
 import 'package:marky/features/tags/domain/tag_repository.dart';
@@ -10,6 +14,7 @@ import 'package:marky/features/tags/domain/tag_repository.dart';
 void main() {
   late _FakeBookmarkRepository bookmarkRepository;
   late _FakeTagRepository tagRepository;
+  late _FakeCollectionRepository collectionRepository;
   late BookmarkSearchService service;
 
   setUp(() {
@@ -18,9 +23,13 @@ void main() {
       _tag(id: 7, name: 'Dart'),
       _tag(id: 8, name: 'Reading List'),
     ]);
+    collectionRepository = _FakeCollectionRepository(<BookmarkCollection>[
+      _collection(id: 10, title: 'Tech Reads', slug: 'tech-reads'),
+    ]);
     service = BookmarkSearchService(
       bookmarkRepository: bookmarkRepository,
       tagRepository: tagRepository,
+      collectionRepository: collectionRepository,
     );
   });
 
@@ -89,6 +98,35 @@ void main() {
     expect(query.createdBefore, DateTime(2026, 4, 25, 23, 59, 59, 999, 999));
   });
 
+  test('filters by collection and content type operators', () async {
+    bookmarkRepository.searchResults = <Bookmark>[
+      _bookmark(
+        id: 1,
+        title: 'Video tech tutorial',
+        collectionIds: <int>[10],
+        contentType: BookmarkContentType.video,
+      ),
+      _bookmark(
+        id: 2,
+        title: 'Article tech read',
+        collectionIds: <int>[10],
+        contentType: BookmarkContentType.article,
+      ),
+      _bookmark(
+        id: 3,
+        title: 'Other video',
+        collectionIds: <int>[99],
+        contentType: BookmarkContentType.video,
+      ),
+    ];
+
+    final List<Bookmark> results = await service.search(
+      'tutorial collection:tech-reads type:video',
+    );
+
+    expect(results.map((Bookmark b) => b.id), <int?>[1]);
+  });
+
   test('unknown tag operator returns no results without repository search',
       () async {
     final List<Bookmark> results = await service.search('tag:missing flutter');
@@ -97,6 +135,21 @@ void main() {
     expect(bookmarkRepository.searchCalls, isEmpty);
     expect(bookmarkRepository.feedCalls, isEmpty);
   });
+}
+
+BookmarkCollection _collection({
+  required int id,
+  required String title,
+  required String slug,
+}) {
+  final DateTime now = DateTime(2026);
+  return BookmarkCollection(
+    id: id,
+    title: title,
+    slug: slug,
+    createdAt: now,
+    updatedAt: now,
+  );
 }
 
 Tag _tag({required int id, required String name}) {
@@ -114,6 +167,8 @@ Bookmark _bookmark({
   required int id,
   String title = 'Bookmark',
   List<int> tagIds = const <int>[],
+  List<int> collectionIds = const <int>[],
+  BookmarkContentType contentType = BookmarkContentType.unknown,
   String host = 'example.com',
   bool favorite = false,
   bool archived = false,
@@ -127,6 +182,8 @@ Bookmark _bookmark({
     title: title,
     normalizedHost: host,
     tagIds: tagIds,
+    collectionIds: collectionIds,
+    contentType: contentType,
     isFavorite: favorite,
     isArchived: archived,
     isRead: read,
@@ -221,4 +278,56 @@ class _FakeTagRepository implements TagRepository {
   Stream<List<Tag>> watchAll() => throw UnimplementedError();
   @override
   Stream<Tag?> watchById(int id) => throw UnimplementedError();
+}
+
+class _FakeCollectionRepository implements BookmarkCollectionRepository {
+  _FakeCollectionRepository(Iterable<BookmarkCollection> collections)
+      : _collectionsBySlug = <String, BookmarkCollection>{
+          for (final BookmarkCollection col in collections) col.slug: col,
+        };
+
+  final Map<String, BookmarkCollection> _collectionsBySlug;
+
+  @override
+  Future<BookmarkCollection?> findBySlug(String slug) async =>
+      _collectionsBySlug[slug];
+
+  @override
+  Future<BookmarkCollection> save(BookmarkCollection collection) =>
+      throw UnimplementedError();
+  @override
+  Future<BookmarkCollection> createFromTitle(String title,
+          {int? accentColorArgb, String? icon}) =>
+      throw UnimplementedError();
+  @override
+  Future<BookmarkCollection> createSmartFromRule(
+          String title, SmartCollectionRule rule,
+          {int? accentColorArgb, String? icon}) =>
+      throw UnimplementedError();
+  @override
+  Future<BookmarkCollection?> getById(int id) => throw UnimplementedError();
+  @override
+  Future<List<BookmarkCollection>> getAll({bool includeArchived = false}) =>
+      throw UnimplementedError();
+  @override
+  Future<List<BookmarkCollection>> getByIds(List<int> ids) =>
+      throw UnimplementedError();
+  @override
+  Future<bool> delete(int id) => throw UnimplementedError();
+  @override
+  Future<void> incrementItemCount(int collectionId) =>
+      throw UnimplementedError();
+  @override
+  Future<void> decrementItemCount(int collectionId) =>
+      throw UnimplementedError();
+  @override
+  Future<int> recomputeItemCount(int collectionId) =>
+      throw UnimplementedError();
+  @override
+  Future<Map<int, int>> recomputeAllItemCounts() => throw UnimplementedError();
+  @override
+  Stream<List<BookmarkCollection>> watchAll({bool includeArchived = false}) =>
+      throw UnimplementedError();
+  @override
+  Stream<BookmarkCollection?> watchById(int id) => throw UnimplementedError();
 }

@@ -92,9 +92,41 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ],
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(44),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _SearchOperatorChipsBar(
+                currentQuery: searchState.query,
+                onToggleOperator: _toggleOperator,
+              ),
+              const Divider(height: 1),
+            ],
+          ),
+        ),
       ),
       body: _buildBody(searchState, recentSearches, savedSearches),
     );
+  }
+
+  void _toggleOperator(String op) {
+    final String current = _controller.text;
+    final RegExp regex =
+        RegExp(r'(^|\s)' + RegExp.escape(op) + r'($|\s)', caseSensitive: false);
+    String updated;
+    if (regex.hasMatch(current)) {
+      updated = current
+          .replaceAll(regex, ' ')
+          .trim()
+          .replaceAll(RegExp(r'\s+'), ' ');
+    } else {
+      final String trimmed = current.trim();
+      updated = trimmed.isEmpty ? op : '$trimmed $op';
+    }
+    _controller.text = updated;
+    _controller.selection = TextSelection.collapsed(offset: updated.length);
+    ref.read(searchNotifierProvider.notifier).updateQuery(updated);
   }
 
   Widget _buildBody(
@@ -395,6 +427,118 @@ class _SearchQuerySection extends StatelessWidget {
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),
+      ),
+    );
+  }
+}
+
+class _OperatorChipData {
+  const _OperatorChipData({
+    required this.operatorToken,
+    required this.label,
+    required this.icon,
+  });
+
+  final String operatorToken;
+  final String label;
+  final IconData icon;
+}
+
+const List<_OperatorChipData> _kDefaultOperatorChips = <_OperatorChipData>[
+  _OperatorChipData(
+    operatorToken: 'is:unread',
+    label: 'Unread',
+    icon: Icons.mark_email_unread_outlined,
+  ),
+  _OperatorChipData(
+    operatorToken: 'is:favorite',
+    label: 'Favorites',
+    icon: Icons.star_outline_rounded,
+  ),
+  _OperatorChipData(
+    operatorToken: 'type:article',
+    label: 'Articles',
+    icon: Icons.article_outlined,
+  ),
+  _OperatorChipData(
+    operatorToken: 'type:video',
+    label: 'Videos',
+    icon: Icons.videocam_outlined,
+  ),
+  _OperatorChipData(
+    operatorToken: 'has:notes',
+    label: 'Has Notes',
+    icon: Icons.note_alt_outlined,
+  ),
+  _OperatorChipData(
+    operatorToken: 'is:archived',
+    label: 'Archived',
+    icon: Icons.archive_outlined,
+  ),
+];
+
+class _SearchOperatorChipsBar extends StatelessWidget {
+  const _SearchOperatorChipsBar({
+    required this.currentQuery,
+    required this.onToggleOperator,
+  });
+
+  final String currentQuery;
+  final ValueChanged<String> onToggleOperator;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final String queryLower = currentQuery.toLowerCase();
+
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: ReadingRoomSpacing.md,
+          vertical: ReadingRoomSpacing.xs,
+        ),
+        itemCount: _kDefaultOperatorChips.length,
+        separatorBuilder: (_, __) =>
+            const SizedBox(width: ReadingRoomSpacing.xs),
+        itemBuilder: (BuildContext context, int index) {
+          final _OperatorChipData chip = _kDefaultOperatorChips[index];
+          final bool isSelected = queryLower.contains(chip.operatorToken);
+
+          return FilterChip(
+            selected: isSelected,
+            showCheckmark: false,
+            avatar: Icon(
+              chip.icon,
+              size: 15,
+              color: isSelected
+                  ? theme.colorScheme.onPrimaryContainer
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            label: Text(chip.label),
+            labelStyle: theme.textTheme.labelMedium?.copyWith(
+              color: isSelected
+                  ? theme.colorScheme.onPrimaryContainer
+                  : theme.colorScheme.onSurface,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
+              side: BorderSide(
+                color: isSelected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                    : theme.colorScheme.outlineVariant,
+              ),
+            ),
+            backgroundColor: Colors.transparent,
+            selectedColor: theme.colorScheme.primaryContainer,
+            onSelected: (_) => onToggleOperator(chip.operatorToken),
+          );
+        },
       ),
     );
   }

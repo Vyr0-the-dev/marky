@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
+import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
 import 'package:marky/features/search/data/search_query_providers.dart';
 import 'package:marky/features/search/domain/bookmark_search_service.dart';
 import 'package:marky/features/search/domain/search_query_repository.dart';
@@ -105,11 +106,13 @@ final StateNotifierProvider<SearchNotifier, SearchState>
     StateNotifierProvider<SearchNotifier, SearchState>((Ref ref) {
   final BookmarkRepository repo = ref.watch(bookmarkRepositoryProvider);
   final TagRepository tagRepo = ref.watch(tagRepositoryProvider);
+  final collectionRepo = ref.watch(bookmarkCollectionRepositoryProvider);
   final searchQueryRepo = ref.watch(searchQueryRepositoryProvider);
   return SearchNotifier(
       BookmarkSearchService(
         bookmarkRepository: repo,
         tagRepository: tagRepo,
+        collectionRepository: collectionRepo,
       ),
       searchQueryRepo);
 });

@@ -22,6 +22,8 @@ import 'package:marky/features/capture/domain/capture_result.dart';
 import 'package:marky/features/capture/domain/capture_service.dart';
 import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
 import 'package:marky/features/collections/domain/bookmark_collection.dart';
+import 'package:marky/features/collections/domain/bookmark_collection_repository.dart';
+import 'package:marky/features/collections/domain/smart_collection_rule.dart';
 import 'package:marky/features/notes/data/note_providers.dart';
 import 'package:marky/features/notes/domain/note.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
@@ -74,6 +76,9 @@ void main() {
         tagsProvider.overrideWith(
           (ref) => Stream<List<Tag>>.value(<Tag>[]),
         ),
+        bookmarkCollectionRepositoryProvider.overrideWithValue(
+          _NoOpBookmarkCollectionRepository(),
+        ),
         bookmarkCollectionsProvider.overrideWith(
           (ref) =>
               Stream<List<BookmarkCollection>>.value(<BookmarkCollection>[]),
@@ -110,6 +115,9 @@ void main() {
         ),
         tagByIdProvider.overrideWith(
           (ref, id) => Stream<Tag?>.value(null),
+        ),
+        bookmarkCollectionRepositoryProvider.overrideWithValue(
+          _NoOpBookmarkCollectionRepository(),
         ),
         bookmarkCollectionsProvider.overrideWith(
           (ref) =>
@@ -1169,4 +1177,49 @@ class _NoOpTagRepository implements TagRepository {
   Stream<List<Tag>> watchAll() => Stream<List<Tag>>.value(<Tag>[]);
   @override
   Stream<Tag?> watchById(int id) => Stream<Tag?>.value(null);
+}
+
+class _NoOpBookmarkCollectionRepository implements BookmarkCollectionRepository {
+  @override
+  Future<BookmarkCollection?> findBySlug(String slug) async => null;
+  @override
+  Future<BookmarkCollection> save(BookmarkCollection collection) async =>
+      collection;
+  @override
+  Future<BookmarkCollection> createFromTitle(String title,
+      {int? accentColorArgb, String? icon}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<BookmarkCollection> createSmartFromRule(
+      String title, SmartCollectionRule rule,
+      {int? accentColorArgb, String? icon}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<BookmarkCollection?> getById(int id) async => null;
+  @override
+  Future<List<BookmarkCollection>> getAll({bool includeArchived = false}) async =>
+      <BookmarkCollection>[];
+  @override
+  Future<List<BookmarkCollection>> getByIds(List<int> ids) async =>
+      <BookmarkCollection>[];
+  @override
+  Future<bool> delete(int id) async => false;
+  @override
+  Future<void> incrementItemCount(int collectionId) async {}
+  @override
+  Future<void> decrementItemCount(int collectionId) async {}
+  @override
+  Future<int> recomputeItemCount(int collectionId) async => 0;
+  @override
+  Future<Map<int, int>> recomputeAllItemCounts() async => <int, int>{};
+  @override
+  Stream<List<BookmarkCollection>> watchAll({bool includeArchived = false}) =>
+      Stream<List<BookmarkCollection>>.value(<BookmarkCollection>[]);
+  @override
+  Stream<BookmarkCollection?> watchById(int id) =>
+      Stream<BookmarkCollection?>.value(null);
 }
