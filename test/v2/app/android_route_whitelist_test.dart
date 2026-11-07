@@ -17,7 +17,6 @@ void main() {
     }
 
     expect(kotlin, isNot(contains('"/settings"')));
-    expect(kotlin, isNot(contains('"/vault"')));
     expect(kotlin, isNot(contains('"/detail/')));
   });
 }

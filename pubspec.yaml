@@ -1,5 +1,5 @@
 name: marky
-description: Marky - Offline-first personal link vault
+description: Marky - Offline-first personal link manager
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -37,7 +37,6 @@ dependencies:
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   json_annotation: ^4.9.0
-  local_auth: ^2.3.0
   logger: ^2.5.0
   lottie: ^3.3.1
   meta: ^1.15.0

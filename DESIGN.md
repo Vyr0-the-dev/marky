@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Design Philosophy
 
-**Marky** is an offline-first personal knowledge vault and link preservation system built natively for Android using Flutter. It is designed around the tenet of **digital sovereignty**: links, tags, annotations, collections, search queries, reminders, and automation rules reside solely on the physical device in an embedded database.
+**Marky** is an offline-first personal reading library and link preservation system built natively for Android using Flutter. It is designed around the tenet of **digital sovereignty**: links, tags, annotations, collections, search queries, reminders, and automation rules reside solely on the physical device in an embedded database.
 
 ### 1.1 Core Principles
 
@@ -130,7 +130,7 @@ graph TD
         DetailView["/detail/:id<br>Bookmark Full Detail"]
         AddScreen["/add<br>Manual Link Input"]
         QrScanner["/add/qr<br>Camera QR Scanner"]
-        Dashboard["/settings/stats<br>Vault Analytics"]
+        Dashboard["/settings/stats<br>Library Analytics"]
         RemindersScreen["/reminders<br>Active Reminders"]
         AutomationList["/settings/automation<br>Rule Directory"]
         AutomationEditor["/settings/automation/:id<br>Rule Editor"]
@@ -183,7 +183,7 @@ The navigation shell uses `StatefulShellRoute.indexedStack`. Each tab retains it
    * Language configuration (English, Turkish, System).
    * Re-engagement and unread reminder schedulers.
    * Automation rules entry.
-   * Advanced tools: JSON vault export/restore, dashboard statistics, reset to factory defaults.
+   * Advanced tools: JSON library export/restore, dashboard statistics, reset to factory defaults.
 
 ### 3.2 Stacked Detail Surface (`/detail/:id`)
 
@@ -399,7 +399,7 @@ sequenceDiagram
 
 ### 7.2 The 4-Tier Duplicate Detection Engine
 
-Duplicate detection checks 4 independent dimensions to avoid vault clutter:
+Duplicate detection checks 4 independent dimensions to avoid library clutter:
 1. **Canonical URL Match:** Exact string match against normalized canonical URL.
 2. **URL Hash Match:** Cryptographic SHA-256 hash match against `urlHash` index.
 3. **Domain + Path Heuristic:** Matches the origin domain and path while disregarding superficial trailing parameters.
@@ -505,7 +505,7 @@ Marky provides reliable reminder scheduling without relying on remote push notif
 * Users can enable periodic nudges for unread bookmarks in settings.
 * **Cadence Options:** `daily` or `weekly`.
 * Configurable weekday, hour, and minute.
-* The scheduler probes the vault: if no unread links exist, the notification is silently skipped to avoid user fatigue.
+* The scheduler probes the library: if no unread links exist, the notification is silently skipped to avoid user fatigue.
 
 ---
 
@@ -559,8 +559,8 @@ To protect the app against malicious intent routing or deep link hijacking, `Mai
 
 Marky enforces open data ownership with zero vendor lock-in.
 
-### 13.1 Standalone JSON Vault Specification (v1)
-The entire vault exports into a structured UTF-8 JSON format:
+### 13.1 Standalone JSON Backup Specification (v1)
+The entire library exports into a structured UTF-8 JSON format:
 
 ```json
 {
@@ -606,9 +606,9 @@ The entire vault exports into a structured UTF-8 JSON format:
 
 ---
 
-## 14. Vault Analytics & Dashboard Engine
+## 14. Library Analytics & Dashboard Engine
 
-Accessible via `/settings/stats`, the `DashboardScreen` visualizes vault health using `fl_chart`:
+Accessible via `/settings/stats`, the `DashboardScreen` visualizes library health using `fl_chart`:
 
 * **Summary Metrics:** Total Bookmarks, Unread Ratio, Favorite Ratio, Archived Count, and Links Added This Week.
 * **Distribution Timelines:** 7-day activity bar chart displaying capture velocity.
@@ -624,7 +624,6 @@ Accessible via `/settings/stats`, the `DashboardScreen` visualizes vault health 
 | :--- | :--- |
 | **Data Storage** | 100% on-device in Isar v1 database. No remote sync, no cloud storage dependency. |
 | **Network Egress** | Zero analytics, crash reporting, or telemetry beacons. Outbound HTTP requests are restricted strictly to user-requested link scraping and favicon downloads. |
-| **Biometric Vault** | Biometric fingerprint/face unlock and system PIN fallback powered by `local_auth`. |
 | **Window Protection** | Android `FLAG_SECURE` capability prevents thumbnail leak in Android's recent app switcher. |
 | **Error Sanitization** | `safe_error_details.dart` redacts local file paths, query strings, and stack traces from production UI. |
 | **Intent Guard** | Explicit route allowlist in `MainActivity.kt` prevents deep-link routing exploits. |
@@ -643,7 +642,7 @@ Accessible via `/settings/stats`, the `DashboardScreen` visualizes vault health 
 | **Network & Scraping** | `dio: ^5.8.0+1`, `html: ^0.15.5` |
 | **Image Caching** | `cached_network_image: ^3.4.1`, custom `ThumbnailService` |
 | **Notifications & Alarms** | `flutter_local_notifications: ^19.0.0`, `timezone: ^0.10.0` |
-| **Hardware & Native** | `mobile_scanner: ^6.0.0` (QR), `local_auth: ^2.3.0` (Biometrics) |
+| **Hardware & Native** | `mobile_scanner: ^6.0.0` (QR) |
 | **UI Charts & Graphs** | `fl_chart: ^0.70.0` |
 | **Typography** | `google_fonts: ^6.2.1` (Source Serif 4, Inter, JetBrains Mono) |
 | **System Sharing** | `share_plus: ^10.1.4`, `receive_sharing_intent: ^1.8.1` |

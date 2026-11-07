@@ -1,5 +1,9 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/timezone.dart' as tz;
+
+final Provider<NotificationService> notificationServiceProvider =
+    Provider<NotificationService>((Ref ref) => NotificationServiceImpl());
 
 abstract interface class NotificationService {
   Future<void> initialize();
@@ -30,18 +34,25 @@ abstract interface class NotificationService {
   Future<NotificationAppLaunchDetails?> getLaunchDetails();
 
   Future<bool> canScheduleExactNotifications();
+
+  void setPayloadHandler(void Function(String payload)? handler);
 }
 
 class NotificationServiceImpl implements NotificationService {
-  NotificationServiceImpl._();
+  NotificationServiceImpl();
 
-  static final NotificationServiceImpl instance = NotificationServiceImpl._();
+  static final NotificationServiceImpl instance = NotificationServiceImpl();
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   Future<void>? _initializing;
   bool _initialized = false;
   void Function(String payload)? payloadHandler;
+
+  @override
+  void setPayloadHandler(void Function(String payload)? handler) {
+    payloadHandler = handler;
+  }
 
   @override
   Future<void> initialize() async {

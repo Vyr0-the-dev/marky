@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:marky/app/theme/reading_room_tokens.dart';
 
@@ -8,7 +9,10 @@ import 'package:marky/app/theme/reading_room_tokens.dart';
 /// Design decisions:
 /// - No floating / elevated nav. A 1px top border separates it from the
 ///   scroll region without using a shadow (Reading Room is flat).
-/// - The center quick-add action uses a floating rounded-square plus button.
+/// - Selection is indicated strictly through color on uniform 22x22px
+///   outlined icons without M3 selection pills or filled/outline jumps.
+/// - The center quick-add action uses a flat editorial surface with a
+///   1px border.
 ///
 /// The widget is stateless w.r.t. navigation; it reads the current
 /// shell index from its owning [StatefulNavigationShell] and delegates
@@ -20,6 +24,12 @@ class MarkyBottomNav extends StatelessWidget {
     this.onQuickAddTap,
     super.key,
   });
+
+  static const Color darkActiveColor = Color(0xFFEDEDEC);
+  static const Color inactiveColor = Color(0xFF6E6E6C);
+  static const Color darkQuickAddSurface = Color(0xFF222220);
+  static const Color darkQuickAddBorder = Color(0xFF333330);
+  static const double iconBoxSize = 22;
 
   /// The shell owning this nav. Swapping branches through
   /// [StatefulNavigationShell.goBranch] is the idiomatic way to keep
@@ -118,6 +128,16 @@ class _QuickAddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color surfaceColor = isDark
+        ? MarkyBottomNav.darkQuickAddSurface
+        : ReadingRoomColors.lightSurfaceRaised;
+    final Color borderColor = isDark
+        ? MarkyBottomNav.darkQuickAddBorder
+        : ReadingRoomColors.lightOutline;
+    final Color iconColor = isDark
+        ? MarkyBottomNav.darkActiveColor
+        : ReadingRoomColors.lightInk;
 
     return Semantics(
       button: true,
@@ -127,43 +147,34 @@ class _QuickAddButton extends StatelessWidget {
         enableFeedback: false,
         splashFactory: NoSplash.splashFactory,
         highlightColor: Colors.transparent,
-        child: Padding(
-          padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Transform.translate(
-                offset: const Offset(0, -12),
-                child: AnimatedSwitcher(
-                  duration:
-                      reduceMotion ? Duration.zero : ReadingRoomMotion.quick,
-                  child: DecoratedBox(
-                    key: const ValueKey<String>('quick_add_button'),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color:
-                              theme.colorScheme.primary.withValues(alpha: 0.28),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: const SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Icon(
-                        Icons.add_rounded,
-                        size: 28,
-                        color: Colors.white,
-                      ),
+        overlayColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+        child: Center(
+          child: AnimatedSwitcher(
+            duration: reduceMotion ? Duration.zero : ReadingRoomMotion.quick,
+            child: DecoratedBox(
+              key: const ValueKey<String>('quick_add_button'),
+              decoration: BoxDecoration(
+                color: surfaceColor,
+                borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+                border: Border.all(
+                  color: borderColor,
+                ),
+              ),
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(
+                  child: SizedBox.square(
+                    dimension: MarkyBottomNav.iconBoxSize,
+                    child: Icon(
+                      item.icon,
+                      size: MarkyBottomNav.iconBoxSize,
+                      color: iconColor,
                     ),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -175,10 +186,10 @@ class _QuickAddButton extends StatelessWidget {
 class MarkyNavItem {
   const MarkyNavItem({
     required this.icon,
-    required this.selectedIcon,
+    IconData? selectedIcon,
     required this.label,
     this.role = MarkyNavItemRole.branch,
-  });
+  }) : selectedIcon = selectedIcon ?? icon;
 
   final IconData icon;
   final IconData selectedIcon;
@@ -215,9 +226,10 @@ class _NavButton extends StatelessWidget {
         reduceMotion: reduceMotion,
       );
     }
-    final Color color = selected
-        ? theme.colorScheme.primary
-        : theme.colorScheme.onSurfaceVariant;
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color activeColor =
+        isDark ? MarkyBottomNav.darkActiveColor : ReadingRoomColors.lightInk;
+    final Color color = selected ? activeColor : MarkyBottomNav.inactiveColor;
 
     return Semantics(
       button: true,
@@ -228,19 +240,12 @@ class _NavButton extends StatelessWidget {
         enableFeedback: false,
         splashFactory: NoSplash.splashFactory,
         highlightColor: Colors.transparent,
+        overlayColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
         child: Center(
-          child: AnimatedContainer(
-            duration: reduceMotion ? Duration.zero : ReadingRoomMotion.quick,
-            curve: Curves.easeOutCubic,
+          child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: ReadingRoomSpacing.sm,
               vertical: 6,
-            ),
-            decoration: BoxDecoration(
-              color: selected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.10)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -249,20 +254,24 @@ class _NavButton extends StatelessWidget {
                 AnimatedSwitcher(
                   duration:
                       reduceMotion ? Duration.zero : ReadingRoomMotion.quick,
-                  child: Icon(
-                    selected ? item.selectedIcon : item.icon,
+                  child: SizedBox.square(
                     key: ValueKey<bool>(selected),
-                    size: selected ? 23 : 22,
-                    color: color,
+                    dimension: MarkyBottomNav.iconBoxSize,
+                    child: Icon(
+                      item.icon,
+                      size: MarkyBottomNav.iconBoxSize,
+                      color: color,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 2),
                 ExcludeSemantics(
                   child: Text(
                     item.label,
-                    style: theme.textTheme.labelSmall?.copyWith(
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                       color: color,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

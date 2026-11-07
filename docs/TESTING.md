@@ -139,7 +139,7 @@ flutter run --profile --trace-startup -d <device-id>
 - Guarantees default pagination (`limit: 100`, `offset: 0`) and validates lazy widget building so offscreen `BookmarkCard` instances are not materialized into memory prematurely.
 
 ### 5.3 Text Scale & Accessibility
-`v2_app_smoke_test.dart` exercises Home, Search, Detail, Add, Library, Settings, and locked Vault under:
+`v2_app_smoke_test.dart` exercises Home, Search, Detail, Add, Library, and Settings under:
 - **1.0x standard text scale**
 - **1.5x accessibility scale**
 - **2.0x large accessibility scale**

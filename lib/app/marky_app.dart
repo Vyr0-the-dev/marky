@@ -1,15 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:marky/app/routing/app_router.dart';
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
+import 'package:marky/app/startup/app_startup_coordinator.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
-import 'package:marky/core/notifications/notification_service.dart';
-import 'package:marky/features/capture/data/capture_providers.dart';
 import 'package:marky/features/capture/domain/capture_result.dart';
 import 'package:marky/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:marky/features/quick_actions/data/quick_action_providers.dart';
@@ -52,6 +52,7 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
     with WidgetsBindingObserver {
   bool _coldStartShareHandled = false;
   ErrorWidgetBuilder? _previousErrorWidgetBuilder;
+  AppStartupCoordinator? _startupCoordinator;
 
   @override
   void initState() {
@@ -64,14 +65,19 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
       );
     };
     ref.read(quickActionControllerProvider).registerRouteHandler(_openRoute);
-    NotificationServiceImpl.instance.payloadHandler = _openNotificationPayload;
+    final AppStartupCoordinator startupCoordinator =
+        ref.read(appStartupCoordinatorProvider);
+    _startupCoordinator = startupCoordinator;
+    startupCoordinator.registerNotificationPayloadHandler(
+      _openNotificationPayload,
+    );
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_showOnboardingIfNeeded());
       unawaited(_consumeInitialQuickActionRoute());
       unawaited(_consumeInitialNotificationPayload());
-      unawaited(_enrichPendingBookmarks());
+      _enrichPendingBookmarks();
     });
   }
 
@@ -81,7 +87,7 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
     if (previous != null) {
       ErrorWidget.builder = previous;
     }
-    NotificationServiceImpl.instance.payloadHandler = null;
+    _startupCoordinator?.registerNotificationPayloadHandler(null);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -90,7 +96,7 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        unawaited(_enrichPendingBookmarks());
+        _enrichPendingBookmarks();
         return;
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
@@ -209,26 +215,24 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
     GoRouter.of(context).go(route);
   }
 
-  Future<void> _enrichPendingBookmarks() async {
-    await Future<void>.delayed(const Duration(seconds: 2));
+  void _enrichPendingBookmarks() {
     if (!mounted) return;
-    try {
-      await ref.read(scrapingOrchestratorProvider).enrichIncomplete();
-    } on Object {
-      return;
-    }
+    SchedulerBinding.instance.scheduleTask<void>(
+      () {
+        if (!mounted) return;
+        unawaited(
+          ref.read(appStartupCoordinatorProvider).enrichPendingBookmarks(),
+        );
+      },
+      Priority.idle,
+    );
   }
 
   Future<void> _consumeInitialNotificationPayload() async {
-    try {
-      await NotificationServiceImpl.instance.initialize();
-    } on Object {
-      return;
-    }
-    final details = await NotificationServiceImpl.instance.getLaunchDetails();
-    if (!mounted || details?.didNotificationLaunchApp != true) return;
-    final String? payload = details?.notificationResponse?.payload;
-    if (payload == null || payload.trim().isEmpty) return;
+    final String? payload = await ref
+        .read(appStartupCoordinatorProvider)
+        .consumeInitialNotificationPayload();
+    if (!mounted || payload == null || payload.isEmpty) return;
     _openNotificationPayload(payload);
   }
 

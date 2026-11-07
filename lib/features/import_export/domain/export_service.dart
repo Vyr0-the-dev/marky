@@ -8,7 +8,7 @@ import 'package:marky/features/collections/domain/bookmark_collection_repository
 import 'package:marky/features/tags/domain/tag.dart';
 import 'package:marky/features/tags/domain/tag_repository.dart';
 
-/// Serialises the entire Marky vault into a portable JSON string.
+/// Serialises the entire Marky library into a portable JSON string.
 ///
 /// The output envelope:
 /// ```json

@@ -349,12 +349,12 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold> {
           items: <MarkyNavItem>[
             MarkyNavItem(
               icon: Icons.auto_stories_outlined,
-              selectedIcon: Icons.auto_stories,
+              selectedIcon: Icons.auto_stories_outlined,
               label: l10n?.navigationHome ?? 'Home',
             ),
             MarkyNavItem(
               icon: Icons.search_outlined,
-              selectedIcon: Icons.search_rounded,
+              selectedIcon: Icons.search_outlined,
               label: l10n?.navigationSearch ?? 'Search',
             ),
             MarkyNavItem(
@@ -365,12 +365,12 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold> {
             ),
             MarkyNavItem(
               icon: Icons.collections_bookmark_outlined,
-              selectedIcon: Icons.collections_bookmark_rounded,
+              selectedIcon: Icons.collections_bookmark_outlined,
               label: l10n?.navigationLibrary ?? 'Library',
             ),
             MarkyNavItem(
               icon: Icons.settings_outlined,
-              selectedIcon: Icons.settings,
+              selectedIcon: Icons.settings_outlined,
               label: l10n?.settingsTitle ?? 'Settings',
             ),
           ],

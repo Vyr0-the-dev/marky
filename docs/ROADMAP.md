@@ -49,7 +49,6 @@ Status Legend:
 - [x] **Pre-E2: Screen Polish:** Added full-screen hero image zoom, inline title/description editing, and automation guides.
 
 ### Phase E — Security & Privacy
-- [x] **E1: Vault Security:** Biometric and device credential fallback support via `local_auth`, app lifecycle relock, and `FLAG_SECURE`.
 - [x] **E2: Minimal Permission Audit:** Removed unnecessary permissions (`VIBRATE` stripped, `RECEIVE_BOOT_COMPLETED` audited for alarms).
 - [x] **E3: Release-Safe Error Boundary:** Implemented `debugOnlyErrorDetails` to prevent sensitive URLs or PII leaks in production logs.
 - [x] **E4: Input Limits & Deep-Link Hardening:** Added `MarkyInputLimits` and enforced route allowlists on Android intents.
@@ -94,6 +93,6 @@ Ideas and conceptual extensions slated for exploration following the initial And
 1. **Browser Companion Extension (Firefox & Chrome):**
    - A lightweight browser extension to send active browser tabs or highlighted passages directly to Marky via a secure local bridge or share payload.
 2. **Desktop Companion Bridge (Windows / Linux):**
-   - Local, peer-to-peer or file-based synchronization allowing users to search and read their Marky link vault from desktop workstations.
+   - Local, peer-to-peer or file-based synchronization allowing users to search and read their Marky link library from desktop workstations.
 3. **Smart Digest & Export Formats:**
    - Periodic reading digests, weekly summary exports in Markdown/HTML, and export compatibility with e-readers (ePub).

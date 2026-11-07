@@ -19,6 +19,12 @@ class FakeNotificationService implements NotificationService {
   bool canScheduleExact = true;
   bool permissionGranted = true;
   int? throwOnId;
+  void Function(String payload)? payloadHandler;
+
+  @override
+  void setPayloadHandler(void Function(String payload)? handler) {
+    payloadHandler = handler;
+  }
 
   @override
   Future<void> initialize() async {}

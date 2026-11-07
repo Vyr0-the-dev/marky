@@ -822,6 +822,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Görünüm'), findsOneWidget);
       expect(find.text('Unread reminders'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Advanced'),
+        150,
+      );
       expect(find.text('Advanced'), findsOneWidget);
       await tester.tap(find.text('Advanced'));
       await tester.pumpAndSettle();

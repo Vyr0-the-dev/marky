@@ -117,55 +117,71 @@ class SettingsScreen extends ConsumerWidget {
             ),
             onTap: () => context.push(Routes.automationRules),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: ReadingRoomSpacing.sm,
+          ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: ReadingRoomSpacing.lg,
             ),
-            child: ExpansionTile(
-              leading: const Icon(Icons.tune_rounded),
-              title: const Text('Advanced'),
-              subtitle: const Text('Backups, insights, app info'),
-              children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.upload_file),
-                  title: Text(
-                    l10n?.settingsExportBackupTitle ?? 'Export backup (JSON)',
-                  ),
-                  onTap: () => _export(context, ref),
+            childrenPadding: EdgeInsets.zero,
+            shape: const Border(),
+            collapsedShape: const Border(),
+            leading: const Icon(Icons.tune_rounded),
+            title: const Text('Advanced'),
+            subtitle: const Text('Backups, insights, app info'),
+            children: <Widget>[
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: ReadingRoomSpacing.lg,
                 ),
-                ListTile(
-                  leading: const Icon(Icons.download),
-                  title: Text(
-                    l10n?.settingsRestoreBackupTitle ?? 'Restore backup (JSON)',
-                  ),
-                  subtitle: Text(
-                    l10n?.settingsRestoreBackupSubtitle ??
-                        'Duplicates are merged safely',
-                  ),
-                  onTap: () => _import(context, ref),
+                leading: const Icon(Icons.upload_file),
+                title: Text(
+                  l10n?.settingsExportBackupTitle ?? 'Export backup (JSON)',
                 ),
-                ListTile(
-                  leading: const Icon(Icons.bar_chart_rounded),
-                  title: Text(l10n?.settingsDashboardLabel ?? 'Dashboard'),
-                  subtitle: Text(
-                    l10n?.settingsDashboardSubtitle ?? 'Stats & analytics',
-                  ),
-                  onTap: () => context.push(Routes.stats),
+                onTap: () => _export(context, ref),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: ReadingRoomSpacing.lg,
                 ),
-                const ListTile(
-                  leading: Icon(Icons.info_outline),
-                  title: Text('Marky'),
-                  subtitle: Text('v2.0.0-dev'),
+                leading: const Icon(Icons.download),
+                title: Text(
+                  l10n?.settingsRestoreBackupTitle ?? 'Restore backup (JSON)',
                 ),
-                ListTile(
-                  leading: const Icon(Icons.restore),
-                  title: Text(
-                    l10n?.settingsResetDefaultsTitle ?? 'Reset to defaults',
-                  ),
-                  onTap: () => _confirmReset(context, notifier),
+                subtitle: Text(
+                  l10n?.settingsRestoreBackupSubtitle ??
+                      'Duplicates are merged safely',
                 ),
-              ],
-            ),
+                onTap: () => _import(context, ref),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: ReadingRoomSpacing.lg,
+                ),
+                leading: const Icon(Icons.bar_chart_rounded),
+                title: Text(l10n?.settingsDashboardLabel ?? 'Dashboard'),
+                subtitle: Text(
+                  l10n?.settingsDashboardSubtitle ?? 'Stats & analytics',
+                ),
+                onTap: () => context.push(Routes.stats),
+              ),
+              const ListTile(
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: ReadingRoomSpacing.lg,
+                ),
+                leading: Icon(Icons.info_outline),
+                title: Text('Marky'),
+                subtitle: Text('v2.0.0-dev'),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: ReadingRoomSpacing.lg,
+                ),
+                leading: const Icon(Icons.restore),
+                title: Text(
+                  l10n?.settingsResetDefaultsTitle ?? 'Reset to defaults',
+                ),
+                onTap: () => _confirmReset(context, notifier),
+              ),
+            ],
           ),
           const SizedBox(height: ReadingRoomSpacing.huge),
         ],

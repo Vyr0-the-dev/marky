@@ -16,7 +16,7 @@ void main() {
     expect(pubspec, contains('name: marky'));
     expect(
       pubspec,
-      contains('description: Marky - Offline-first personal link vault'),
+      contains('description: Marky - Offline-first personal link manager'),
     );
     expect(pubspec, contains('version: 1.0.0+1'));
     expect(buildGradle, contains('namespace = "com.marky.app.marky"'));

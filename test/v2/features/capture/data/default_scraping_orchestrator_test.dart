@@ -448,5 +448,32 @@ void main() {
       expect(afterRecent.scrapingStatus, BookmarkScrapingStatus.done);
       expect(scrapeCalls, 1);
     });
+
+    test(
+        'synthesizes humanized slug title and siteName when scrape returns empty for multi-word URL',
+        () async {
+      final Bookmark seeded = await repo.save(
+        Bookmark(
+          originalUrl:
+              'https://substack.com/p/deep-dive-into-flutter-isolates',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      final DefaultScrapingOrchestrator orchestrator =
+          DefaultScrapingOrchestrator(
+        bookmarkRepo: repo,
+        scraper: _FakeMetadataScraper(const MetadataResult()),
+        merger: const DefaultUpsertMergeService(),
+      );
+
+      await orchestrator.enrich(seeded.id!);
+
+      final Bookmark after = (await repo.getById(seeded.id!))!;
+      expect(after.scrapingStatus, BookmarkScrapingStatus.failed);
+      expect(after.title, 'Deep Dive Into Flutter Isolates');
+      expect(after.siteName, 'Substack');
+    });
   });
 }

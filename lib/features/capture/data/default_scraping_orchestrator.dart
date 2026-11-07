@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/core/scraping/metadata_result.dart';
 import 'package:marky/core/scraping/metadata_scraper.dart';
+import 'package:marky/core/scraping/parsers/generic_html_parser.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
@@ -84,17 +85,39 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
       try {
         final Bookmark? fresh = await _bookmarkRepo.getById(bookmarkId);
         if (fresh == null || token.isCancelled) return; // deleted or cancelled while scraping
-        final Bookmark stub = _stubFromMetadata(fresh, result);
-        final Bookmark merged = _merger.merge(fresh, stub);
 
-        if (token.isCancelled) return;
-
-        // Mark final status. If the scrape produced nothing useful
-        // (no title, no description, no image), surface as failed so
-        // the UI can show a fallback.
+        // Mark final status based on primary scraper result before applying
+        // URL-slug fallback metadata so retry semantics remain intact.
         final BookmarkScrapingStatus finalStatus = _isUseful(result)
             ? BookmarkScrapingStatus.done
             : BookmarkScrapingStatus.failed;
+
+        MetadataResult effectiveResult = result;
+        if (result.title == null || result.siteName == null) {
+          final MetadataResult fallback =
+              GenericHtmlParser.synthesizeFallbackMetadata(
+            result.canonicalUrl ?? fresh.canonicalUrl ?? fresh.originalUrl,
+          );
+          effectiveResult = MetadataResult(
+            title: result.title ?? fallback.title,
+            description: result.description,
+            snippet: result.snippet,
+            author: result.author,
+            siteName: result.siteName ?? fallback.siteName,
+            publisher: result.publisher,
+            publishDate: result.publishDate,
+            languageCode: result.languageCode,
+            heroImageUrl: result.heroImageUrl,
+            faviconUrl: result.faviconUrl,
+            canonicalUrl: result.canonicalUrl,
+            readingTimeMinutes: result.readingTimeMinutes,
+          );
+        }
+
+        final Bookmark stub = _stubFromMetadata(fresh, effectiveResult);
+        final Bookmark merged = _merger.merge(fresh, stub);
+
+        if (token.isCancelled) return;
 
         await _bookmarkRepo.save(
           merged.copyWith(scrapingStatus: finalStatus),
@@ -138,9 +161,9 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
             b.scrapingStatus == BookmarkScrapingStatus.processing) {
           return true;
         }
-        final bool neverEnriched = b.title == null &&
+        final bool neverEnriched =
             (b.heroImageUrl == null || b.heroImageUrl!.isEmpty) &&
-            (b.faviconUrl == null || b.faviconUrl!.isEmpty);
+                (b.faviconUrl == null || b.faviconUrl!.isEmpty);
         return b.scrapingStatus == BookmarkScrapingStatus.failed &&
             neverEnriched;
       }).take(limit).toList();

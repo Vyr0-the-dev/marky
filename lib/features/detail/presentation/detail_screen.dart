@@ -5,22 +5,18 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:marky/app/routing/routes.dart';
-import 'package:marky/app/settings/app_settings.dart';
-import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
-import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
-import 'package:marky/features/capture/data/capture_providers.dart';
 import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
 import 'package:marky/features/collections/domain/bookmark_collection.dart';
+import 'package:marky/features/detail/presentation/detail_action_controller.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/notes/data/note_providers.dart';
 import 'package:marky/features/notes/domain/note.dart';
-import 'package:marky/features/notes/domain/note_repository.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
 import 'package:marky/features/reminders/domain/reminder.dart';
 import 'package:marky/features/reminders/presentation/create_reminder_sheet.dart';
@@ -86,6 +82,32 @@ class _DetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<DetailActionState>(
+      detailActionControllerProvider,
+      (DetailActionState? previous, DetailActionState next) {
+        final DetailActionFeedback? feedback = next.feedback;
+        if (feedback == null ||
+            (feedback == previous?.feedback &&
+                next.status == previous?.status)) {
+          return;
+        }
+        final AppLocalizations? l10n = AppLocalizations.of(context);
+        final String? message = switch (feedback) {
+          DetailActionFeedback.bookmarkUpdated =>
+            l10n?.snackbarBookmarkUpdated ?? 'Bookmark updated',
+          DetailActionFeedback.metadataRefetching =>
+            l10n?.detailRefetchingMetadata ?? 'Refetching metadata…',
+          DetailActionFeedback.metadataRefreshed =>
+            l10n?.detailMetadataRefreshed ?? 'Metadata refreshed',
+          DetailActionFeedback.bookmarkDeleted => null,
+        };
+        if (message == null) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message)));
+      },
+    );
+
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
@@ -170,13 +192,28 @@ class _HeroAppBar extends ConsumerWidget {
     final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
-    final List<Widget> actions = _buildActions(context, ref, theme, l10n);
+    final ButtonStyle pillButtonStyle = _pillIconButtonStyle();
+    final Widget leadingButton = Center(
+      child: IconButton(
+        style: pillButtonStyle,
+        icon: const BackButtonIcon(),
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+    );
+    final List<Widget> actions = _buildActions(
+      context,
+      ref,
+      l10n,
+      pillButtonStyle,
+    );
 
     if (!hasImage) {
       return SliverAppBar(
         pinned: true,
         expandedHeight: 0,
         backgroundColor: theme.colorScheme.surface,
+        leading: leadingButton,
         actions: actions,
       );
     }
@@ -185,6 +222,7 @@ class _HeroAppBar extends ConsumerWidget {
       pinned: true,
       expandedHeight: 220,
       backgroundColor: theme.colorScheme.surface,
+      leading: leadingButton,
       actions: actions,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
@@ -215,12 +253,11 @@ class _HeroAppBar extends ConsumerWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: <Color>[
-                      Colors.black.withValues(alpha: 0.38),
+                      Colors.black.withValues(alpha: 0.65),
+                      Colors.black.withValues(alpha: 0.25),
                       Colors.transparent,
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.34),
                     ],
-                    stops: const <double>[0, 0.22, 0.72, 1],
+                    stops: const <double>[0, 0.45, 1],
                   ),
                 ),
               ),
@@ -231,17 +268,30 @@ class _HeroAppBar extends ConsumerWidget {
     );
   }
 
+  static ButtonStyle _pillIconButtonStyle() {
+    return IconButton.styleFrom(
+      backgroundColor: const Color(0x99121210),
+      foregroundColor: const Color(0xFFEDEDEC),
+      side: BorderSide(
+        color: Colors.white.withValues(alpha: 0.14),
+      ),
+      minimumSize: const Size(38, 38),
+      padding: const EdgeInsets.all(8),
+    );
+  }
+
   List<Widget> _buildActions(
     BuildContext context,
     WidgetRef ref,
-    ThemeData theme,
     AppLocalizations? l10n,
+    ButtonStyle pillButtonStyle,
   ) {
     return <Widget>[
       IconButton(
+        style: pillButtonStyle,
         icon: Icon(
           bookmark.isFavorite ? Icons.favorite : Icons.favorite_outline,
-          color: bookmark.isFavorite ? theme.colorScheme.primary : null,
+          color: bookmark.isFavorite ? const Color(0xFFFF6B6B) : null,
         ),
         tooltip: bookmark.isFavorite
             ? (l10n?.detailActionUnfavorite ?? 'Unfav')
@@ -249,35 +299,42 @@ class _HeroAppBar extends ConsumerWidget {
         onPressed: () {
           unawaited(HapticFeedback.lightImpact());
           unawaited(
-            _toggle(
-              ref,
-              (Bookmark b) => b.copyWith(isFavorite: !b.isFavorite),
-            ),
+            ref
+                .read(detailActionControllerProvider.notifier)
+                .toggleFavorite(bookmark),
           );
         },
       ),
+      const SizedBox(width: ReadingRoomSpacing.xs),
       IconButton(
+        style: pillButtonStyle,
         icon: Icon(
           bookmark.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-          color: bookmark.isPinned ? theme.colorScheme.primary : null,
+          color: bookmark.isPinned ? ReadingRoomColors.darkAccent : null,
         ),
         tooltip: bookmark.isPinned
             ? (l10n?.detailActionUnpin ?? 'Unpin')
             : (l10n?.detailActionPin ?? 'Pin'),
-        onPressed: () => _toggle(
-          ref,
-          (Bookmark b) => b.copyWith(isPinned: !b.isPinned),
+        onPressed: () => unawaited(
+          ref.read(detailActionControllerProvider.notifier).togglePin(bookmark),
         ),
       ),
+      const SizedBox(width: ReadingRoomSpacing.xs),
       IconButton(
+        style: pillButtonStyle,
         icon: const Icon(Icons.share_outlined),
         tooltip: l10n?.actionShare ?? 'Share',
         onPressed: _share,
       ),
-      IconButton(
-        icon: const Icon(Icons.more_horiz_rounded),
-        tooltip: MaterialLocalizations.of(context).showMenuTooltip,
-        onPressed: () => _showMoreActionsSheet(context, ref, bookmark),
+      const SizedBox(width: ReadingRoomSpacing.xs),
+      Padding(
+        padding: const EdgeInsets.only(right: ReadingRoomSpacing.sm),
+        child: IconButton(
+          style: pillButtonStyle,
+          icon: const Icon(Icons.more_horiz_rounded),
+          tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+          onPressed: () => _showMoreActionsSheet(context, ref, bookmark),
+        ),
       ),
     ];
   }
@@ -295,18 +352,17 @@ class _HeroAppBar extends ConsumerWidget {
       builder: (_) => _DetailMoreActionsSheet(bookmark: bookmark),
     );
     if (action == null || !context.mounted) return;
+    final DetailActionController controller =
+        ref.read(detailActionControllerProvider.notifier);
     switch (action) {
       case 'edit':
         await _editTitleAndDescription(context, ref);
       case 'refetch':
-        await _refetchMetadata(context, ref);
+        await _refetchMetadata(ref);
       case 'toggleRead':
-        await _toggleRead(ref);
+        await controller.toggleRead(bookmark);
       case 'toggleArchive':
-        await _toggle(
-          ref,
-          (Bookmark b) => b.copyWith(isArchived: !b.isArchived),
-        );
+        await controller.toggleArchive(bookmark);
       case 'delete':
         await _delete(context, ref);
     }
@@ -376,23 +432,13 @@ class _HeroAppBar extends ConsumerWidget {
       ),
     );
     if (updated == null) return;
-    await ref.read(bookmarkRepositoryProvider).save(
-          bookmark.copyWith(
-            title: updated.title,
-            description: updated.description,
-          ),
+    await ref
+        .read(detailActionControllerProvider.notifier)
+        .updateTitleAndDescription(
+          bookmark,
+          title: updated.title,
+          description: updated.description,
         );
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)?.snackbarBookmarkUpdated ??
-                'Bookmark updated',
-          ),
-        ),
-      );
   }
 
   Future<void> _share() async {
@@ -404,57 +450,11 @@ class _HeroAppBar extends ConsumerWidget {
     );
   }
 
-  Future<void> _refetchMetadata(BuildContext context, WidgetRef ref) async {
+  Future<void> _refetchMetadata(WidgetRef ref) async {
     if (bookmark.id == null) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)?.detailRefetchingMetadata ??
-                'Refetching metadata…',
-          ),
-        ),
-      );
-    await ref.read(scrapingOrchestratorProvider).enrich(bookmark.id!);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)?.detailMetadataRefreshed ??
-                'Metadata refreshed',
-          ),
-        ),
-      );
-  }
-
-  Future<void> _toggle(
-    WidgetRef ref,
-    Bookmark Function(Bookmark) transform,
-  ) async {
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.save(transform(bookmark));
-  }
-
-  Future<void> _toggleRead(WidgetRef ref) async {
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.save(bookmark.copyWith(isRead: !bookmark.isRead));
-    final AppSettings settings = ref.read(appSettingsProvider);
-    final UnreadReminderCadence cadence = settings.unreadReminderCadence;
-    if (cadence != UnreadReminderCadence.off) {
-      try {
-        await ref.read(unreadReminderSchedulerProvider).sync(
-              cadence,
-              weekday: settings.unreadReminderWeekday,
-              hour: settings.unreadReminderHour,
-              minute: settings.unreadReminderMinute,
-            );
-      } on Object {
-        return;
-      }
-    }
+    await ref
+        .read(detailActionControllerProvider.notifier)
+        .refetchMetadata(bookmark.id!);
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
@@ -482,9 +482,9 @@ class _HeroAppBar extends ConsumerWidget {
     );
     if (confirmed != true) return;
     if (bookmark.id == null) return;
-    ref.read(scrapingOrchestratorProvider).cancel(bookmark.id!);
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.delete(bookmark.id!);
+    await ref
+        .read(detailActionControllerProvider.notifier)
+        .deleteBookmark(bookmark.id!);
     // Stream will emit null → screen auto-pops.
   }
 }
@@ -1123,7 +1123,9 @@ class _ReminderTile extends ConsumerWidget {
 
   Future<void> _cancel(WidgetRef ref) async {
     if (reminder.id == null) return;
-    await ref.read(reminderSchedulerProvider).cancelReminder(reminder.id!);
+    await ref
+        .read(detailActionControllerProvider.notifier)
+        .cancelReminder(reminder.id!);
   }
 
   static String _formatDate(DateTime dt) {
@@ -1180,11 +1182,9 @@ class _TagsSection extends ConsumerWidget {
   }
 
   Future<void> _showAddTagSheet(BuildContext context, WidgetRef ref) async {
-    final List<Tag> allTags = await ref.read(tagRepositoryProvider).getAll();
-    final Set<int> current = bookmark.tagIds.toSet();
-    final List<Tag> available = allTags
-        .where((Tag t) => t.id != null && !current.contains(t.id))
-        .toList();
+    final DetailActionController controller =
+        ref.read(detailActionControllerProvider.notifier);
+    final List<Tag> available = await controller.loadAvailableTags(bookmark);
 
     if (!context.mounted) return;
     final AppLocalizations? l10n = AppLocalizations.of(context);
@@ -1223,12 +1223,7 @@ class _TagsSection extends ConsumerWidget {
     );
 
     if (selectedTagId == null) return;
-
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.save(bookmark.copyWith(
-      tagIds: <int>[...bookmark.tagIds, selectedTagId],
-    ));
-    await ref.read(tagRepositoryProvider).incrementUsageCount(selectedTagId);
+    await controller.addTag(bookmark, selectedTagId);
   }
 }
 
@@ -1274,12 +1269,10 @@ class _TagChipsEditable extends ConsumerWidget {
     );
   }
 
-  Future<void> _removeTag(WidgetRef ref, int tagId) async {
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    final List<int> updated =
-        bookmark.tagIds.where((int id) => id != tagId).toList();
-    await repo.save(bookmark.copyWith(tagIds: updated));
-    await ref.read(tagRepositoryProvider).decrementUsageCount(tagId);
+  Future<void> _removeTag(WidgetRef ref, int tagId) {
+    return ref
+        .read(detailActionControllerProvider.notifier)
+        .removeTag(bookmark, tagId);
   }
 }
 
@@ -1330,13 +1323,10 @@ class _CollectionsSection extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final List<BookmarkCollection> all =
-        await ref.read(bookmarkCollectionRepositoryProvider).getAll();
-    final Set<int> current = bookmark.collectionIds.toSet();
-    final List<BookmarkCollection> available = all
-        .where(
-            (BookmarkCollection c) => c.id != null && !current.contains(c.id))
-        .toList();
+    final DetailActionController controller =
+        ref.read(detailActionControllerProvider.notifier);
+    final List<BookmarkCollection> available =
+        await controller.loadAvailableCollections(bookmark);
 
     if (!context.mounted) return;
     final AppLocalizations? l10n = AppLocalizations.of(context);
@@ -1380,14 +1370,7 @@ class _CollectionsSection extends ConsumerWidget {
     );
 
     if (selectedId == null) return;
-
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.save(bookmark.copyWith(
-      collectionIds: <int>[...bookmark.collectionIds, selectedId],
-    ));
-    await ref
-        .read(bookmarkCollectionRepositoryProvider)
-        .incrementItemCount(selectedId);
+    await controller.addCollection(bookmark, selectedId);
   }
 }
 
@@ -1434,14 +1417,10 @@ class _CollectionChipsEditable extends ConsumerWidget {
     );
   }
 
-  Future<void> _remove(WidgetRef ref, int collectionId) async {
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    final List<int> updated =
-        bookmark.collectionIds.where((int id) => id != collectionId).toList();
-    await repo.save(bookmark.copyWith(collectionIds: updated));
-    await ref
-        .read(bookmarkCollectionRepositoryProvider)
-        .decrementItemCount(collectionId);
+  Future<void> _remove(WidgetRef ref, int collectionId) {
+    return ref
+        .read(detailActionControllerProvider.notifier)
+        .removeCollection(bookmark, collectionId);
   }
 }
 
@@ -1507,7 +1486,7 @@ class _NotesSection extends ConsumerWidget {
           const SizedBox(height: ReadingRoomSpacing.sm),
           _LegacyNoteBanner(
             bookmark: bookmark,
-            onConvert: () => _convertLegacy(context, ref),
+            onConvert: () => _convertLegacy(ref),
           ),
         ],
         const SizedBox(height: ReadingRoomSpacing.sm),
@@ -1565,8 +1544,8 @@ class _NotesSection extends ConsumerWidget {
     );
     if (content == null || content.trim().isEmpty) return;
     await ref
-        .read(noteRepositoryProvider)
-        .createForBookmark(bookmark.id!, content);
+        .read(detailActionControllerProvider.notifier)
+        .addNote(bookmark.id!, content);
   }
 
   Future<void> _editNote(
@@ -1580,11 +1559,9 @@ class _NotesSection extends ConsumerWidget {
       initial: note.content,
     );
     if (content == null) return;
-    final String trimmed = content.trim();
-    if (trimmed.isEmpty || trimmed == note.content) return;
     await ref
-        .read(noteRepositoryProvider)
-        .save(note.copyWith(content: trimmed));
+        .read(detailActionControllerProvider.notifier)
+        .editNote(note, content);
   }
 
   Future<void> _deleteNote(
@@ -1617,21 +1594,18 @@ class _NotesSection extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    await ref.read(noteRepositoryProvider).delete(note.id!);
+    await ref
+        .read(detailActionControllerProvider.notifier)
+        .deleteNote(note.id!);
   }
 
   /// Migrates the legacy single-string note into a proper Note row,
   /// then clears the bookmark's `inlineNotes` field. Idempotent —
   /// safe if called twice (the second call is a no-op).
-  Future<void> _convertLegacy(BuildContext context, WidgetRef ref) async {
-    final String? legacy = bookmark.inlineNotes?.trim();
-    if (legacy == null || legacy.isEmpty || bookmark.id == null) return;
-
-    final NoteRepository notes = ref.read(noteRepositoryProvider);
-    await notes.createForBookmark(bookmark.id!, legacy);
-
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.save(bookmark.copyWith(inlineNotes: ''));
+  Future<void> _convertLegacy(WidgetRef ref) {
+    return ref
+        .read(detailActionControllerProvider.notifier)
+        .convertLegacyNote(bookmark);
   }
 
   /// Shared modal sheet for both add + edit flows. Returns the

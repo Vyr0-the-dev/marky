@@ -49,6 +49,20 @@ abstract final class ReadingRoomTheme {
     );
 
     final TextTheme baseText = _buildTextTheme(p.ink, p.muted);
+    final Color navActiveColor = variant == ReadingRoomVariant.light
+        ? ReadingRoomColors.lightInk
+        : const Color(0xFFEDEDEC);
+    const Color navInactiveColor = Color(0xFF6E6E6C);
+    final TextStyle navActiveLabelStyle = GoogleFonts.inter(
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      color: navActiveColor,
+    );
+    final TextStyle navInactiveLabelStyle = GoogleFonts.inter(
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      color: navInactiveColor,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -71,17 +85,44 @@ abstract final class ReadingRoomTheme {
         titleTextStyle: baseText.titleLarge,
         iconTheme: IconThemeData(color: p.ink, size: 22),
       ),
-      // ─── Bottom Nav: flat, no shadow, outlined on top ───
+      // ─── Bottom Nav: flat, no shadow, no selection pill, uniform 22px icons ───
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: p.surface,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: p.ink,
-        unselectedItemColor: p.muted,
-        selectedLabelStyle: baseText.labelSmall,
-        unselectedLabelStyle: baseText.labelSmall,
+        selectedItemColor: navActiveColor,
+        unselectedItemColor: navInactiveColor,
+        selectedIconTheme: IconThemeData(color: navActiveColor, size: 22),
+        unselectedIconTheme: const IconThemeData(
+          color: navInactiveColor,
+          size: 22,
+        ),
+        selectedLabelStyle: navActiveLabelStyle,
+        unselectedLabelStyle: navInactiveLabelStyle,
         showSelectedLabels: true,
         showUnselectedLabels: true,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: p.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        indicatorColor: Colors.transparent,
+        overlayColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+          (Set<WidgetState> states) {
+            final bool isSelected = states.contains(WidgetState.selected);
+            return IconThemeData(
+              color: isSelected ? navActiveColor : navInactiveColor,
+              size: 22,
+            );
+          },
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
+          (Set<WidgetState> states) {
+            final bool isSelected = states.contains(WidgetState.selected);
+            return isSelected ? navActiveLabelStyle : navInactiveLabelStyle;
+          },
+        ),
       ),
       // ─── Cards: flat fills, 1px border ───
       cardTheme: CardThemeData(

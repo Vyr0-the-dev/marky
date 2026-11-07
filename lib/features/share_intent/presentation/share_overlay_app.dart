@@ -2,26 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/settings/app_settings.dart';
-import 'package:marky/app/settings/app_settings_providers.dart';
-import 'package:marky/app/settings/app_settings_repository.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
-import 'package:marky/core/database/database_providers.dart';
-import 'package:marky/core/notifications/notification_service.dart';
 import 'package:marky/core/time/timezone_bootstrap.dart';
-import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/capture/domain/capture_result.dart';
-import 'package:marky/features/reminders/data/reminder_providers.dart';
-import 'package:marky/features/reminders/domain/unread_reminder_scheduler.dart';
-import 'package:marky/features/share_intent/data/share_intent_providers.dart';
-import 'package:marky/features/share_intent/platform/share_overlay_bridge.dart';
+import 'package:marky/features/share_intent/presentation/share_overlay_controller.dart';
 import 'package:marky/features/share_intent/presentation/share_result_sheet.dart';
 import 'package:marky/l10n/app_localizations.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timezone/timezone.dart' as tz;
 
 typedef ShareOverlayCapture = Future<CaptureResult> Function(String? payload);
 
@@ -35,14 +22,10 @@ Future<void> runShareOverlayApp() async {
     ]).catchError((Object _) {}),
   );
 
-  // Pre-warm the database connection and ProviderContainer ahead of time
-  unawaited(_getOrCreateShareContainer().catchError((Object error) {
-    debugPrint('[ShareOverlay] Warmup container failed: $error');
-    _shareContainerFuture = null;
-    return ProviderContainer();
-  }));
+  final ShareSessionGateway gateway = DefaultShareSessionGateway();
+  unawaited(gateway.warmUp());
 
-  runApp(const ShareOverlayApp());
+  runApp(ShareOverlayApp(gateway: gateway));
 }
 
 class ShareOverlayApp extends StatefulWidget {
@@ -54,6 +37,7 @@ class ShareOverlayApp extends StatefulWidget {
     this.capturePayload,
     this.finishOverlay,
     this.openMainApp,
+    this.gateway,
     super.key,
   });
 
@@ -64,6 +48,7 @@ class ShareOverlayApp extends StatefulWidget {
   final ShareOverlayCapture? capturePayload;
   final Future<void> Function()? finishOverlay;
   final Future<void> Function()? openMainApp;
+  final ShareSessionGateway? gateway;
 
   @override
   State<ShareOverlayApp> createState() => _ShareOverlayAppState();
@@ -71,6 +56,7 @@ class ShareOverlayApp extends StatefulWidget {
 
 class _ShareOverlayAppState extends State<ShareOverlayApp> {
   late AppLocaleChoice _localeChoice = widget.localeChoice;
+  late ShareSessionGateway _gateway = _resolveGateway();
 
   @override
   void initState() {
@@ -86,17 +72,28 @@ class _ShareOverlayAppState extends State<ShareOverlayApp> {
     if (widget.localeChoice != oldWidget.localeChoice) {
       _localeChoice = widget.localeChoice;
     }
+    if (widget.gateway != oldWidget.gateway ||
+        widget.capturePayload != oldWidget.capturePayload ||
+        widget.finishOverlay != oldWidget.finishOverlay ||
+        widget.openMainApp != oldWidget.openMainApp) {
+      _gateway = _resolveGateway();
+    }
+  }
+
+  ShareSessionGateway _resolveGateway() {
+    return widget.gateway ??
+        DefaultShareSessionGateway(
+          capturePayload: widget.capturePayload,
+          finishOverlay: widget.finishOverlay,
+          openMainApp: widget.openMainApp,
+        );
   }
 
   void _loadSavedLocale() {
-    SharedPreferences.getInstance().then((SharedPreferences prefs) {
-      final SharedPreferencesAppSettingsRepository repo =
-          SharedPreferencesAppSettingsRepository(prefs);
-      return repo.load();
-    }).then((AppSettings settings) {
-      if (mounted && _localeChoice != settings.locale) {
+    _gateway.loadSavedLocale().then((AppLocaleChoice savedLocale) {
+      if (mounted && _localeChoice != savedLocale) {
         setState(() {
-          _localeChoice = settings.locale;
+          _localeChoice = savedLocale;
         });
       }
     }).catchError((Object _) {});
@@ -114,9 +111,7 @@ class _ShareOverlayAppState extends State<ShareOverlayApp> {
         initialPayload: widget.initialPayload,
         autoCloseAfter: widget.autoCloseAfter,
         exitAnimationDuration: widget.exitAnimationDuration,
-        capturePayload: widget.capturePayload ?? _captureSharedPayload,
-        finishOverlay: widget.finishOverlay,
-        openMainApp: widget.openMainApp,
+        gateway: _gateway,
       ),
     );
   }
@@ -143,17 +138,13 @@ class _ShareOverlayHost extends StatefulWidget {
     required this.initialPayload,
     required this.autoCloseAfter,
     required this.exitAnimationDuration,
-    required this.capturePayload,
-    required this.finishOverlay,
-    required this.openMainApp,
+    required this.gateway,
   });
 
   final String? initialPayload;
   final Duration autoCloseAfter;
   final Duration exitAnimationDuration;
-  final ShareOverlayCapture capturePayload;
-  final Future<void> Function()? finishOverlay;
-  final Future<void> Function()? openMainApp;
+  final ShareSessionGateway gateway;
 
   @override
   State<_ShareOverlayHost> createState() => _ShareOverlayHostState();
@@ -162,114 +153,34 @@ class _ShareOverlayHost extends StatefulWidget {
 class _ShareOverlayHostState extends State<_ShareOverlayHost> {
   final GlobalKey<MarkyShareResultPanelState> _panelKey =
       GlobalKey<MarkyShareResultPanelState>();
-  CaptureResult? _resolvedResult;
-  Timer? _captureTimeoutTimer;
-  String? _activePayload;
-  bool _isCapturing = false;
-  bool _closing = false;
-  bool _openAppRequested = false;
-  bool _flutterReadyNotified = false;
-
-  DateTime _lastCaptureTime = DateTime.fromMillisecondsSinceEpoch(0);
+  late final ShareOverlayController _controller;
+  void Function()? _removeControllerListener;
+  ShareOverlayState _state = const ShareOverlayState.idle();
 
   @override
   void initState() {
     super.initState();
-
-    final String? payload = widget.initialPayload?.trim();
-    if (payload != null && payload.isNotEmpty) {
-      _activePayload = payload;
-      _lastCaptureTime = DateTime.now();
-      unawaited(_executeCapture(payload));
-    } else {
-      ShareOverlayBridge.getInitialPayload().then((String? bridgePayload) {
-        if (!mounted) return;
-        final String? trimmed = bridgePayload?.trim();
-        if (trimmed != null && trimmed.isNotEmpty) {
-          _handleIncomingPayload(trimmed);
-        }
-      }).catchError((Object _) {});
-
-      _captureTimeoutTimer = Timer(const Duration(seconds: 4), () {
-        if (_resolvedResult == null && mounted) {
-          setState(() {
-            _resolvedResult = const CaptureResult.invalidUrl();
-          });
-        }
+    _controller = ShareOverlayController(
+      gateway: widget.gateway,
+      initialPayload: widget.initialPayload,
+    );
+    _removeControllerListener = _controller.addListener((ShareOverlayState s) {
+      if (!mounted) return;
+      setState(() {
+        _state = s;
       });
-    }
-
-    ShareOverlayBridge.setPayloadHandler(_handleIncomingPayload);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _notifyFlutterReady();
+      if (!mounted) return;
+      _controller.notifyFlutterReady();
     });
   }
 
   @override
   void dispose() {
-    ShareOverlayBridge.clearPayloadHandler();
-    _captureTimeoutTimer?.cancel();
+    _removeControllerListener?.call();
+    _controller.dispose();
     super.dispose();
-  }
-
-  void _handleIncomingPayload(String? payload) {
-    if (!mounted) return;
-    final String? trimmed = payload?.trim();
-    if (trimmed == null || trimmed.isEmpty) return;
-
-    final int elapsedSinceLastCapture =
-        DateTime.now().difference(_lastCaptureTime).inMilliseconds;
-    // Debounce duplicate calls for the same payload within 400ms (startup burst)
-    if (_activePayload == trimmed &&
-        (_isCapturing || elapsedSinceLastCapture < 400)) {
-      return;
-    }
-
-    _captureTimeoutTimer?.cancel();
-    _activePayload = trimmed;
-    _lastCaptureTime = DateTime.now();
-
-    setState(() {
-      _resolvedResult = null;
-      _closing = false;
-      _openAppRequested = false;
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _notifyFlutterReady();
-    });
-
-    unawaited(_executeCapture(trimmed));
-  }
-
-  Future<void> _executeCapture(String payload) async {
-    if (_isCapturing) return;
-    _isCapturing = true;
-    try {
-      final CaptureResult result = await widget.capturePayload(payload);
-      if (!mounted) return;
-      setState(() {
-        _resolvedResult = result;
-        _closing = false;
-      });
-    } on Object catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _resolvedResult =
-            CaptureResult.error('share_overlay_capture_failed: $error');
-        _closing = false;
-      });
-    } finally {
-      _isCapturing = false;
-    }
-  }
-
-  void _notifyFlutterReady() {
-    if (_flutterReadyNotified) return;
-    _flutterReadyNotified = true;
-    unawaited(
-      ShareOverlayBridge.flutterReady().catchError((Object _) {}),
-    );
   }
 
   void _handleBackPress() {
@@ -277,60 +188,13 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
     if (state != null) {
       state.animateDismiss();
     } else {
-      _requestClose();
-    }
-  }
-
-  void _requestClose() {
-    if (_closing || _openAppRequested) return;
-    _closing = true;
-    unawaited(_finishOverlay());
-  }
-
-  void _requestOpenMainApp() {
-    if (_openAppRequested) return;
-    _openAppRequested = true;
-    unawaited(_openMainApp());
-  }
-
-  Future<void> _finishOverlay() async {
-    try {
-      await (widget.finishOverlay ?? ShareOverlayBridge.finish)();
-    } on Object {
-      debugPrint('[ShareOverlay] Finish failed');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _activePayload = null;
-          _resolvedResult = null;
-          _closing = false;
-          _openAppRequested = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _openMainApp() async {
-    try {
-      await (widget.openMainApp ?? ShareOverlayBridge.openMainApp)();
-    } on Object {
-      debugPrint('[ShareOverlay] Open main app failed');
-      await _finishOverlay();
-    } finally {
-      if (mounted) {
-        setState(() {
-          _activePayload = null;
-          _resolvedResult = null;
-          _closing = false;
-          _openAppRequested = false;
-        });
-      }
+      unawaited(_controller.requestClose());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final CaptureResult? result = _resolvedResult;
+    final CaptureResult? result = _state.result;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (_, __) => _handleBackPress(),
@@ -343,101 +207,11 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
                 result: result,
                 autoCloseAfter: widget.autoCloseAfter,
                 exitDuration: widget.exitAnimationDuration,
-                onAutoClose: _requestClose,
-                onOpenApp: _requestOpenMainApp,
-                onDismiss: _requestClose,
+                onAutoClose: () => unawaited(_controller.requestClose()),
+                onOpenApp: () => unawaited(_controller.requestOpenMainApp()),
+                onDismiss: () => unawaited(_controller.requestClose()),
               ),
       ),
     );
-  }
-}
-
-class _NoOpNotificationService implements NotificationService {
-  const _NoOpNotificationService();
-
-  @override
-  Future<void> initialize() async {}
-
-  @override
-  Future<bool> requestPermission() async => true;
-
-  @override
-  Future<void> showInstantSaveNotification({
-    required int id,
-    required String title,
-    required String body,
-    String? payload,
-    bool isError = false,
-  }) async {}
-
-  @override
-  Future<void> scheduleNotification({
-    required int id,
-    required String title,
-    required String body,
-    required tz.TZDateTime scheduledDate,
-    String? payload,
-    String repeatMode = 'none',
-  }) async {}
-
-  @override
-  Future<void> cancelNotification(int id) async {}
-
-  @override
-  Future<void> cancelAllNotifications() async {}
-
-  @override
-  Future<NotificationAppLaunchDetails?> getLaunchDetails() async => null;
-
-  @override
-  Future<bool> canScheduleExactNotifications() async => true;
-}
-
-Future<ProviderContainer>? _shareContainerFuture;
-
-Future<ProviderContainer> _getOrCreateShareContainer() {
-  final Future<ProviderContainer>? existing = _shareContainerFuture;
-  if (existing != null) return existing;
-
-  final Future<ProviderContainer> future = () async {
-    final databaseBootstrap = await markyDatabaseBootstrap();
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final SharedPreferencesAppSettingsRepository settingsRepository =
-        SharedPreferencesAppSettingsRepository(prefs);
-    await settingsRepository.load();
-    return ProviderContainer(
-      overrides: <Override>[
-        ...databaseBootstrap.overrides,
-        ...appSettingsBootstrapOverrides(settingsRepository),
-        unreadReminderSchedulerProvider.overrideWith(
-          (Ref ref) => UnreadReminderScheduler(
-            bookmarkRepository: ref.watch(bookmarkRepositoryProvider),
-            notificationService: const _NoOpNotificationService(),
-            payload: Routes.homeUnread,
-          ),
-        ),
-      ],
-    );
-  }();
-
-  _shareContainerFuture = future;
-  return future;
-}
-
-Future<CaptureResult> _captureSharedPayload(String? payload) async {
-  final String? text = payload?.trim();
-  if (text == null || text.isEmpty) {
-    return const CaptureResult.invalidUrl();
-  }
-
-  try {
-    final ProviderContainer container = await _getOrCreateShareContainer();
-    return await container
-        .read(shareCaptureCoordinatorProvider)
-        .captureSharedText(text);
-  } on Object catch (error) {
-    _shareContainerFuture = null;
-    debugPrint('[ShareOverlay] Capture failed: $error');
-    return CaptureResult.error('share_overlay_capture_failed: $error');
   }
 }

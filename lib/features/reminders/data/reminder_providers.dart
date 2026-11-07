@@ -20,7 +20,7 @@ final Provider<ReminderScheduler> reminderSchedulerProvider =
   final ReminderRepository repository = ref.watch(reminderRepositoryProvider);
   return ReminderScheduler(
     reminderRepository: repository,
-    notificationService: NotificationServiceImpl.instance,
+    notificationService: ref.watch(notificationServiceProvider),
   );
 });
 
@@ -28,7 +28,7 @@ final Provider<UnreadReminderScheduler> unreadReminderSchedulerProvider =
     Provider<UnreadReminderScheduler>((Ref ref) {
   return UnreadReminderScheduler(
     bookmarkRepository: ref.watch(bookmarkRepositoryProvider),
-    notificationService: NotificationServiceImpl.instance,
+    notificationService: ref.watch(notificationServiceProvider),
     payload: Routes.homeUnread,
   );
 });

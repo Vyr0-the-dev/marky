@@ -27,13 +27,9 @@ class MetadataScraperService implements MetadataScraper {
             Dio(BaseOptions(
               connectTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 10),
-              headers: <String, dynamic>{
-                'User-Agent':
-                    'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.171 Mobile Safari/537.36',
-                'Accept':
-                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9,tr;q=0.8',
-              },
+              followRedirects: true,
+              maxRedirects: 5,
+              headers: GenericHtmlParser.browserNavigationHeaders(),
             ));
 
   final SourceParserRegistry _registry;
@@ -52,20 +48,24 @@ class MetadataScraperService implements MetadataScraper {
         return const MetadataResult();
       }
 
-      // Step 1: Fetch HTML once, share with parsers.
-      final String? html = await _fetchHtml(url, cancelToken: cancelToken);
+      // Step 1: Fetch HTML once (with charset sniffing & redirect tracking).
+      final ({String? html, String effectiveUrl}) fetched =
+          await _fetchHtml(url, cancelToken: cancelToken);
+      final String? html = fetched.html;
+      final String effectiveUrl = fetched.effectiveUrl;
 
       if (cancelToken?.isCancelled ?? false) {
         return const MetadataResult();
       }
 
       // Step 2: Find the best platform-specific parser.
-      final SourceParser? platformParser = _registry.resolve(url);
+      final SourceParser? platformParser =
+          _registry.resolve(effectiveUrl) ?? _registry.resolve(url);
 
       MetadataResult platformResult = const MetadataResult();
       if (platformParser != null && platformParser is! GenericHtmlParser) {
         platformResult = await platformParser.parse(
-          url,
+          effectiveUrl,
           html: html,
           cancelToken: cancelToken,
         );
@@ -75,9 +75,9 @@ class MetadataScraperService implements MetadataScraper {
         return const MetadataResult();
       }
 
-      // Step 3: Always run generic OG/meta extraction.
+      // Step 3: Always run generic multi-tier extraction.
       final MetadataResult genericResult = await _genericParser.parse(
-        url,
+        effectiveUrl,
         html: html,
         cancelToken: cancelToken,
       );
@@ -89,15 +89,51 @@ class MetadataScraperService implements MetadataScraper {
     }
   }
 
-  Future<String?> _fetchHtml(String url, {CancelToken? cancelToken}) async {
+  Future<({String? html, String effectiveUrl})> _fetchHtml(
+    String url, {
+    CancelToken? cancelToken,
+  }) async {
     try {
-      final Response<String> response = await _dio.get<String>(
+      final Response<List<int>> response = await _dio.get<List<int>>(
         url,
         cancelToken: cancelToken,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: true,
+          maxRedirects: 5,
+          headers: GenericHtmlParser.browserNavigationHeaders(url: url),
+        ),
       );
-      return response.data;
+      final String effectiveUrl = response.realUri.toString().isNotEmpty &&
+              response.realUri.hasScheme
+          ? response.realUri.toString()
+          : url;
+      final List<int>? bytes = response.data;
+      if (bytes == null || bytes.isEmpty) {
+        return (html: null, effectiveUrl: effectiveUrl);
+      }
+      final String? contentType =
+          response.headers.value(Headers.contentTypeHeader);
+      final String decoded = await GenericHtmlParser.decodeHtmlBytes(
+        bytes,
+        contentTypeHeader: contentType,
+      );
+      return (html: decoded, effectiveUrl: effectiveUrl);
     } catch (_) {
-      return null;
+      try {
+        final Response<String> fallbackResponse = await _dio.get<String>(
+          url,
+          cancelToken: cancelToken,
+        );
+        final String effectiveUrl =
+            fallbackResponse.realUri.toString().isNotEmpty &&
+                    fallbackResponse.realUri.hasScheme
+                ? fallbackResponse.realUri.toString()
+                : url;
+        return (html: fallbackResponse.data, effectiveUrl: effectiveUrl);
+      } catch (_) {
+        return (html: null, effectiveUrl: url);
+      }
     }
   }
 }

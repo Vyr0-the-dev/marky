@@ -53,7 +53,7 @@ ProviderContainer _container({
 }
 
 void main() {
-  test('returns zeros when vault is empty', () async {
+  test('returns zeros when library is empty', () async {
     final ProviderContainer c = _container();
     addTearDown(c.dispose);
 

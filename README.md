@@ -4,7 +4,7 @@
 
 # Marky
 
-**Offline-First Personal Link Vault for Android**  
+**Offline-First Personal Link Manager for Android**  
 *Çevrimdışı öncelikli kişisel yer imi yöneticisi — bağlantılarını hızlı yakala, düzenle, hatırla.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -21,7 +21,7 @@
 
 ## Overview / Genel Bakış
 
-**Marky** is an offline-first, privacy-respecting link manager and personal knowledge vault built for Android with Flutter and the Isar local database. It captures web links from your browser or apps, enriches them with metadata, deduplicates them through an intelligent URL normalization engine, and lets you organize your reading life without ever syncing to a third-party cloud.
+**Marky** is an offline-first, privacy-respecting link manager and personal reading library built for Android with Flutter and the Isar local database. It captures web links from your browser or apps, enriches them with metadata, deduplicates them through an intelligent URL normalization engine, and lets you organize your reading life without ever syncing to a third-party cloud.
 
 *Marky, bağlantılarını kaydetmek, düzenlemek ve gerektiğinde anında yeniden bulmak için tasarlanmış, çevrimdışı öncelikli bir Android uygulamasıdır. Yer imleri, etiketler, koleksiyonlar, notlar, hatırlatıcılar ve otomasyonlar tamamen cihazınızda yerel Isar veritabanı ile saklanır. Sunucu yoktur, verileriniz cihazınızdan çıkmaz.*
 
@@ -50,7 +50,7 @@ Comprehensive documentation is organized under the [`docs/`](docs/) directory an
     </td>
     <td width="50%" align="left">
       <b>🔁 Intelligent Deduplication</b><br>
-      Duplicate links are detected via canonical URL matching, SHA-256 hashing, and external content IDs (YouTube, Reddit, GitHub). Existing bookmarks are surfaced with an instant <code>Open</code> action instead of cluttering your vault.
+      Duplicate links are detected via canonical URL matching, SHA-256 hashing, and external content IDs (YouTube, Reddit, GitHub). Existing bookmarks are surfaced with an instant <code>Open</code> action instead of cluttering your library.
     </td>
   </tr>
   <tr>
@@ -75,12 +75,12 @@ Comprehensive documentation is organized under the [`docs/`](docs/) directory an
   </tr>
   <tr>
     <td width="50%" align="left">
-      <b>🔒 Biometric Private Vault</b><br>
-      Protect sensitive bookmarks behind biometric (fingerprint/face) authentication or system device PIN with automatic app-switcher relock and Android <code>FLAG_SECURE</code>.
+      <b>📊 Library Analytics &amp; Insights</b><br>
+      Visualize your reading habits, top domains, tag distribution, and weekly capture velocity entirely offline on your device.
     </td>
     <td width="50%" align="left">
       <b>💾 Backup, Restore &amp; HTML Export</b><br>
-      Export your entire vault into standardized JSON or browser-compatible Netscape HTML bookmarks. Restore backups with non-destructive duplicate merging.
+      Export your entire library into standardized JSON or browser-compatible Netscape HTML bookmarks. Restore backups with non-destructive duplicate merging.
     </td>
   </tr>
 </table>

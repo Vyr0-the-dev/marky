@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
-import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
@@ -20,6 +20,7 @@ import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/home/presentation/feed_state.dart';
 import 'package:marky/features/home/presentation/widgets/batch_action_bar.dart';
 import 'package:marky/features/home/presentation/widgets/bookmark_card.dart';
+import 'package:marky/features/home/presentation/widgets/editorial_grid_card.dart';
 import 'package:marky/features/home/presentation/widgets/feed_filter_bar.dart';
 import 'package:marky/features/home/presentation/widgets/feed_skeleton.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
@@ -405,44 +406,51 @@ class _BookmarkList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (feedState.viewMode == FeedViewMode.grid) {
-      return _BookmarkGrid(
-        bookmarks: bookmarks,
-        feedState: feedState,
-      );
-    }
+    final bool reduceMotion = MediaQuery.of(context).disableAnimations;
 
-    return Scrollbar(
-      interactive: true,
-      child: ListView.separated(
-        // ignore: deprecated_member_use
-        cacheExtent: 360,
-        itemCount: bookmarks.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (BuildContext context, int index) {
-          final Bookmark bookmark = bookmarks[index];
-          final Widget card = BookmarkCard(
-            bookmark: bookmark,
-            selectionMode: feedState.selectionMode,
-            isSelected: bookmark.id != null &&
-                feedState.selectedIds.contains(bookmark.id),
-            onTap: () => _onTap(context, ref, bookmark),
-            onLongPress: () => _onLongPress(ref, bookmark),
-          );
+    return AnimatedSwitcher(
+      duration: reduceMotion ? Duration.zero : ReadingRoomMotion.standard,
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: feedState.viewMode == FeedViewMode.grid
+          ? _BookmarkGrid(
+              key: const ValueKey<FeedViewMode>(FeedViewMode.grid),
+              bookmarks: bookmarks,
+              feedState: feedState,
+            )
+          : Scrollbar(
+              key: const ValueKey<FeedViewMode>(FeedViewMode.list),
+              interactive: true,
+              child: ListView.separated(
+                // ignore: deprecated_member_use
+                cacheExtent: 360,
+                itemCount: bookmarks.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (BuildContext context, int index) {
+                  final Bookmark bookmark = bookmarks[index];
+                  final Widget card = BookmarkCard(
+                    bookmark: bookmark,
+                    selectionMode: feedState.selectionMode,
+                    isSelected: bookmark.id != null &&
+                        feedState.selectedIds.contains(bookmark.id),
+                    onTap: () => _onTap(context, ref, bookmark),
+                    onLongPress: () => _onLongPress(ref, bookmark),
+                  );
 
-          // Swipe disabled in selection mode.
-          if (feedState.selectionMode || bookmark.id == null) {
-            return RepaintBoundary(child: card);
-          }
+                  // Swipe disabled in selection mode.
+                  if (feedState.selectionMode || bookmark.id == null) {
+                    return RepaintBoundary(child: card);
+                  }
 
-          return RepaintBoundary(
-            child: _SwipeableCard(
-              bookmark: bookmark,
-              child: card,
+                  return RepaintBoundary(
+                    child: _SwipeableCard(
+                      bookmark: bookmark,
+                      child: card,
+                    ),
+                  );
+                },
+              ),
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -469,223 +477,70 @@ class _BookmarkGrid extends ConsumerWidget {
   const _BookmarkGrid({
     required this.bookmarks,
     required this.feedState,
+    super.key,
   });
 
   final List<Bookmark> bookmarks;
   final FeedState feedState;
 
+  static int columnCountForWidth(double width) {
+    if (width < 600) return 2;
+    if (width < 900) return 3;
+    return 4;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scrollbar(
-      interactive: true,
-      child: GridView.builder(
-        // ignore: deprecated_member_use
-        cacheExtent: 360,
-        padding: const EdgeInsets.all(ReadingRoomSpacing.sm),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: ReadingRoomSpacing.sm,
-          crossAxisSpacing: ReadingRoomSpacing.sm,
-          childAspectRatio: 0.75,
-        ),
-        itemCount: bookmarks.length,
-        itemBuilder: (BuildContext context, int index) {
-          final Bookmark bookmark = bookmarks[index];
-          return RepaintBoundary(
-            child: _GridCard(
-              bookmark: bookmark,
-              isSelected: bookmark.id != null &&
-                  feedState.selectedIds.contains(bookmark.id),
-              selectionMode: feedState.selectionMode,
-              onTap: () {
-                if (feedState.selectionMode && bookmark.id != null) {
-                  ref
-                      .read(feedNotifierProvider.notifier)
-                      .toggleSelection(bookmark.id!);
-                  return;
-                }
-                if (bookmark.id != null) {
-                  context.push(Routes.bookmarkDetailPath(bookmark.id!));
-                }
-              },
-              onLongPress: () {
-                if (!feedState.selectionMode && bookmark.id != null) {
-                  ref
-                      .read(feedNotifierProvider.notifier)
-                      .enterSelectionMode(bookmark.id!);
-                }
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final int crossAxisCount = columnCountForWidth(width);
 
-class _GridCard extends StatelessWidget {
-  const _GridCard({
-    required this.bookmark,
-    required this.isSelected,
-    required this.selectionMode,
-    this.onTap,
-    this.onLongPress,
-  });
-
-  final Bookmark bookmark;
-  final bool isSelected;
-  final bool selectionMode;
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final String? imageUrl = bookmark.heroImageUrl ?? bookmark.faviconUrl;
-
-    return Semantics(
-      button: onTap != null || onLongPress != null,
-      selected: selectionMode && isSelected,
-      label: _gridSemanticsLabel(bookmark),
-      child: ExcludeSemantics(
-        child: Card(
-          child: InkWell(
-            onTap: onTap,
-            onLongPress: onLongPress,
-            borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    // Hero image
-                    Expanded(
-                      flex: 3,
-                      child: LayoutBuilder(
-                        builder: (
-                          BuildContext context,
-                          BoxConstraints constraints,
-                        ) {
-                          final int? cacheWidth = constraints.maxWidth.isFinite
-                              ? (constraints.maxWidth *
-                                      MediaQuery.devicePixelRatioOf(context))
-                                  .round()
-                              : null;
-                          final int? cacheHeight = constraints
-                                  .maxHeight.isFinite
-                              ? (constraints.maxHeight *
-                                      MediaQuery.devicePixelRatioOf(context))
-                                  .round()
-                              : null;
-                          return imageUrl != null && imageUrl.isNotEmpty
-                              ? Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.cover,
-                                  gaplessPlayback: true,
-                                  cacheWidth: cacheWidth,
-                                  cacheHeight: cacheHeight,
-                                  filterQuality: FilterQuality.low,
-                                  errorBuilder: (_, __, ___) =>
-                                      _gridPlaceholder(
-                                    context,
-                                    bookmark,
-                                  ),
-                                )
-                              : _gridPlaceholder(context, bookmark);
-                        },
-                      ),
-                    ),
-                    // Text
-                    Flexible(
-                      flex: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(ReadingRoomSpacing.sm),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text(
-                              bookmark.displayTitle,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelMedium,
-                            ),
-                            const SizedBox(height: ReadingRoomSpacing.xs),
-                            Text(
-                              bookmark.normalizedHost ?? '',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: ReadingRoomTextStyles.metadata(context),
-                            ),
-                            if (bookmark.tagIds.isNotEmpty) ...<Widget>[
-                              const SizedBox(height: ReadingRoomSpacing.xs),
-                              Flexible(
-                                child: TagChipsRow(
-                                  tagIds: bookmark.tagIds,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+        return Scrollbar(
+          interactive: true,
+          child: MasonryGridView.count(
+            key: ValueKey<int>(crossAxisCount),
+            cacheExtent: 360,
+            padding: const EdgeInsets.all(ReadingRoomSpacing.md),
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: ReadingRoomSpacing.md,
+            crossAxisSpacing: ReadingRoomSpacing.md,
+            itemCount: bookmarks.length,
+            itemBuilder: (BuildContext context, int index) {
+              final Bookmark bookmark = bookmarks[index];
+              return RepaintBoundary(
+                child: EditorialGridCard(
+                  bookmark: bookmark,
+                  isSelected: bookmark.id != null &&
+                      feedState.selectedIds.contains(bookmark.id),
+                  selectionMode: feedState.selectionMode,
+                  onTap: () {
+                    if (feedState.selectionMode && bookmark.id != null) {
+                      ref
+                          .read(feedNotifierProvider.notifier)
+                          .toggleSelection(bookmark.id!);
+                      return;
+                    }
+                    if (bookmark.id != null) {
+                      context.push(Routes.bookmarkDetailPath(bookmark.id!));
+                    }
+                  },
+                  onLongPress: () {
+                    if (!feedState.selectionMode && bookmark.id != null) {
+                      ref
+                          .read(feedNotifierProvider.notifier)
+                          .enterSelectionMode(bookmark.id!);
+                    }
+                  },
                 ),
-                // Selection overlay
-                if (selectionMode)
-                  Positioned(
-                    top: ReadingRoomSpacing.xs,
-                    right: ReadingRoomSpacing.xs,
-                    child: Icon(
-                      isSelected
-                          ? Icons.check_circle_rounded
-                          : Icons.radio_button_unchecked,
-                      size: 22,
-                      color: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-              ],
-            ),
+              );
+            },
           ),
-        ),
-      ),
+        );
+      },
     );
-  }
-
-  static Widget _gridPlaceholder(BuildContext context, Bookmark bookmark) {
-    final ThemeData theme = Theme.of(context);
-    final String domain = bookmark.normalizedHost ?? '';
-    final String letter = domain.isNotEmpty ? domain[0].toUpperCase() : '?';
-
-    return ColoredBox(
-      color: theme.colorScheme.outlineVariant,
-      child: Center(
-        child: Text(
-          letter,
-          style: theme.textTheme.headlineMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
-    );
-  }
-
-  static String _gridSemanticsLabel(Bookmark bookmark) {
-    final String host = bookmark.normalizedHost ?? '';
-    final List<String> parts = <String>[
-      'Bookmark',
-      bookmark.displayTitle,
-      if (host.isNotEmpty) host,
-      if (bookmark.isRead) 'read' else 'unread',
-      if (bookmark.isFavorite) 'favorite',
-      if (bookmark.isPinned) 'pinned',
-      if (bookmark.isArchived) 'archived',
-    ];
-    return parts.join(', ');
   }
 }
 

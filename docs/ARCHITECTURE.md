@@ -8,7 +8,7 @@
 
 ## 1. System Overview
 
-Marky is an offline-first personal bookmark vault and link manager designed for Android. It operates with zero mandatory cloud accounts, zero remote analytics or tracking SDKs, and stores 100% of bookmark data locally on the device using an embedded Isar database.
+Marky is an offline-first personal bookmark library and link manager designed for Android. It operates with zero mandatory cloud accounts, zero remote analytics or tracking SDKs, and stores 100% of bookmark data locally on the device using an embedded Isar database.
 
 ### 1.1 Core Principles
 
@@ -196,19 +196,13 @@ android/app/src/main/
 
 ### 8.3 Route & Intent Security
 - `MainActivity.kt` enforces an explicit `OPEN_ROUTE` allowlist (`/`, `/add`, `/search`, `/home`, `/reminders`).
-- Arbitrary external deep links cannot force navigation into protected surfaces like the Vault or Settings.
+- Arbitrary external deep links cannot force navigation into protected surfaces like Settings.
 
 ---
 
-## 9. Security, Vault & Privacy
+## 9. Security & Privacy
 
-### 9.1 Local Vault
-- Protected by biometric authentication (fingerprint/face) or device credentials (PIN/pattern) using `local_auth`.
-- Relies on `isDeviceSupported()` to ensure devices without hardware biometrics can securely unlock using their system PIN.
-- Automatically relocks when the app enters `AppLifecycleState.inactive`, `hidden`, or `paused`.
-- Android `FLAG_SECURE` is active on window surfaces to prevent sensitive link previews from appearing in the Android app switcher.
-
-### 9.2 Release-Safe Error Boundary
+### 9.1 Release-Safe Error Boundary
 - `safe_error_details.dart` filters out technical stack traces, local file system paths, and raw URL queries from release error messages.
 - Production users see graceful, localized recovery dialogs with zero PII exposure.
 

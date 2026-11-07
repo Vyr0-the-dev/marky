@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:marky/core/database/enums/bookmark_source_type.dart';
 
-/// Snapshot of vault-level analytics for the dashboard.
+/// Snapshot of library-level analytics for the dashboard.
 @immutable
 class DashboardStats {
   const DashboardStats({

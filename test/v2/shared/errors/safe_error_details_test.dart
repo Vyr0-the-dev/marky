@@ -4,7 +4,7 @@ import 'package:marky/shared/errors/safe_error_details.dart';
 void main() {
   test('debugOnlyErrorDetails hides sensitive details in release mode', () {
     final String? details = debugOnlyErrorDetails(
-      Exception('private url https://vault.example.com/secret?token=abc'),
+      Exception('private url https://private.example.com/secret?token=abc'),
       stackTrace: StackTrace.fromString('private stack trace'),
       releaseMode: true,
     );

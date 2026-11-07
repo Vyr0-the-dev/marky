@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/database/enums/bookmark_source_type.dart';
 import 'package:marky/features/dashboard/data/dashboard_providers.dart';
 import 'package:marky/features/dashboard/domain/dashboard_stats.dart';
 import 'package:marky/l10n/app_localizations.dart';
 
-/// Dashboard screen — library analytics and stats.
+/// Dashboard screen — library analytics and reading overview.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -32,9 +33,11 @@ class DashboardScreen extends ConsumerWidget {
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
         error: (Object e, _) => Center(
-            child: Text(
-                AppLocalizations.of(context)?.detailInlineError(e.toString()) ??
-                    'Error: $e')),
+          child: Text(
+            AppLocalizations.of(context)?.detailInlineError(e.toString()) ??
+                'Error: $e',
+          ),
+        ),
       ),
     );
   }
@@ -48,67 +51,336 @@ class _DashboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
     final String topSource =
         stats.topHosts.isEmpty ? '—' : stats.topHosts.first.host;
 
     return ListView(
-      padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        ReadingRoomSpacing.lg,
+        ReadingRoomSpacing.md,
+        ReadingRoomSpacing.lg,
+        ReadingRoomSpacing.huge,
+      ),
       children: <Widget>[
+        _ReadingProgressHeroCard(stats: stats),
+        const SizedBox(height: ReadingRoomSpacing.lg),
         _SummaryCards(
           stats: stats,
           topSource: topSource,
         ),
-
-        const SizedBox(height: ReadingRoomSpacing.xl),
-
         if (stats.timeline.isNotEmpty) ...<Widget>[
+          const SizedBox(height: ReadingRoomSpacing.lg),
           _TimelinePanel(buckets: stats.timeline),
-          const SizedBox(height: ReadingRoomSpacing.xl),
         ],
-
-        if (stats.sourceBreakdown.isNotEmpty) ...<Widget>[
-          Text('Source Breakdown', style: theme.textTheme.titleSmall),
-          const SizedBox(height: ReadingRoomSpacing.sm),
-          ...stats.sourceBreakdown.map((SourceTypeCount source) => _BarRow(
-                label: source.label,
-                count: source.count,
-                maxCount: stats.sourceBreakdown.first.count,
-                color: Colors.lightBlueAccent,
-              )),
-          const SizedBox(height: ReadingRoomSpacing.xl),
-        ],
-
-        // ── Top sources ──────────────────────────────────────
         if (stats.topHosts.isNotEmpty) ...<Widget>[
-          Text('Top Sources', style: theme.textTheme.titleSmall),
-          const SizedBox(height: ReadingRoomSpacing.sm),
-          ...stats.topHosts.map((HostCount h) => _BarRow(
-                label: h.host,
-                count: h.count,
-                maxCount: stats.topHosts.first.count,
-                color: theme.colorScheme.primary,
-              )),
+          const SizedBox(height: ReadingRoomSpacing.lg),
+          _SectionCard(
+            title: 'Top Sources',
+            icon: Icons.public_rounded,
+            accentColor: colors.primary,
+            children: <Widget>[
+              for (int i = 0; i < stats.topHosts.length; i++) ...<Widget>[
+                if (i > 0) const SizedBox(height: ReadingRoomSpacing.md),
+                _RankedBarRow(
+                  rank: i + 1,
+                  label: stats.topHosts[i].host,
+                  count: stats.topHosts[i].count,
+                  maxCount: stats.topHosts.first.count,
+                  color: colors.primary,
+                ),
+              ],
+            ],
+          ),
         ],
-
-        const SizedBox(height: ReadingRoomSpacing.xl),
-
-        // ── Top tags ─────────────────────────────────────────
+        if (stats.sourceBreakdown.isNotEmpty) ...<Widget>[
+          const SizedBox(height: ReadingRoomSpacing.lg),
+          _SectionCard(
+            title: 'Source Breakdown',
+            icon: Icons.layers_outlined,
+            accentColor: colors.secondary,
+            children: <Widget>[
+              for (int i = 0;
+                  i < stats.sourceBreakdown.length;
+                  i++) ...<Widget>[
+                if (i > 0) const SizedBox(height: ReadingRoomSpacing.md),
+                _RankedBarRow(
+                  leadingIcon:
+                      _sourceIcon(stats.sourceBreakdown[i].sourceType),
+                  label: stats.sourceBreakdown[i].label,
+                  count: stats.sourceBreakdown[i].count,
+                  maxCount: stats.sourceBreakdown.first.count,
+                  color: colors.secondary,
+                ),
+              ],
+            ],
+          ),
+        ],
         if (stats.topTags.isNotEmpty) ...<Widget>[
-          Text('Top Tags', style: theme.textTheme.titleSmall),
-          const SizedBox(height: ReadingRoomSpacing.sm),
-          ...stats.topTags.map((TagCount t) => _BarRow(
-                label: t.tagName,
-                count: t.count,
-                maxCount: stats.topTags.first.count,
-                color: theme.colorScheme.tertiary,
-              )),
+          const SizedBox(height: ReadingRoomSpacing.lg),
+          _SectionCard(
+            title: 'Top Tags',
+            icon: Icons.sell_outlined,
+            accentColor: colors.tertiary,
+            children: <Widget>[
+              for (int i = 0; i < stats.topTags.length; i++) ...<Widget>[
+                if (i > 0) const SizedBox(height: ReadingRoomSpacing.md),
+                _RankedBarRow(
+                  leadingIcon: Icons.tag_rounded,
+                  label: stats.topTags[i].tagName,
+                  count: stats.topTags[i].count,
+                  maxCount: stats.topTags.first.count,
+                  color: colors.tertiary,
+                ),
+              ],
+            ],
+          ),
         ],
-
-        const SizedBox(height: ReadingRoomSpacing.huge),
       ],
     );
   }
+
+  static IconData _sourceIcon(BookmarkSourceType type) {
+    switch (type) {
+      case BookmarkSourceType.share:
+        return Icons.share_rounded;
+      case BookmarkSourceType.clipboard:
+        return Icons.content_paste_rounded;
+      case BookmarkSourceType.manual:
+        return Icons.edit_note_rounded;
+      case BookmarkSourceType.import:
+        return Icons.file_download_outlined;
+      case BookmarkSourceType.automation:
+        return Icons.auto_fix_high_rounded;
+    }
+  }
 }
+
+// ─── Reading progress hero card ─────────────────────────────────
+
+class _ReadingProgressHeroCard extends StatelessWidget {
+  const _ReadingProgressHeroCard({required this.stats});
+
+  final DashboardStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+    final int readCount =
+        (stats.totalBookmarks - stats.unreadCount).clamp(0, stats.totalBookmarks);
+    final double ratio = stats.readRatio.clamp(0.0, 1.0);
+    final String percentageText = '${(ratio * 100).round()}%';
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+        border: Border.all(color: colors.outline),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            colors.primary.withValues(alpha: 0.10),
+            colors.surfaceContainerLow,
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'LIBRARY OVERVIEW',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.9,
+                        ),
+                      ),
+                      const SizedBox(height: ReadingRoomSpacing.xs),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: <Widget>[
+                          Text(
+                            stats.totalBookmarks.toString(),
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -1,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(width: ReadingRoomSpacing.sm),
+                          Text(
+                            'saved links',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: ReadingRoomSpacing.md,
+                    vertical: ReadingRoomSpacing.xs + 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.28),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.auto_stories_rounded,
+                        size: 15,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(width: ReadingRoomSpacing.xs),
+                      Text(
+                        '$percentageText Read',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: ReadingRoomSpacing.md),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: ratio,
+                minHeight: 8,
+                backgroundColor: colors.outline.withValues(alpha: 0.45),
+                valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+              ),
+            ),
+            const SizedBox(height: ReadingRoomSpacing.md),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _HeroMiniStat(
+                    icon: Icons.check_circle_outline_rounded,
+                    label: 'Read',
+                    value: readCount.toString(),
+                    color: colors.primary,
+                  ),
+                ),
+                const SizedBox(width: ReadingRoomSpacing.sm),
+                Expanded(
+                  child: _HeroMiniStat(
+                    icon: Icons.schedule_rounded,
+                    label: 'Unread',
+                    value: stats.unreadCount.toString(),
+                    color: colors.error,
+                  ),
+                ),
+                const SizedBox(width: ReadingRoomSpacing.sm),
+                Expanded(
+                  child: _HeroMiniStat(
+                    icon: Icons.favorite_border_rounded,
+                    label: 'Favorites',
+                    value: stats.favoritesCount.toString(),
+                    color: colors.tertiary,
+                  ),
+                ),
+                const SizedBox(width: ReadingRoomSpacing.sm),
+                Expanded(
+                  child: _HeroMiniStat(
+                    icon: Icons.archive_outlined,
+                    label: 'Archived',
+                    value: stats.archivedCount.toString(),
+                    color: colors.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroMiniStat extends StatelessWidget {
+  const _HeroMiniStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ReadingRoomSpacing.sm,
+        vertical: ReadingRoomSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surface.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(ReadingRoomRadii.standard - 2),
+        border: Border.all(
+          color: colors.outline.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, size: 15, color: color),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colors.onSurface,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontSize: 10,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Metric grid cards ──────────────────────────────────────────
 
 class _SummaryCards extends StatelessWidget {
   const _SummaryCards({
@@ -121,43 +393,43 @@ class _SummaryCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = Theme.of(context).colorScheme;
     final List<_StatCard> cards = <_StatCard>[
       _StatCard(
         label: 'Total',
         value: stats.totalBookmarks.toString(),
-        icon: Icons.bookmark_outline,
-        color: theme.colorScheme.primary,
+        icon: Icons.bookmark_outline_rounded,
+        color: colors.primary,
       ),
       _StatCard(
         label: 'Unread',
         value: stats.unreadCount.toString(),
         icon: Icons.visibility_off_outlined,
-        color: theme.colorScheme.error,
+        color: colors.error,
       ),
       _StatCard(
         label: 'This week',
         value: stats.addedThisWeek.toString(),
-        icon: Icons.calendar_today,
-        color: theme.colorScheme.tertiary,
+        icon: Icons.calendar_today_rounded,
+        color: colors.tertiary,
       ),
       _StatCard(
         label: 'Read %',
         value: '${(stats.readRatio * 100).toStringAsFixed(0)}%',
-        icon: Icons.pie_chart_outline,
-        color: Colors.tealAccent,
+        icon: Icons.pie_chart_outline_rounded,
+        color: colors.primary,
       ),
       _StatCard(
         label: 'Favorites',
         value: stats.favoritesCount.toString(),
-        icon: Icons.favorite_outline,
-        color: Colors.pinkAccent,
+        icon: Icons.favorite_outline_rounded,
+        color: colors.tertiary,
       ),
       _StatCard(
         label: 'Top source',
         value: topSource,
         icon: Icons.public_rounded,
-        color: Colors.lightBlueAccent,
+        color: colors.secondary,
       ),
     ];
 
@@ -184,6 +456,81 @@ class _SummaryCards extends StatelessWidget {
   }
 }
 
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+    return SizedBox(
+      height: 112,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+          border: Border.all(color: colors.outline),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(ReadingRoomSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: color, size: 18),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                value,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── 7-day activity timeline ────────────────────────────────────
+
 class _TimelinePanel extends StatelessWidget {
   const _TimelinePanel({required this.buckets});
 
@@ -192,24 +539,72 @@ class _TimelinePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
     final int maxCount = buckets.fold<int>(
       0,
       (int max, TimelineBucket bucket) =>
           bucket.count > max ? bucket.count : max,
     );
+    final int totalWeek = buckets.fold<int>(
+      0,
+      (int sum, TimelineBucket bucket) => sum + bucket.count,
+    );
 
-    return Card(
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-      shape: RoundedRectangleBorder(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+        border: Border.all(color: colors.outline),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(ReadingRoomSpacing.md),
+        padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('7-day Timeline', style: theme.textTheme.titleSmall),
-            const SizedBox(height: ReadingRoomSpacing.md),
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.bar_chart_rounded,
+                    size: 16,
+                    color: colors.primary,
+                  ),
+                ),
+                const SizedBox(width: ReadingRoomSpacing.sm),
+                Expanded(
+                  child: Text(
+                    '7-day Timeline',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: ReadingRoomSpacing.sm,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$totalWeek saved',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: ReadingRoomSpacing.lg),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: buckets
@@ -242,49 +637,47 @@ class _TimelineBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
     final double fraction = maxCount == 0 ? 0 : bucket.count / maxCount;
-    final double barHeight = 6 + (fraction * 58);
+    final double barHeight = 8 + (fraction * 60);
+    final bool hasActivity = bucket.count > 0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
           Text(
             bucket.count.toString(),
             style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: hasActivity ? colors.onSurface : colors.onSurfaceVariant,
+              fontWeight: hasActivity ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              color: theme.colorScheme.primary.withValues(alpha: 0.2),
+              color: colors.outline.withValues(alpha: 0.35),
             ),
             child: SizedBox(
               height: barHeight,
-              width: 14,
+              width: 16,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: <Color>[
-                      theme.colorScheme.primary,
-                      theme.colorScheme.tertiary,
-                    ],
-                  ),
+                  color: hasActivity
+                      ? colors.primary
+                      : colors.outline.withValues(alpha: 0.45),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             bucket.shortLabel,
             style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -293,90 +686,78 @@ class _TimelineBar extends StatelessWidget {
   }
 }
 
-// ─── Stat card ──────────────────────────────────────────────────
+// ─── Ranked section card & row ──────────────────────────────────
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.title,
     required this.icon,
-    required this.color,
+    required this.accentColor,
+    required this.children,
   });
 
-  final String label;
-  final String value;
+  final String title;
   final IconData icon;
-  final Color color;
+  final Color accentColor;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return SizedBox(
-      height: 104,
-      child: Card(
-        margin: EdgeInsets.zero,
-        color: color.withValues(alpha: 0.09),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(ReadingRoomSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(icon, color: color, size: 17),
+    final ColorScheme colors = theme.colorScheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+        border: Border.all(color: colors.outline),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const Spacer(),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                value,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
+                  child: Icon(icon, size: 16, color: accentColor),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
+                const SizedBox(width: ReadingRoomSpacing.sm),
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: ReadingRoomSpacing.md),
+            ...children,
+          ],
         ),
       ),
     );
   }
 }
 
-// ─── Bar row ────────────────────────────────────────────────────
-
-class _BarRow extends StatelessWidget {
-  const _BarRow({
+class _RankedBarRow extends StatelessWidget {
+  const _RankedBarRow({
     required this.label,
     required this.count,
     required this.maxCount,
     required this.color,
+    this.rank,
+    this.leadingIcon,
   });
 
+  final int? rank;
+  final IconData? leadingIcon;
   final String label;
   final int count;
   final int maxCount;
@@ -385,47 +766,86 @@ class _BarRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final double fraction = maxCount == 0 ? 0 : count / maxCount;
+    final ColorScheme colors = theme.colorScheme;
+    final double fraction =
+        maxCount == 0 ? 0 : (count / maxCount).clamp(0.0, 1.0);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: <Widget>[
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall,
-              overflow: TextOverflow.ellipsis,
-            ),
+    return Row(
+      children: <Widget>[
+        Container(
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
           ),
-          const SizedBox(width: ReadingRoomSpacing.sm),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: fraction,
-                minHeight: 14,
-                backgroundColor: color.withValues(alpha: 0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  color.withValues(alpha: 0.6),
+          child: rank != null
+              ? Text(
+                  '$rank',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
+                )
+              : Icon(
+                  leadingIcon ?? Icons.circle,
+                  size: 15,
+                  color: color,
+                ),
+        ),
+        const SizedBox(width: ReadingRoomSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colors.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: ReadingRoomSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: ReadingRoomSpacing.sm,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      count.toString(),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: fraction,
+                  minHeight: 6,
+                  backgroundColor: colors.outline.withValues(alpha: 0.35),
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: ReadingRoomSpacing.sm),
-          SizedBox(
-            width: 30,
-            child: Text(
-              count.toString(),
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

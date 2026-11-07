@@ -16,7 +16,7 @@ class RedditParser implements SourceParser {
               receiveTimeout: const Duration(seconds: 8),
               headers: <String, dynamic>{
                 'User-Agent':
-                    'Mozilla/5.0 (Android 13; Mobile) Marky/1.0 link-vault',
+                    'Mozilla/5.0 (Android 13; Mobile) Marky/1.0 link-manager',
                 'Accept': 'application/json,text/plain,*/*',
               },
             ));
