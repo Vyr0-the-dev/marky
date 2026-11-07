@@ -413,6 +413,7 @@ class _BookmarkList extends ConsumerWidget {
     return Scrollbar(
       interactive: true,
       child: ListView.separated(
+        // ignore: deprecated_member_use
         cacheExtent: 360,
         itemCount: bookmarks.length,
         separatorBuilder: (_, __) => const Divider(height: 1),
@@ -476,6 +477,7 @@ class _BookmarkGrid extends ConsumerWidget {
     return Scrollbar(
       interactive: true,
       child: GridView.builder(
+        // ignore: deprecated_member_use
         cacheExtent: 360,
         padding: const EdgeInsets.all(ReadingRoomSpacing.sm),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

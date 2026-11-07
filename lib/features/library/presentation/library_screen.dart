@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
 import 'package:marky/features/collections/domain/bookmark_collection.dart';
 import 'package:marky/features/collections/domain/bookmark_collection_repository.dart';
@@ -147,9 +148,10 @@ class _TagChip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ThemeData theme = Theme.of(context);
-    final Color? chipColor =
-        tag.colorArgb != null ? Color(tag.colorArgb!) : null;
+    final TagColorStyle tagStyle = ColorContrastUtils.resolveTagStyle(
+      colorArgb: tag.colorArgb,
+      context: context,
+    );
 
     return Semantics(
       button: true,
@@ -158,21 +160,22 @@ class _TagChip extends ConsumerWidget {
       child: GestureDetector(
         onLongPress: () => _openEditor(context),
         child: InputChip(
-          label: _TagChipLabel(tag: tag),
+          label: _TagChipLabel(tag: tag, textColor: tagStyle.textColor),
           avatar: tag.isPinned
-              ? Icon(Icons.push_pin,
-                  size: 14, color: theme.colorScheme.onSurfaceVariant)
+              ? Icon(
+                  Icons.push_pin,
+                  size: 14,
+                  color: tagStyle.textColor,
+                )
               : null,
-          deleteIcon: const Icon(Icons.close, size: 16),
+          deleteIcon: Icon(Icons.close, size: 16, color: tagStyle.textColor),
           onDeleted: () => _confirmDelete(context, ref),
           onPressed: () {
             ref.read(feedNotifierProvider.notifier).setTagId(tag.id);
             context.go(Routes.home);
           },
-          backgroundColor: chipColor?.withValues(alpha: 0.15),
-          side: chipColor != null
-              ? BorderSide(color: chipColor.withValues(alpha: 0.4))
-              : null,
+          backgroundColor: tagStyle.backgroundColor,
+          side: BorderSide(color: tagStyle.borderColor, width: 0.5),
         ),
       ),
     );
@@ -218,25 +221,33 @@ class _TagChip extends ConsumerWidget {
 /// Inline label for [_TagChip] that shows the tag name plus a small
 /// usage-count badge when the tag has at least one bookmark.
 class _TagChipLabel extends StatelessWidget {
-  const _TagChipLabel({required this.tag});
+  const _TagChipLabel({required this.tag, this.textColor});
 
   final Tag tag;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
     if (tag.usageCount <= 0) {
-      return Text(tag.name);
+      return Text(
+        tag.name,
+        style: textColor != null ? TextStyle(color: textColor) : null,
+      );
     }
     final ThemeData theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Text(tag.name),
+        Text(
+          tag.name,
+          style: textColor != null ? TextStyle(color: textColor) : null,
+        ),
         const SizedBox(width: ReadingRoomSpacing.xs),
         Text(
           '${tag.usageCount}',
           style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: textColor?.withValues(alpha: 0.8) ??
+                theme.colorScheme.onSurfaceVariant,
             fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
           ),
         ),

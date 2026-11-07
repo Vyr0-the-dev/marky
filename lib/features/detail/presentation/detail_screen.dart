@@ -8,6 +8,7 @@ import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
+import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
@@ -1043,15 +1044,18 @@ class _TagChipsEditable extends ConsumerWidget {
         return tagAsync.when(
           data: (Tag? tag) {
             if (tag == null) return const SizedBox.shrink();
-            final Color? c =
-                tag.colorArgb != null ? Color(tag.colorArgb!) : null;
+            final TagColorStyle tagStyle = ColorContrastUtils.resolveTagStyle(
+              colorArgb: tag.colorArgb,
+              context: context,
+            );
             return InputChip(
-              label: Text(tag.name),
-              backgroundColor: c?.withValues(alpha: 0.15),
-              side: c != null
-                  ? BorderSide(color: c.withValues(alpha: 0.4))
-                  : null,
-              deleteIcon: const Icon(Icons.close, size: 14),
+              label: Text(
+                tag.name,
+                style: TextStyle(color: tagStyle.textColor),
+              ),
+              backgroundColor: tagStyle.backgroundColor,
+              side: BorderSide(color: tagStyle.borderColor, width: 0.5),
+              deleteIcon: Icon(Icons.close, size: 14, color: tagStyle.textColor),
               onDeleted: () => _removeTag(ref, id),
             );
           },

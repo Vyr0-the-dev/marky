@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
+import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
@@ -313,26 +314,27 @@ class TagChipsRow extends ConsumerWidget {
         ];
         if (resolved.isEmpty) return const SizedBox.shrink();
         final List<Widget> chips = resolved.map((Tag tag) {
-          final Color? c = tag.colorArgb != null ? Color(tag.colorArgb!) : null;
+          final TagColorStyle tagStyle = ColorContrastUtils.resolveTagStyle(
+            colorArgb: tag.colorArgb,
+            context: context,
+          );
           return Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 6,
               vertical: 2,
             ),
             decoration: BoxDecoration(
-              color: (c ?? Theme.of(context).colorScheme.primary)
-                  .withValues(alpha: 0.12),
+              color: tagStyle.backgroundColor,
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: (c ?? Theme.of(context).colorScheme.primary)
-                    .withValues(alpha: 0.3),
+                color: tagStyle.borderColor,
                 width: 0.5,
               ),
             ),
             child: Text(
               tag.name,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: c ?? Theme.of(context).colorScheme.primary,
+                    color: tagStyle.textColor,
                     fontSize: 10,
                   ),
             ),
