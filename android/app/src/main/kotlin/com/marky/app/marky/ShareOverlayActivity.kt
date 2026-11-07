@@ -1,41 +1,24 @@
 package com.marky.app.marky
 
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
-import android.os.LocaleList
 import android.os.Bundle
-import android.view.Gravity
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.TextView
-import java.util.Locale
-import kotlin.math.max
-import kotlin.math.min
 
 class ShareOverlayActivity : Activity() {
     private var initialPayload: String? = null
     private var startupOverlay: View? = null
-    private var startupPulse: AnimatorSet? = null
     private var rootLayout: FrameLayout? = null
     private var flutterContainer: FrameLayout? = null
     private var flutterHost: ShareOverlayHost? = null
     private var flutterAttached = false
-    private val flutterAttachDelayMillis = 700L
     private val attachFlutterRunnable = Runnable {
         if (!isFinishing && !isDestroyed) {
             attachFlutterEngine()
@@ -45,6 +28,7 @@ class ShareOverlayActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         initialPayload = extractPayload(intent)
         super.onCreate(savedInstanceState)
+        applyZeroTransitions()
         try {
             val loader = io.flutter.FlutterInjector.instance().flutterLoader()
             loader.startInitialization(applicationContext)
@@ -109,7 +93,7 @@ class ShareOverlayActivity : Activity() {
 
     override fun finish() {
         super.finish()
-        overridePendingTransition(0, 0)
+        applyZeroTransitions()
     }
 
     private fun attachFlutterEngine() {
@@ -210,231 +194,40 @@ class ShareOverlayActivity : Activity() {
 
     private fun showStartupOverlay() {
         if (startupOverlay != null) return
-        val copy = startupCopy()
-
         val overlay = FrameLayout(this).apply {
             setBackgroundColor(Color.TRANSPARENT)
-            isClickable = true
         }
-
-        val panel = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(24), dp(14), dp(24), dp(24))
-            background = GradientDrawable().apply {
-                setColor(Color.rgb(3, 3, 3))
-                val r = dp(28).toFloat()
-                cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
-                setStroke(dp(1), Color.argb(80, 255, 255, 255))
-            }
-            elevation = dp(18).toFloat()
-            minimumHeight = dp(384)
-        }
-        bindStartupPanelDrag(panel)
-
-        val handle = View(this).apply {
-            background = GradientDrawable().apply {
-                setColor(Color.argb(70, 255, 255, 255))
-                cornerRadius = dp(999).toFloat()
-            }
-        }
-        panel.addView(
-            handle,
-            LinearLayout.LayoutParams(dp(42), dp(5)).apply {
-                bottomMargin = dp(36)
-            },
-        )
-
-        val statusHost = FrameLayout(this).apply {
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(Color.argb(26, 143, 163, 255))
-            }
-        }
-        val statusDot = View(this).apply {
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(Color.rgb(143, 163, 255))
-            }
-        }
-        statusHost.addView(
-            statusDot,
-            FrameLayout.LayoutParams(dp(34), dp(34), Gravity.CENTER),
-        )
-        startPulse(statusHost)
-        panel.addView(
-            statusHost,
-            LinearLayout.LayoutParams(dp(116), dp(116)).apply {
-                bottomMargin = dp(12)
-            },
-        )
-
-        val title = TextView(this).apply {
-            text = copy.title
-            setTextColor(Color.WHITE)
-            textSize = 22f
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-        }
-        panel.addView(title)
-
-        val message = TextView(this).apply {
-            text = copy.message
-            setTextColor(Color.argb(190, 255, 255, 255))
-            textSize = 14f
-            gravity = Gravity.CENTER
-            setPadding(0, dp(8), 0, 0)
-        }
-        panel.addView(message)
-
-        panel.addView(
-            View(this),
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f),
-        )
-
-        val action = TextView(this).apply {
-            text = copy.action
-            setTextColor(Color.argb(150, 255, 255, 255))
-            textSize = 15f
-            gravity = Gravity.CENTER
-            background = GradientDrawable().apply {
-                setColor(Color.argb(46, 255, 255, 255))
-                cornerRadius = dp(18).toFloat()
-            }
-        }
-        panel.addView(
-            action,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(52)),
-        )
-
-        overlay.addView(
-            panel,
-            FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(384)).apply {
-                gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                leftMargin = 0
-                rightMargin = 0
-                bottomMargin = 0
-            },
-        )
-
         startupOverlay = overlay
         addContentView(
             overlay,
-            FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT),
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+            ),
         )
     }
 
     private fun hideStartupOverlay() {
         val overlay = startupOverlay ?: return
         startupOverlay = null
-        startupPulse?.cancel()
-        startupPulse = null
-        overlay.animate()
-            .alpha(0f)
-            .setDuration(100L)
-            .withEndAction {
-                overlay.visibility = View.GONE
-                (overlay.parent as? ViewGroup)?.removeView(overlay)
-            }
-            .start()
-    }
-
-    private fun startPulse(view: View) {
-        val scaleX = ObjectAnimator.ofFloat(view, View.SCALE_X, 0.94f, 1.04f)
-        val scaleY = ObjectAnimator.ofFloat(view, View.SCALE_Y, 0.94f, 1.04f)
-        val alpha = ObjectAnimator.ofFloat(view, View.ALPHA, 0.72f, 1f)
-        listOf(scaleX, scaleY, alpha).forEach { animator ->
-            animator.repeatCount = ValueAnimator.INFINITE
-            animator.repeatMode = ValueAnimator.REVERSE
-        }
-        startupPulse = AnimatorSet().apply {
-            playTogether(scaleX, scaleY, alpha)
-            duration = 900L
-            interpolator = AccelerateDecelerateInterpolator()
-            start()
-        }
-    }
-
-    private fun bindStartupPanelDrag(panel: View) {
-        var startY = 0f
-        var offsetY = 0f
-        panel.setOnTouchListener { view, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    startY = event.rawY
-                    offsetY = 0f
-                    view.animate().cancel()
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    offsetY = max(0f, min(dp(180).toFloat(), event.rawY - startY))
-                    view.translationY = offsetY
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    if (offsetY > dp(56)) {
-                        finishOverlayNow()
-                    } else {
-                        view.animate().translationY(0f).setDuration(150).start()
-                    }
-                    true
-                }
-                MotionEvent.ACTION_CANCEL -> {
-                    view.animate().translationY(0f).setDuration(150).start()
-                    true
-                }
-                else -> false
-            }
-        }
+        overlay.visibility = View.GONE
+        (overlay.parent as? ViewGroup)?.removeView(overlay)
     }
 
     private fun finishOverlayNow() {
         hideStartupOverlay()
         finish()
-        overridePendingTransition(0, 0)
+        applyZeroTransitions()
     }
 
-    private fun startupCopy(): StartupCopy {
-        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        val storedLocale = prefs.getString("flutter.v2.settings.locale", "system")
-        val language = when (storedLocale) {
-            "en" -> "en"
-            "tr" -> "tr"
-            else -> deviceLanguage()
-        }
-        return if (language == "tr") {
-            StartupCopy(
-                title = "Kaydediliyor",
-                message = "Paylaşım Marky’ye aktarılıyor.",
-                action = "Kaydediliyor...",
-            )
+    private fun applyZeroTransitions() {
+        if (Build.VERSION.SDK_INT >= 34) {
+            overrideActivityTransition(Activity.OVERRIDE_TRANSITION_OPEN, 0, 0)
+            overrideActivityTransition(Activity.OVERRIDE_TRANSITION_CLOSE, 0, 0)
         } else {
-            StartupCopy(
-                title = "Saving",
-                message = "Sending the shared item to Marky.",
-                action = "Saving...",
-            )
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
         }
-    }
-
-    private fun deviceLanguage(): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val locales = LocaleList.getDefault()
-            val locale = if (locales.size() == 0) null else locales.get(0)
-            locale?.language?.lowercase() ?: "en"
-        } else {
-            Locale.getDefault().language.lowercase()
-        }
-    }
-
-    private data class StartupCopy(
-        val title: String,
-        val message: String,
-        val action: String,
-    )
-
-    private fun dp(value: Int): Int {
-        return (value * resources.displayMetrics.density).toInt()
     }
 }
 

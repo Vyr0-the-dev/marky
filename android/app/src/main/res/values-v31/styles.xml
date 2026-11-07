@@ -30,6 +30,8 @@
         <item name="android:windowIsFloating">false</item>
         <item name="android:backgroundDimEnabled">false</item>
         <item name="android:windowContentTransitions">false</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowSwipeToDismiss">false</item>
         <item name="android:windowAnimationStyle">@style/ShareOverlayAnimation</item>
         <item name="android:windowSplashScreenBackground">#00000000</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/share_overlay_transparent_splash_icon</item>

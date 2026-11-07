@@ -84,6 +84,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
     with TickerProviderStateMixin {
   Timer? _autoCloseTimer;
   CaptureResult? _result;
+  int _resultGeneration = 0;
   bool _isDismissing = false;
 
   static const double _compactHeight = 384;
@@ -117,7 +118,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
     )..addListener(_handleExitTick);
 
     _entranceController.forward();
-    unawaited(_waitForResult());
+    unawaited(_waitForResult(++_resultGeneration));
   }
 
   @override
@@ -125,11 +126,13 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
     super.didUpdateWidget(oldWidget);
     if (widget.resultFuture != oldWidget.resultFuture) {
       _autoCloseTimer?.cancel();
+      _result = null;
+      _resultGeneration++;
       _isDismissing = false;
       _exitController.reset();
       _snapController.reset();
       _dragOffsetNotifier.value = 0.0;
-      unawaited(_waitForResult());
+      unawaited(_waitForResult(_resultGeneration));
     }
     if (widget.exitDuration != oldWidget.exitDuration) {
       _exitController.duration = widget.exitDuration;
@@ -160,7 +163,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
     }
   }
 
-  Future<void> _waitForResult() async {
+  Future<void> _waitForResult(int generation) async {
     CaptureResult result;
     try {
       result = await widget.resultFuture;
@@ -168,7 +171,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
       result = CaptureResult.error('share_result_failed');
     }
 
-    if (!mounted) return;
+    if (!mounted || generation != _resultGeneration) return;
     setState(() {
       _result = result;
     });
@@ -189,8 +192,12 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
       _snapController.stop();
     }
 
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+    final double totalHeight = _compactHeight + bottomInset;
+    final double targetExit = math.max(650, totalHeight + 180);
+
     if (widget.exitDuration == Duration.zero) {
-      _dragOffsetNotifier.value = _compactHeight + 100;
+      _dragOffsetNotifier.value = targetExit;
       if (isAutoClose) {
         (widget.onAutoClose ?? widget.onDismiss)?.call();
       } else {
@@ -200,10 +207,9 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
     }
 
     final double start = _dragOffsetNotifier.value;
-    const double end = _compactHeight + 120;
     _exitAnimation = Tween<double>(
       begin: start,
-      end: end,
+      end: targetExit,
     ).animate(
       CurvedAnimation(
         parent: _exitController,
@@ -487,9 +493,13 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
         final double entranceProgress =
             Curves.easeOut.transform(_entranceController.value);
         final double dragDismissFraction =
-            (_dragOffsetNotifier.value / totalHeight).clamp(0.0, 1.0);
+            (_dragOffsetNotifier.value / _compactHeight).clamp(0.0, 1.0);
         final double scrimOpacity =
             (entranceProgress * (1.0 - dragDismissFraction)).clamp(0.0, 1.0);
+
+        if (scrimOpacity <= 0.0) {
+          return const SizedBox.shrink();
+        }
 
         return Opacity(
           opacity: scrimOpacity,

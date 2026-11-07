@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -239,4 +240,59 @@ void main() {
     expect(find.text('Already saved'), findsOneWidget);
     expect(find.byKey(const ValueKey('duplicate')), findsOneWidget);
   });
+
+  testWidgets(
+    'does not re-trigger capture or flash error on identical platform payload',
+    (WidgetTester tester) async {
+      final DateTime now = DateTime.now();
+      final Bookmark bookmark = Bookmark(
+        id: 2,
+        originalUrl: 'https://example.com/duplicate-test',
+        normalizedHost: 'example.com',
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      var captureCalls = 0;
+      await tester.pumpWidget(
+        ShareOverlayApp(
+          initialPayload: 'https://example.com/duplicate-test',
+          autoCloseAfter: const Duration(minutes: 1),
+          localeChoice: AppLocaleChoice.en,
+          capturePayload: (_) async {
+            captureCalls++;
+            return CaptureResult.duplicate(
+              bookmark,
+              DuplicateMatchLevel.canonicalUrl,
+            );
+          },
+          finishOverlay: () async {},
+          openMainApp: () async {},
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+      expect(captureCalls, 1);
+      expect(find.text('Already saved'), findsOneWidget);
+      expect(find.byKey(const ValueKey('error')), findsNothing);
+
+      // Send the same payload again via the platform bridge
+      await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+        'marky/share_overlay',
+        const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('newPayload', 'https://example.com/duplicate-test'),
+        ),
+        (_) {},
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      // Should not have triggered a second capture call
+      expect(captureCalls, 1);
+      expect(find.text('Already saved'), findsOneWidget);
+      expect(find.byKey(const ValueKey('error')), findsNothing);
+    },
+  );
 }

@@ -142,7 +142,9 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
       GlobalKey<MarkyShareResultPanelState>();
   late Future<CaptureResult> _resultFuture;
   late Completer<CaptureResult> _resultCompleter;
-  Timer? _captureStartTimer;
+  Timer? _captureTimeoutTimer;
+  String? _activePayload;
+  bool _isCapturing = false;
   bool _closing = false;
   bool _openAppRequested = false;
   bool _flutterReadyNotified = false;
@@ -150,7 +152,23 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
   @override
   void initState() {
     super.initState();
-    _startInitialCapture();
+    _resultCompleter = Completer<CaptureResult>();
+    _resultFuture = _resultCompleter.future;
+
+    final String? payload = widget.initialPayload?.trim();
+    if (payload != null && payload.isNotEmpty) {
+      _activePayload = payload;
+      _captureTimeoutTimer = Timer(const Duration(milliseconds: 150), () {
+        unawaited(_executeCapture(payload));
+      });
+    } else {
+      _captureTimeoutTimer = Timer(const Duration(seconds: 4), () {
+        if (!_resultCompleter.isCompleted) {
+          _resultCompleter.complete(const CaptureResult.invalidUrl());
+        }
+      });
+    }
+
     ShareOverlayBridge.setPayloadHandler(_handleIncomingPayload);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _notifyFlutterReady();
@@ -160,46 +178,43 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
   @override
   void dispose() {
     ShareOverlayBridge.clearPayloadHandler();
-    _captureStartTimer?.cancel();
+    _captureTimeoutTimer?.cancel();
     if (!_resultCompleter.isCompleted) {
       _resultCompleter.complete(CaptureResult.error('share_overlay_disposed'));
     }
     super.dispose();
   }
 
-  void _startInitialCapture() {
-    _resultCompleter = Completer<CaptureResult>();
-    _resultFuture = _resultCompleter.future;
-    final String? payload = widget.initialPayload?.trim();
-    if (payload != null && payload.isNotEmpty) {
-      _captureStartTimer = Timer(const Duration(milliseconds: 150), () {
-        unawaited(_capturePayloadWith(widget.initialPayload));
-      });
-    } else {
-      _captureStartTimer = Timer(const Duration(seconds: 4), () {
-        if (!_resultCompleter.isCompleted) {
-          _resultCompleter.complete(const CaptureResult.invalidUrl());
-        }
-      });
-    }
-  }
-
   void _handleIncomingPayload(String? payload) {
     if (!mounted) return;
-    _captureStartTimer?.cancel();
+    final String? trimmed = payload?.trim();
+    if (trimmed == null || trimmed.isEmpty) return;
+
+    // Prevent duplicate concurrent execution for the identical payload
+    if (_activePayload == trimmed && (_isCapturing || _resultCompleter.isCompleted)) {
+      return;
+    }
+
+    _captureTimeoutTimer?.cancel();
+    _activePayload = trimmed;
+
     setState(() {
       _resultCompleter = Completer<CaptureResult>();
       _resultFuture = _resultCompleter.future;
       _closing = false;
       _openAppRequested = false;
     });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _notifyFlutterReady();
     });
-    unawaited(_capturePayloadWith(payload));
+
+    unawaited(_executeCapture(trimmed));
   }
 
-  Future<void> _capturePayloadWith(String? payload) async {
+  Future<void> _executeCapture(String payload) async {
+    if (_isCapturing) return;
+    _isCapturing = true;
     try {
       final DateTime startTime = DateTime.now();
       final CaptureResult result = await widget.capturePayload(payload);
@@ -216,6 +231,8 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
       if (!_resultCompleter.isCompleted) {
         _resultCompleter.completeError(error, stackTrace);
       }
+    } finally {
+      _isCapturing = false;
     }
   }
 
