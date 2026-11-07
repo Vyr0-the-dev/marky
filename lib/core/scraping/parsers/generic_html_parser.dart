@@ -56,12 +56,16 @@ class GenericHtmlParser implements SourceParser {
     return _extractInBackground(url, body);
   }
 
+  static const int _maxHtmlLength = 350000;
+
   /// Full-document HTML parsing is the most expensive step of a capture
   /// (hundreds of ms on large pages), so it never runs on the UI isolate.
   /// Static so the isolate closure captures only [url] and [body], not
   /// this parser and its [Dio] client.
   static Future<MetadataResult> _extractInBackground(String url, String body) {
-    return Isolate.run(() => _extractMetadata(url, body));
+    final String cappedBody =
+        body.length > _maxHtmlLength ? body.substring(0, _maxHtmlLength) : body;
+    return Isolate.run(() => _extractMetadata(url, cappedBody));
   }
 
   static MetadataResult _extractMetadata(String url, String body) {

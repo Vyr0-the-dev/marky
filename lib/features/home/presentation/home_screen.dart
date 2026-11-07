@@ -582,6 +582,7 @@ class _GridCard extends StatelessWidget {
                               ? Image.network(
                                   imageUrl,
                                   fit: BoxFit.cover,
+                                  gaplessPlayback: true,
                                   cacheWidth: cacheWidth,
                                   cacheHeight: cacheHeight,
                                   filterQuality: FilterQuality.low,

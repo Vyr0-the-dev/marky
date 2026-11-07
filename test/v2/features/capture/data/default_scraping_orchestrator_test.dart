@@ -398,5 +398,55 @@ void main() {
       expect(afterDone.title, 'Already Done');
       expect(afterDone.heroImageUrl, 'https://example.com/done.jpg');
     });
+
+    test(
+        'enrichIncomplete skips bookmarks older than 30 minutes and deduplicates within session',
+        () async {
+      final Bookmark oldBookmark = await repo.save(
+        Bookmark(
+          originalUrl: 'https://example.com/old',
+          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+          updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+        ),
+      );
+      final Bookmark recentFailed = await repo.save(
+        Bookmark(
+          originalUrl: 'https://example.com/recent-empty',
+          scrapingStatus: BookmarkScrapingStatus.failed,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      int scrapeCalls = 0;
+      final _BlockingScraper countingEmptyScraper = _BlockingScraper(
+        onScrape: (_) async {
+          scrapeCalls++;
+        },
+      );
+      final DefaultScrapingOrchestrator orchestrator =
+          DefaultScrapingOrchestrator(
+        bookmarkRepo: repo,
+        scraper: _FakeMetadataScraper(const MetadataResult()),
+        merger: const DefaultUpsertMergeService(),
+      );
+
+      await orchestrator.enrichIncomplete();
+      // Second call in the same session must not re-attempt `recentFailed`.
+      final DefaultScrapingOrchestrator sessionOrchestrator =
+          DefaultScrapingOrchestrator(
+        bookmarkRepo: repo,
+        scraper: countingEmptyScraper,
+        merger: const DefaultUpsertMergeService(),
+      );
+      await sessionOrchestrator.enrichIncomplete();
+      await sessionOrchestrator.enrichIncomplete();
+
+      final Bookmark afterOld = (await repo.getById(oldBookmark.id!))!;
+      final Bookmark afterRecent = (await repo.getById(recentFailed.id!))!;
+      expect(afterOld.scrapingStatus, BookmarkScrapingStatus.pending);
+      expect(afterRecent.scrapingStatus, BookmarkScrapingStatus.done);
+      expect(scrapeCalls, 1);
+    });
   });
 }

@@ -110,7 +110,7 @@ void main() {
     expect((await repository.getById(initial.id!))!.isPinned, isTrue);
 
     // Overflow menu exposes Edit, Refetch, Read, Archive, Delete
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('Edit'), findsOneWidget);
@@ -125,7 +125,7 @@ void main() {
     expect((await repository.getById(initial.id!))!.isRead, isTrue);
 
     // Toggle Archive via overflow menu
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Unread'), findsOneWidget);
     await tester.tap(find.text('Archive'));
@@ -138,7 +138,7 @@ void main() {
     expect(find.text('Link copied'), findsOneWidget);
 
     // Edit title & description from overflow menu
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
@@ -152,7 +152,7 @@ void main() {
     expect(find.text('Updated Editorial Title'), findsOneWidget);
 
     // Delete confirmation dialog from overflow menu
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();

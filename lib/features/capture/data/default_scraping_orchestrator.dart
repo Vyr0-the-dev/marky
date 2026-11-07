@@ -30,6 +30,8 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
   final MetadataScraper _scraper;
   final UpsertMergeService _merger;
   final Map<int, CancelToken> _activeTokens = <int, CancelToken>{};
+  final Set<int> _attemptedIncompleteIds = <int>{};
+  bool _isEnrichingIncomplete = false;
 
   @override
   void cancel(int bookmarkId) {
@@ -114,27 +116,46 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
   }
 
   @override
-  Future<void> enrichIncomplete({int limit = 15}) async {
+  Future<void> enrichIncomplete({int limit = 3}) async {
+    if (_isEnrichingIncomplete) return;
+    _isEnrichingIncomplete = true;
     try {
       final List<Bookmark> recent = await _bookmarkRepo.feed(
         const BookmarkFeedQuery(
-          limit: 50,
+          limit: 15,
         ),
       );
+      final DateTime now = DateTime.now();
       final List<Bookmark> incomplete = recent.where((Bookmark b) {
-        if (b.id == null) return false;
-        return (b.heroImageUrl == null || b.heroImageUrl!.isEmpty) ||
-            b.scrapingStatus == BookmarkScrapingStatus.pending ||
-            b.scrapingStatus == BookmarkScrapingStatus.processing;
+        final int? id = b.id;
+        if (id == null || _attemptedIncompleteIds.contains(id)) {
+          return false;
+        }
+        if (now.difference(b.createdAt).inMinutes > 30) {
+          return false;
+        }
+        if (b.scrapingStatus == BookmarkScrapingStatus.pending ||
+            b.scrapingStatus == BookmarkScrapingStatus.processing) {
+          return true;
+        }
+        final bool neverEnriched = b.title == null &&
+            (b.heroImageUrl == null || b.heroImageUrl!.isEmpty) &&
+            (b.faviconUrl == null || b.faviconUrl!.isEmpty);
+        return b.scrapingStatus == BookmarkScrapingStatus.failed &&
+            neverEnriched;
       }).take(limit).toList();
 
       for (final Bookmark b in incomplete) {
-        if (b.id != null) {
-          await enrich(b.id!);
+        final int? id = b.id;
+        if (id != null) {
+          _attemptedIncompleteIds.add(id);
+          await enrich(id);
         }
       }
     } catch (_) {
       // Incomplete enrichment is best-effort.
+    } finally {
+      _isEnrichingIncomplete = false;
     }
   }
 

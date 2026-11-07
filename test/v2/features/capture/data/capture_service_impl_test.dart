@@ -596,7 +596,7 @@ class _RecordingOrchestrator implements ScrapingOrchestrator {
   }
 
   @override
-  Future<void> enrichIncomplete({int limit = 15}) async {}
+  Future<void> enrichIncomplete({int limit = 3}) async {}
 }
 
 class _ThrowingOrchestrator implements ScrapingOrchestrator {
@@ -609,7 +609,7 @@ class _ThrowingOrchestrator implements ScrapingOrchestrator {
   void cancel(int bookmarkId) {}
 
   @override
-  Future<void> enrichIncomplete({int limit = 15}) async {}
+  Future<void> enrichIncomplete({int limit = 3}) async {}
 }
 
 class _BlockingOrchestrator implements ScrapingOrchestrator {
@@ -626,7 +626,7 @@ class _BlockingOrchestrator implements ScrapingOrchestrator {
   void cancel(int bookmarkId) {}
 
   @override
-  Future<void> enrichIncomplete({int limit = 15}) async {}
+  Future<void> enrichIncomplete({int limit = 3}) async {}
 
   void complete() {
     if (!_completer.isCompleted) {

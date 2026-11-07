@@ -197,6 +197,7 @@ class _Thumbnail extends StatelessWidget {
             ? Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
+                gaplessPlayback: true,
                 cacheWidth: cacheSize,
                 cacheHeight: cacheSize,
                 filterQuality: FilterQuality.low,

@@ -210,6 +210,7 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
   }
 
   Future<void> _enrichPendingBookmarks() async {
+    await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     try {
       await ref.read(scrapingOrchestratorProvider).enrichIncomplete();

@@ -19,8 +19,8 @@ abstract interface class ScrapingOrchestrator {
   /// [bookmarkId] if active.
   void cancel(int bookmarkId);
 
-  /// Automatically discovers bookmarks with missing thumbnails or
-  /// incomplete/abandoned scraping states and enriches them in the
-  /// background. Safe to fire-and-forget — never throws.
-  Future<void> enrichIncomplete({int limit = 15});
+  /// Automatically discovers recently captured bookmarks whose
+  /// scraping was interrupted (e.g. in the background share overlay)
+  /// and enriches them once per session. Safe to fire-and-forget.
+  Future<void> enrichIncomplete({int limit = 3});
 }

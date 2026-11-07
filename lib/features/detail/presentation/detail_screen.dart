@@ -274,114 +274,42 @@ class _HeroAppBar extends ConsumerWidget {
         tooltip: l10n?.actionShare ?? 'Share',
         onPressed: _share,
       ),
-      PopupMenuButton<String>(
-        onSelected: (String value) {
-          switch (value) {
-            case 'edit':
-              unawaited(_editTitleAndDescription(context, ref));
-            case 'refetch':
-              unawaited(_refetchMetadata(context, ref));
-            case 'toggleRead':
-              unawaited(_toggleRead(ref));
-            case 'toggleArchive':
-              unawaited(
-                _toggle(
-                  ref,
-                  (Bookmark b) => b.copyWith(isArchived: !b.isArchived),
-                ),
-              );
-            case 'delete':
-              unawaited(_delete(context, ref));
-          }
-        },
-        itemBuilder: (BuildContext menuContext) => <PopupMenuEntry<String>>[
-          PopupMenuItem<String>(
-            value: 'edit',
-            child: Row(
-              children: <Widget>[
-                const Icon(Icons.edit_outlined, size: 18),
-                const SizedBox(width: ReadingRoomSpacing.md),
-                Flexible(child: Text(l10n?.actionEdit ?? 'Edit')),
-              ],
-            ),
-          ),
-          PopupMenuItem<String>(
-            value: 'refetch',
-            child: Row(
-              children: <Widget>[
-                const Icon(Icons.refresh_rounded, size: 18),
-                const SizedBox(width: ReadingRoomSpacing.md),
-                Flexible(
-                  child: Text(l10n?.detailActionRefetch ?? 'Refetch'),
-                ),
-              ],
-            ),
-          ),
-          PopupMenuItem<String>(
-            value: 'toggleRead',
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  bookmark.isRead
-                      ? Icons.visibility_off
-                      : Icons.check_circle_outline,
-                  size: 18,
-                ),
-                const SizedBox(width: ReadingRoomSpacing.md),
-                Flexible(
-                  child: Text(
-                    bookmark.isRead
-                        ? (l10n?.detailActionUnread ?? 'Unread')
-                        : (l10n?.detailActionRead ?? 'Read'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          PopupMenuItem<String>(
-            value: 'toggleArchive',
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  bookmark.isArchived
-                      ? Icons.unarchive
-                      : Icons.archive_outlined,
-                  size: 18,
-                ),
-                const SizedBox(width: ReadingRoomSpacing.md),
-                Flexible(
-                  child: Text(
-                    bookmark.isArchived
-                        ? (l10n?.detailActionUnarchive ?? 'Unarchive')
-                        : (l10n?.actionArchive ?? 'Archive'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const PopupMenuDivider(),
-          PopupMenuItem<String>(
-            value: 'delete',
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  Icons.delete_outline,
-                  size: 18,
-                  color: theme.colorScheme.error,
-                ),
-                const SizedBox(width: ReadingRoomSpacing.md),
-                Flexible(
-                  child: Text(
-                    l10n?.actionDelete ?? 'Delete',
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      IconButton(
+        icon: const Icon(Icons.more_horiz_rounded),
+        tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+        onPressed: () => _showMoreActionsSheet(context, ref, bookmark),
       ),
     ];
+  }
+
+  Future<void> _showMoreActionsSheet(
+    BuildContext context,
+    WidgetRef ref,
+    Bookmark bookmark,
+  ) async {
+    final String? action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _DetailMoreActionsSheet(bookmark: bookmark),
+    );
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case 'edit':
+        await _editTitleAndDescription(context, ref);
+      case 'refetch':
+        await _refetchMetadata(context, ref);
+      case 'toggleRead':
+        await _toggleRead(ref);
+      case 'toggleArchive':
+        await _toggle(
+          ref,
+          (Bookmark b) => b.copyWith(isArchived: !b.isArchived),
+        );
+      case 'delete':
+        await _delete(context, ref);
+    }
   }
 
   void _openImagePreview(
@@ -558,6 +486,200 @@ class _HeroAppBar extends ConsumerWidget {
     final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
     await repo.delete(bookmark.id!);
     // Stream will emit null → screen auto-pops.
+  }
+}
+
+class _DetailMoreActionsSheet extends StatelessWidget {
+  const _DetailMoreActionsSheet({required this.bookmark});
+
+  final Bookmark bookmark;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final Color dividerColor = theme.colorScheme.outline.withValues(alpha: 0.4);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(ReadingRoomRadii.sheet),
+        ),
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.6),
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            ReadingRoomSpacing.lg,
+            ReadingRoomSpacing.md,
+            ReadingRoomSpacing.lg,
+            ReadingRoomSpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.3,
+                    ),
+                    borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
+                  ),
+                ),
+              ),
+              const SizedBox(height: ReadingRoomSpacing.lg),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.35,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      _ActionSheetTile(
+                        icon: Icons.edit_outlined,
+                        label: l10n?.actionEdit ?? 'Edit',
+                        onTap: () => _select(context, 'edit'),
+                      ),
+                      Divider(height: 1, thickness: 1, color: dividerColor),
+                      _ActionSheetTile(
+                        icon: Icons.refresh_rounded,
+                        label: l10n?.detailActionRefetch ?? 'Refetch',
+                        onTap: () => _select(context, 'refetch'),
+                      ),
+                      Divider(height: 1, thickness: 1, color: dividerColor),
+                      _ActionSheetTile(
+                        icon: bookmark.isRead
+                            ? Icons.visibility_off_outlined
+                            : Icons.check_circle_outline_rounded,
+                        label: bookmark.isRead
+                            ? (l10n?.detailActionUnread ?? 'Unread')
+                            : (l10n?.detailActionRead ?? 'Read'),
+                        onTap: () => _select(context, 'toggleRead'),
+                      ),
+                      Divider(height: 1, thickness: 1, color: dividerColor),
+                      _ActionSheetTile(
+                        icon: bookmark.isArchived
+                            ? Icons.unarchive_outlined
+                            : Icons.archive_outlined,
+                        label: bookmark.isArchived
+                            ? (l10n?.detailActionUnarchive ?? 'Unarchive')
+                            : (l10n?.actionArchive ?? 'Archive'),
+                        onTap: () => _select(context, 'toggleArchive'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: ReadingRoomSpacing.md),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.error.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.error.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.antiAlias,
+                  child: _ActionSheetTile(
+                    icon: Icons.delete_outline_rounded,
+                    label: l10n?.actionDelete ?? 'Delete',
+                    accentColor: theme.colorScheme.error,
+                    onTap: () => _select(context, 'delete'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _select(BuildContext context, String value) {
+    unawaited(HapticFeedback.selectionClick());
+    Navigator.of(context).pop(value);
+  }
+}
+
+class _ActionSheetTile extends StatelessWidget {
+  const _ActionSheetTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.accentColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color badgeColor = accentColor ?? theme.colorScheme.primary;
+    final Color? textColor = accentColor;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: ReadingRoomSpacing.md,
+          vertical: ReadingRoomSpacing.md,
+        ),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: badgeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: badgeColor),
+            ),
+            const SizedBox(width: ReadingRoomSpacing.md),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: (accentColor ?? theme.colorScheme.onSurfaceVariant)
+                  .withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -309,7 +309,7 @@ void main() {
         expect(find.byTooltip('Pin'), findsOneWidget);
         expect(find.byTooltip('Share'), findsOneWidget);
 
-        await tester.tap(find.byType(PopupMenuButton<String>));
+        await tester.tap(find.byIcon(Icons.more_horiz_rounded));
         await tester.pumpAndSettle();
 
         expect(find.text('Edit'), findsAtLeastNWidgets(1));
