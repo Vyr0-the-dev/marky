@@ -191,31 +191,22 @@ class _FakeReminderRepository implements ReminderRepository {
   @override
   Future<List<Reminder>> getByBookmarkId(int bookmarkId) async => <Reminder>[];
   @override
-  Future<List<Reminder>> getDueBefore(DateTime cutoff) async => <Reminder>[];
-  @override
   Future<Reminder?> markFired(int id, {DateTime? firedAt}) async => null;
   @override
   Future<Reminder?> markCancelled(int id) async => null;
-  @override
-  Future<Reminder?> snooze(int id, DateTime until) async => null;
   @override
   Future<Reminder?> markSnoozed(int id, {required DateTime until}) async =>
       null;
   @override
   Future<List<Reminder>> getUpcoming({
     required DateTime now,
-    int? limit,
+    required Duration window,
   }) async =>
       <Reminder>[];
-  @override
-  Future<int> countActive() async => activeReminders.length;
   @override
   Stream<Reminder?> watchById(int id) => const Stream<Reminder?>.empty();
   @override
   Stream<List<Reminder>> watchByBookmarkId(int bookmarkId) =>
-      const Stream<List<Reminder>>.empty();
-  @override
-  Stream<List<Reminder>> watchAllActive() =>
       const Stream<List<Reminder>>.empty();
 }
 

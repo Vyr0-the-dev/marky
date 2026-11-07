@@ -120,7 +120,7 @@ class _FakeShareSessionGateway implements ShareSessionGateway {
   @override
   Future<CaptureResult> capturePayload(String? payload) async {
     capturedPayloads.add(payload);
-    final DateTime now = DateTime.utc(2026, 3, 1);
+    final DateTime now = DateTime.utc(2026, 3);
     return CaptureResult.saved(
       Bookmark(
         id: 1,

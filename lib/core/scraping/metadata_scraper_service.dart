@@ -114,7 +114,7 @@ class MetadataScraperService implements MetadataScraper {
       }
       final String? contentType =
           response.headers.value(Headers.contentTypeHeader);
-      final String decoded = await GenericHtmlParser.decodeHtmlBytes(
+      final String decoded = GenericHtmlParser.decodeHtmlBytes(
         bytes,
         contentTypeHeader: contentType,
       );

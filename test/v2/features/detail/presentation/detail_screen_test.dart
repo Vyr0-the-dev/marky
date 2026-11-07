@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
+import 'package:marky/core/database/enums/bookmark_content_type.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
@@ -161,6 +162,69 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(await repository.getById(initial.id!), isNotNull);
+  });
+
+  testWidgets(
+      'DetailScreen renders in-app video play button and badge for video bookmarks',
+      (WidgetTester tester) async {
+    final _InMemoryBookmarkRepository repository =
+        _InMemoryBookmarkRepository();
+    addTearDown(repository.dispose);
+
+    final DateTime now = DateTime(2026, 2, 1, 12);
+    final Bookmark videoBookmark = await repository.save(
+      Bookmark(
+        id: 2,
+        originalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        canonicalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        normalizedHost: 'youtube.com',
+        title: 'Rick Astley - Never Gonna Give You Up',
+        heroImageUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+        contentType: BookmarkContentType.video,
+        scrapingStatus: BookmarkScrapingStatus.done,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: <Override>[
+          ...testAppSettingsOverrides(),
+          bookmarkRepositoryProvider.overrideWithValue(repository),
+          bookmarkByIdProvider(videoBookmark.id!).overrideWith(
+            (ref) => repository.watchById(videoBookmark.id!),
+          ),
+          tagByIdProvider.overrideWith((ref, id) => Stream<Tag?>.value(null)),
+          bookmarkCollectionByIdProvider.overrideWith(
+            (ref, id) => Stream<BookmarkCollection?>.value(null),
+          ),
+          notesByBookmarkProvider.overrideWith(
+            (ref, id) => Stream<List<Note>>.value(<Note>[]),
+          ),
+          remindersForBookmarkProvider.overrideWith(
+            (ref, id) => Stream<List<Reminder>>.value(<Reminder>[]),
+          ),
+        ],
+        child: MaterialApp(
+          theme: ReadingRoomTheme.build(ReadingRoomVariant.light),
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: DetailScreen(id: videoBookmark.id!),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify video badge and play button are rendered
+    expect(find.text('VİDEO'), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    expect(find.text('Rick Astley - Never Gonna Give You Up'), findsOneWidget);
   });
 }
 

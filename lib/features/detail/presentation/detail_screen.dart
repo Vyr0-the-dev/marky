@@ -7,7 +7,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/database/enums/bookmark_content_type.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
+import 'package:marky/core/url/content_type_detector.dart';
 import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
@@ -187,8 +189,9 @@ class _HeroAppBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String? imageUrl = bookmark.heroImageUrl ?? bookmark.faviconUrl;
-    final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
+    final String imageUrl =
+        bookmark.heroImageUrl ?? bookmark.faviconUrl ?? '';
+    final bool hasImage = imageUrl.isNotEmpty;
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
     final ButtonStyle buttonStyle = _iconButtonStyle(theme, hasImage);
@@ -220,13 +223,76 @@ class _HeroAppBar extends ConsumerWidget {
       iconShadows,
     );
 
-    if (!hasImage) {
+    final bool isVideo = _isVideo(bookmark);
+
+    if (!hasImage && !isVideo) {
       return SliverAppBar(
         pinned: true,
         expandedHeight: 0,
         backgroundColor: theme.colorScheme.surface,
         leading: leadingButton,
         actions: actions,
+      );
+    }
+
+    if (!hasImage && isVideo) {
+      return SliverAppBar(
+        pinned: true,
+        expandedHeight: 140,
+        backgroundColor: theme.colorScheme.surface,
+        leading: leadingButton,
+        actions: actions,
+        flexibleSpace: FlexibleSpaceBar(
+          background: InkWell(
+            onTap: () => _playVideo(context, bookmark),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: <Color>[
+                    theme.colorScheme.primary.withValues(alpha: 0.35),
+                    Colors.black87,
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.4),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 38,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Videoyu Uygulamada Oynat',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       );
     }
 
@@ -241,7 +307,13 @@ class _HeroAppBar extends ConsumerWidget {
           fit: StackFit.expand,
           children: <Widget>[
             GestureDetector(
-              onTap: () => _openImagePreview(context, imageUrl, bookmark),
+              onTap: () {
+                if (isVideo) {
+                  _playVideo(context, bookmark);
+                } else {
+                  _openImagePreview(context, imageUrl, bookmark);
+                }
+              },
               child: ColoredBox(
                 color: Colors.black,
                 child: Image.network(
@@ -275,10 +347,135 @@ class _HeroAppBar extends ConsumerWidget {
                 ),
               ),
             ),
+            if (isVideo) ...<Widget>[
+              Center(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _playVideo(context, bookmark),
+                    borderRadius: BorderRadius.circular(36),
+                    child: Container(
+                      width: 68,
+                      height: 68,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.65),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.45),
+                          width: 2.2,
+                        ),
+                        boxShadow: const <BoxShadow>[
+                          BoxShadow(
+                            color: Colors.black54,
+                            blurRadius: 18,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 44,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 12,
+                left: ReadingRoomSpacing.lg,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.play_circle_fill_rounded,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        'VİDEO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  static bool _isVideo(Bookmark bookmark) {
+    if (bookmark.contentType == BookmarkContentType.video) return true;
+    final String targetUrl = (bookmark.canonicalUrl?.isNotEmpty ?? false)
+        ? bookmark.canonicalUrl!
+        : bookmark.originalUrl;
+    if (const ContentTypeDetector().detect(targetUrl) ==
+        BookmarkContentType.video) {
+      return true;
+    }
+    final Uri? uri = Uri.tryParse(targetUrl);
+    if (uri == null) return false;
+    final String host = uri.host.toLowerCase();
+    final String path = uri.path.toLowerCase();
+    return host.contains('youtube.com') ||
+        host.contains('youtu.be') ||
+        host.contains('vimeo.com') ||
+        host.contains('tiktok.com') ||
+        host.contains('twitch.tv') ||
+        path.contains('/shorts/') ||
+        path.contains('/reel/') ||
+        path.endsWith('.mp4') ||
+        path.endsWith('.webm') ||
+        path.endsWith('.m3u8') ||
+        path.endsWith('.mov');
+  }
+
+  static Future<void> _playVideo(
+    BuildContext context,
+    Bookmark bookmark,
+  ) async {
+    final String targetUrl =
+        (bookmark.canonicalUrl?.trim().isNotEmpty ?? false)
+            ? bookmark.canonicalUrl!
+            : bookmark.originalUrl;
+    final Uri? uri = Uri.tryParse(targetUrl);
+    if (uri == null) return;
+
+    unawaited(HapticFeedback.mediumImpact());
+    try {
+      final bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.inAppBrowserView,
+      );
+      if (!launched) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {}
+    }
   }
 
   static ButtonStyle _iconButtonStyle(ThemeData theme, bool hasImage) {
@@ -407,6 +604,11 @@ class _HeroAppBar extends ConsumerWidget {
     switch (action) {
       case 'edit':
         await _editTitleAndDescription(context, ref);
+      case 'previewImage':
+        final String? img = bookmark.heroImageUrl ?? bookmark.faviconUrl;
+        if (img != null && img.isNotEmpty) {
+          _openImagePreview(context, img, bookmark);
+        }
       case 'refetch':
         await _refetchMetadata(ref);
       case 'toggleRead':
@@ -607,6 +809,15 @@ class _DetailMoreActionsSheet extends StatelessWidget {
                         label: l10n?.actionEdit ?? 'Edit',
                         onTap: () => _select(context, 'edit'),
                       ),
+                      if ((bookmark.heroImageUrl?.isNotEmpty ?? false) ||
+                          (bookmark.faviconUrl?.isNotEmpty ?? false)) ...<Widget>[
+                        Divider(height: 1, thickness: 1, color: dividerColor),
+                        _ActionSheetTile(
+                          icon: Icons.image_outlined,
+                          label: 'Kapak Görselini Görüntüle',
+                          onTap: () => _select(context, 'previewImage'),
+                        ),
+                      ],
                       Divider(height: 1, thickness: 1, color: dividerColor),
                       _ActionSheetTile(
                         icon: Icons.refresh_rounded,

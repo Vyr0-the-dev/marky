@@ -20,7 +20,9 @@ class ContentTypeDetector {
     final String path = uri.path.toLowerCase();
 
     // ── Video platforms ──────────────────────────────────────────
-    if (_matchesHost(host, _videoHosts)) return BookmarkContentType.video;
+    if (_matchesHost(host, _videoHosts) || _isDirectVideo(path)) {
+      return BookmarkContentType.video;
+    }
 
     // ── Discussion platforms ─────────────────────────────────────
     if (_matchesHost(host, _discussionHosts)) {
@@ -57,6 +59,14 @@ class ContentTypeDetector {
     return false;
   }
 
+  bool _isDirectVideo(String path) {
+    return path.endsWith('.mp4') ||
+        path.endsWith('.webm') ||
+        path.endsWith('.m3u8') ||
+        path.endsWith('.mov') ||
+        path.endsWith('.mkv');
+  }
+
   bool _isDirectImage(String path) {
     return path.endsWith('.jpg') ||
         path.endsWith('.jpeg') ||
@@ -85,6 +95,7 @@ class ContentTypeDetector {
     'dailymotion.com',
     'streamable.com',
     'rumble.com',
+    'tiktok.com',
   ];
 
   static const List<String> _discussionHosts = <String>[

@@ -551,7 +551,7 @@ class GenericHtmlParser implements SourceParser {
 
   static String _humanizeHost(String host) {
     final String cleaned =
-        host.toLowerCase().replaceFirst(RegExp(r'^(www|m|mobile)\.'), '');
+        host.toLowerCase().replaceFirst(RegExp(r'^(www|m|mobile|news|blog|press|docs)\.'), '');
     final List<String> parts = cleaned.split('.');
     if (parts.isEmpty) return host;
     if (cleaned.endsWith('substack.com')) return 'Substack';
@@ -589,9 +589,17 @@ class GenericHtmlParser implements SourceParser {
       }
       if (node is! Map) return;
 
-      title ??= _cleanMetadataText(
-        _asString(node['headline']) ?? _asString(node['name']),
-      );
+      final String? headline = _asString(node['headline']);
+      final String? type = _asString(node['@type']);
+      final bool isArticle = type == null ||
+          type.endsWith('Article') ||
+          type == 'BlogPosting' ||
+          type == 'WebPage';
+      if (headline != null) {
+        title = _cleanMetadataText(headline);
+      } else if (title == null && isArticle && _asString(node['name']) != null) {
+        title = _cleanMetadataText(_asString(node['name']));
+      }
       description ??= _cleanMetadataText(_asString(node['description']));
       articleBody ??= _cleanMetadataText(_asString(node['articleBody']));
       author ??= _cleanMetadataText(_extractJsonLdAuthor(node['author']));
@@ -714,12 +722,12 @@ class GenericHtmlParser implements SourceParser {
   // ─── Tier 3: DOM Readability & Heuristic Scoring ───────────────
 
   static final RegExp _noiseTokensPattern = RegExp(
-    r'(cookie|banner|popup|modal|sidebar|footer|header|navbar|nav-|menu|breadcrumb|social|share|comment|promo|advert|sponsor|newsletter|related|outbrain|taboola)',
+    '(cookie|banner|popup|modal|sidebar|footer|header|navbar|nav-|menu|breadcrumb|social|share|comment|promo|advert|sponsor|newsletter|related|outbrain|taboola)',
     caseSensitive: false,
   );
 
   static final RegExp _positiveTokensPattern = RegExp(
-    r'(article|content|post|entry|story|main|body|text|prose|read)',
+    '(article|content|post|entry|story|main|body|text|prose|read)',
     caseSensitive: false,
   );
 
@@ -768,7 +776,7 @@ class GenericHtmlParser implements SourceParser {
       if (parent == null) continue;
 
       final int punctuationCount =
-          RegExp(r'[,.;:!?]').allMatches(text).length;
+          RegExp('[,.;:!?]').allMatches(text).length;
       final double paragraphScore =
           10.0 + (text.length / 40.0).clamp(0.0, 20.0) + punctuationCount * 1.5;
 
@@ -970,7 +978,7 @@ class GenericHtmlParser implements SourceParser {
     final String? lang =
         doc.querySelector('html')?.attributes['lang'] ?? jsonLd.language;
     if (lang == null || lang.isEmpty) return null;
-    return lang.split(RegExp(r'[-_]')).first.toLowerCase();
+    return lang.split(RegExp('[-_]')).first.toLowerCase();
   }
 
   static String? _extractHeroImage(

@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' as html_parser;
 import 'package:marky/core/scraping/metadata_result.dart';
 import 'package:marky/core/scraping/source_parser.dart';
 
@@ -9,19 +11,21 @@ import 'package:marky/core/scraping/source_parser.dart';
 /// 2. Whitelisted Reddit User-Agent to prevent 429 rate limiting.
 /// 3. Image gallery (`media_metadata`) and preview decoding (`&amp;` -> `&`).
 /// 4. Full text extraction into snippet for Reader Mode support.
-/// 5. Fallback to Reddit oEmbed when JSON API is blocked.
+/// 5. Fallback to Reddit oEmbed and HTML scraping when JSON API is blocked.
 class RedditParser implements SourceParser {
   RedditParser({Dio? dio})
       : _dio = dio ??
-            Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 8),
-              receiveTimeout: const Duration(seconds: 8),
-              headers: <String, dynamic>{
-                'User-Agent':
-                    'android:com.marky.app:v1.0.0 (by /u/marky_reader)',
-                'Accept': 'application/json,text/plain,*/*',
-              },
-            ));
+            Dio(
+              BaseOptions(
+                connectTimeout: const Duration(seconds: 8),
+                receiveTimeout: const Duration(seconds: 8),
+                headers: <String, dynamic>{
+                  'User-Agent':
+                      'android:com.marky.app:v1.0.0 (by /u/marky_reader)',
+                  'Accept': 'application/json,text/plain,*/*',
+                },
+              ),
+            );
 
   final Dio _dio;
 
@@ -48,7 +52,8 @@ class RedditParser implements SourceParser {
     }
 
     // 1. Resolve redirect if it's a shortlink (e.g. reddit.com/r/.../s/... or redd.it/...)
-    final String targetUrl = await _resolveShortlink(url, cancelToken: cancelToken);
+    final String targetUrl =
+        await _resolveShortlink(url, cancelToken: cancelToken);
 
     // 2. Try JSON endpoint
     final MetadataResult jsonResult =
@@ -64,33 +69,60 @@ class RedditParser implements SourceParser {
         await _parseOEmbed(targetUrl, cancelToken: cancelToken);
     if (!embedResult.isEmpty) return embedResult;
 
+    // 4. Try HTML scraping fallback
+    final MetadataResult htmlResult =
+        await _parseRedditHtml(targetUrl, html: html, cancelToken: cancelToken);
+    if (!htmlResult.isEmpty) return htmlResult;
+
     return const MetadataResult(
       siteName: 'Reddit',
       faviconUrl: _faviconUrl,
     );
   }
 
-  Future<String> _resolveShortlink(String url, {CancelToken? cancelToken}) async {
+  Future<String> _resolveShortlink(
+    String url, {
+    CancelToken? cancelToken,
+  }) async {
     final Uri? uri = Uri.tryParse(url);
     if (uri == null) return url;
-    final bool isShort = uri.host.toLowerCase() == 'redd.it' ||
-        uri.path.contains('/s/');
+    final String host = uri.host.toLowerCase();
+    final bool isShort = host == 'redd.it' || uri.path.contains('/s/');
     if (!isShort) return url;
 
     try {
-      final Response<dynamic> res = await _dio.head<dynamic>(
+      final Response<dynamic> res = await _dio.get<dynamic>(
         url,
         options: Options(
           followRedirects: true,
-          maxRedirects: 5,
+          maxRedirects: 6,
+          headers: <String, dynamic>{
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          },
           validateStatus: (int? s) => s != null && s < 400,
         ),
         cancelToken: cancelToken,
       );
-      return res.realUri.toString();
+      final String resolved = res.realUri.toString();
+      if (resolved.isNotEmpty && resolved != url) {
+        return resolved;
+      }
     } catch (_) {
-      return url;
+      try {
+        final Response<dynamic> headRes = await _dio.head<dynamic>(
+          url,
+          options: Options(
+            followRedirects: true,
+            maxRedirects: 5,
+            validateStatus: (int? s) => s != null && s < 400,
+          ),
+          cancelToken: cancelToken,
+        );
+        return headRes.realUri.toString();
+      } catch (_) {}
     }
+    return url;
   }
 
   Future<MetadataResult> _parseJsonEndpoint(
@@ -161,7 +193,10 @@ class RedditParser implements SourceParser {
     }
   }
 
-  Future<MetadataResult> _parseOEmbed(String url, {CancelToken? cancelToken}) async {
+  Future<MetadataResult> _parseOEmbed(
+    String url, {
+    CancelToken? cancelToken,
+  }) async {
     try {
       final Response<dynamic> response = await _dio.get<dynamic>(
         'https://www.reddit.com/oembed',
@@ -181,6 +216,69 @@ class RedditParser implements SourceParser {
         heroImageUrl: thumbnail != null && thumbnail.startsWith('http')
             ? thumbnail
             : null,
+        faviconUrl: _faviconUrl,
+      );
+    } catch (_) {
+      return const MetadataResult();
+    }
+  }
+
+  Future<MetadataResult> _parseRedditHtml(
+    String url, {
+    String? html,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      String pageHtml = html ?? '';
+      if (pageHtml.isEmpty) {
+        final Response<dynamic> res = await _dio.get<dynamic>(
+          url,
+          options: Options(
+            responseType: ResponseType.plain,
+            headers: <String, dynamic>{
+              'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            },
+          ),
+          cancelToken: cancelToken,
+        );
+        pageHtml = res.data?.toString() ?? '';
+      }
+      if (pageHtml.isEmpty) return const MetadataResult();
+
+      final dom.Document doc = html_parser.parse(pageHtml);
+      final dom.Element? shreddit = doc.querySelector('shreddit-post');
+      final String? title = shreddit?.attributes['post-title'] ??
+          doc
+              .querySelector('meta[property="og:title"]')
+              ?.attributes['content'] ??
+          doc.querySelector('h1')?.text.trim();
+      final String? author = shreddit?.attributes['author'];
+      final String? subreddit =
+          shreddit?.attributes['subreddit-prefixed-name'];
+      final String? text = doc
+              .querySelector('div[slot="text-body"]')
+              ?.text
+              .trim() ??
+          doc
+              .querySelector('meta[property="og:description"]')
+              ?.attributes['content'];
+      final String? image = shreddit?.attributes['content-href'] ??
+          doc
+              .querySelector('meta[property="og:image"]')
+              ?.attributes['content'];
+
+      if (title == null || title.isEmpty) return const MetadataResult();
+
+      return MetadataResult(
+        title: title,
+        description: text,
+        snippet: text,
+        author: author,
+        siteName: subreddit ?? 'Reddit',
+        publisher: 'Reddit',
+        heroImageUrl:
+            image != null && image.startsWith('http') ? image : null,
         faviconUrl: _faviconUrl,
       );
     } catch (_) {
@@ -249,6 +347,13 @@ class RedditParser implements SourceParser {
         final String? u = s?['u'] as String?;
         if (u != null && u.isNotEmpty) {
           return _decodeRedditUrl(u);
+        }
+        final List<dynamic>? p = item['p'] as List<dynamic>?;
+        final Map<String, dynamic>? lastPreview =
+            p?.lastOrNull as Map<String, dynamic>?;
+        final String? previewU = lastPreview?['u'] as String?;
+        if (previewU != null && previewU.isNotEmpty) {
+          return _decodeRedditUrl(previewU);
         }
       }
     }

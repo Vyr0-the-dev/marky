@@ -480,11 +480,10 @@ class _EditorialMetaFooter extends StatelessWidget {
 class _EditorialGridTagPills extends ConsumerWidget {
   const _EditorialGridTagPills({
     required this.tagIds,
-    this.maxTags = 2,
   });
 
   final List<int> tagIds;
-  final int maxTags;
+  static const int _maxTags = 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -501,7 +500,7 @@ class _EditorialGridTagPills extends ConsumerWidget {
         ];
         if (resolved.isEmpty) return const SizedBox.shrink();
 
-        final List<Tag> visible = resolved.take(maxTags).toList(growable: false);
+        final List<Tag> visible = resolved.take(_maxTags).toList(growable: false);
         return Wrap(
           spacing: 4,
           runSpacing: 4,
