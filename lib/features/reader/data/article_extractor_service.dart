@@ -399,31 +399,33 @@ class ArticleExtractorService {
           ),
         );
       } catch (_) {
-        return _extractRedditFromHtml(resolvedUrl, bookmark);
+        return await _extractRedditFromHtml(resolvedUrl, bookmark);
       }
 
       final dynamic data = response.data;
       if (data is! List || data.isEmpty) {
-        return _extractRedditFromHtml(resolvedUrl, bookmark);
+        return await _extractRedditFromHtml(resolvedUrl, bookmark);
       }
 
       final dynamic root0 = data[0];
-      if (root0 is! Map) return _extractRedditFromHtml(resolvedUrl, bookmark);
+      if (root0 is! Map) {
+        return await _extractRedditFromHtml(resolvedUrl, bookmark);
+      }
       final dynamic root0Data = root0['data'];
       if (root0Data is! Map) {
-        return _extractRedditFromHtml(resolvedUrl, bookmark);
+        return await _extractRedditFromHtml(resolvedUrl, bookmark);
       }
       final dynamic children = root0Data['children'];
       if (children is! List || children.isEmpty) {
-        return _extractRedditFromHtml(resolvedUrl, bookmark);
+        return await _extractRedditFromHtml(resolvedUrl, bookmark);
       }
       final dynamic firstChild = children[0];
       if (firstChild is! Map) {
-        return _extractRedditFromHtml(resolvedUrl, bookmark);
+        return await _extractRedditFromHtml(resolvedUrl, bookmark);
       }
       final dynamic postData = firstChild['data'];
       if (postData is! Map) {
-        return _extractRedditFromHtml(resolvedUrl, bookmark);
+        return await _extractRedditFromHtml(resolvedUrl, bookmark);
       }
 
       final String title =
@@ -572,7 +574,7 @@ class ArticleExtractorService {
         cachedAt: DateTime.now(),
       );
     } catch (_) {
-      return _extractRedditFromHtml(targetUrl, bookmark);
+      return await _extractRedditFromHtml(targetUrl, bookmark);
     }
   }
 
@@ -691,7 +693,7 @@ class ArticleExtractorService {
       }
 
       if (tweetData == null) {
-        return _extractTwitterFromOEmbed(targetUrl, bookmark);
+        return await _extractTwitterFromOEmbed(targetUrl, bookmark);
       }
 
       final dynamic tweetAuthor = tweetData['author'];
@@ -803,7 +805,7 @@ class ArticleExtractorService {
         cachedAt: DateTime.now(),
       );
     } catch (_) {
-      return _extractTwitterFromOEmbed(targetUrl, bookmark);
+      return await _extractTwitterFromOEmbed(targetUrl, bookmark);
     }
   }
 
