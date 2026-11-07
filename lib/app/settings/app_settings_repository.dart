@@ -50,6 +50,10 @@ class SharedPreferencesAppSettingsRepository implements AppSettingsRepository {
   @visibleForTesting
   static const String keyUnreadReminderMinute =
       'v2.settings.unreadReminderMinute';
+  @visibleForTesting
+  static const String keyLeftSwipeAction = 'v2.settings.leftSwipeAction';
+  @visibleForTesting
+  static const String keyRightSwipeAction = 'v2.settings.rightSwipeAction';
 
   final SharedPreferences _prefs;
   AppSettings _current = const AppSettings.defaults();
@@ -71,6 +75,14 @@ class SharedPreferencesAppSettingsRepository implements AppSettingsRepository {
       ),
       unreadReminderHour: _prefs.getInt(keyUnreadReminderHour) ?? 20,
       unreadReminderMinute: _prefs.getInt(keyUnreadReminderMinute) ?? 0,
+      leftSwipeAction: SwipeAction.fromString(
+        _prefs.getString(keyLeftSwipeAction),
+        fallback: SwipeAction.toggleArchive,
+      ),
+      rightSwipeAction: SwipeAction.fromString(
+        _prefs.getString(keyRightSwipeAction),
+        fallback: SwipeAction.toggleRead,
+      ),
     );
     return _current;
   }
@@ -95,6 +107,8 @@ class SharedPreferencesAppSettingsRepository implements AppSettingsRepository {
       ),
       _prefs.setInt(keyUnreadReminderHour, settings.unreadReminderHour),
       _prefs.setInt(keyUnreadReminderMinute, settings.unreadReminderMinute),
+      _prefs.setString(keyLeftSwipeAction, settings.leftSwipeAction.name),
+      _prefs.setString(keyRightSwipeAction, settings.rightSwipeAction.name),
     ]);
   }
 

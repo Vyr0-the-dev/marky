@@ -101,6 +101,18 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     await _repository.save(state);
   }
 
+  Future<void> setLeftSwipeAction(SwipeAction action) async {
+    if (state.leftSwipeAction == action) return;
+    state = state.copyWith(leftSwipeAction: action);
+    await _repository.save(state);
+  }
+
+  Future<void> setRightSwipeAction(SwipeAction action) async {
+    if (state.rightSwipeAction == action) return;
+    state = state.copyWith(rightSwipeAction: action);
+    await _repository.save(state);
+  }
+
   /// Replaces the whole bag — used by "reset to defaults" in Settings.
   Future<void> replace(AppSettings next) async {
     if (state == next) return;
@@ -170,6 +182,18 @@ final Provider<int> unreadReminderMinuteProvider = Provider<int>(
     appSettingsProvider.select(
       (AppSettings s) => s.unreadReminderMinute,
     ),
+  ),
+);
+
+final Provider<SwipeAction> leftSwipeActionProvider = Provider<SwipeAction>(
+  (Ref ref) => ref.watch(
+    appSettingsProvider.select((AppSettings s) => s.leftSwipeAction),
+  ),
+);
+
+final Provider<SwipeAction> rightSwipeActionProvider = Provider<SwipeAction>(
+  (Ref ref) => ref.watch(
+    appSettingsProvider.select((AppSettings s) => s.rightSwipeAction),
   ),
 );
 

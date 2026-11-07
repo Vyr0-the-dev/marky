@@ -53,6 +53,29 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: Text(_localeLabel(settings.locale, l10n)),
             onTap: () => _showLocalePicker(context, notifier, settings),
           ),
+          _SectionTitle(l10n?.settingsSectionGestures ?? 'Gestures'),
+          ListTile(
+            leading: const Icon(Icons.swipe_right_rounded),
+            title: Text(l10n?.settingsSwipeRightLabel ?? 'Swipe right'),
+            subtitle: Text(_swipeActionLabel(settings.rightSwipeAction, l10n)),
+            onTap: () => _showSwipeActionPicker(
+              context,
+              notifier,
+              isRight: true,
+              current: settings.rightSwipeAction,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.swipe_left_rounded),
+            title: Text(l10n?.settingsSwipeLeftLabel ?? 'Swipe left'),
+            subtitle: Text(_swipeActionLabel(settings.leftSwipeAction, l10n)),
+            onTap: () => _showSwipeActionPicker(
+              context,
+              notifier,
+              isRight: false,
+              current: settings.leftSwipeAction,
+            ),
+          ),
           const _SectionTitle('Re-engagement'),
           ListTile(
             leading: const Icon(Icons.auto_awesome_motion_rounded),
@@ -252,6 +275,64 @@ class SettingsScreen extends ConsumerWidget {
       case AppLocaleChoice.tr:
         return l10n?.languageTurkish ?? 'Türkçe';
     }
+  }
+
+  static String _swipeActionLabel(SwipeAction action, AppLocalizations? l10n) {
+    switch (action) {
+      case SwipeAction.toggleRead:
+        return l10n?.swipeActionToggleRead ?? 'Read / Unread';
+      case SwipeAction.toggleArchive:
+        return l10n?.swipeActionToggleArchive ?? 'Archive / Unarchive';
+      case SwipeAction.toggleFavorite:
+        return l10n?.swipeActionToggleFavorite ?? 'Favorite / Unfavorite';
+      case SwipeAction.delete:
+        return l10n?.swipeActionDelete ?? 'Delete';
+      case SwipeAction.none:
+        return l10n?.swipeActionNone ?? 'None';
+    }
+  }
+
+  void _showSwipeActionPicker(
+    BuildContext context,
+    AppSettingsNotifier notifier, {
+    required bool isRight,
+    required SwipeAction current,
+  }) {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final String title = isRight
+        ? (l10n?.settingsSwipeRightLabel ?? 'Swipe right')
+        : (l10n?.settingsSwipeLeftLabel ?? 'Swipe left');
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext ctx) => SimpleDialog(
+        title: Text(title),
+        children: <Widget>[
+          RadioGroup<SwipeAction>(
+            groupValue: current,
+            onChanged: (SwipeAction? v) {
+              if (v != null) {
+                if (isRight) {
+                  unawaited(notifier.setRightSwipeAction(v));
+                } else {
+                  unawaited(notifier.setLeftSwipeAction(v));
+                }
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: SwipeAction.values
+                  .map((SwipeAction action) => RadioListTile<SwipeAction>(
+                        title: Text(_swipeActionLabel(action, l10n)),
+                        value: action,
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showUnreadReminderPicker(

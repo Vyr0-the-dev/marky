@@ -26,4 +26,20 @@ enum AutomationTriggerType {
   tagContains,
   unreadForDays,
   addedWithinDays,
+
+  /// Fires when bookmark content type matches [triggerValue]
+  /// (e.g. `video`, `article`, `image`, `audio`, `tweet`, `repository`).
+  contentTypeEquals,
+
+  /// Fires when estimated reading time in minutes is strictly greater than
+  /// [triggerValue].
+  readingTimeGreaterThan,
+
+  /// Fires when the bookmark title contains [triggerValue] as a substring.
+  /// Case-insensitive.
+  titleContains,
+
+  /// Fires when the bookmark title matches the regular expression pattern
+  /// in [triggerValue]. Case-insensitive, safely ignoring invalid syntax.
+  titleMatchesRegex,
 }

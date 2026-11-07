@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -87,6 +89,7 @@ class _DetailBody extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
+      bottomNavigationBar: _DetailBottomBar(bookmark: bookmark),
       body: CustomScrollView(
         slivers: <Widget>[
           // ── Hero image app bar ──────────────────────────────
@@ -123,14 +126,6 @@ class _DetailBody extends ConsumerWidget {
                     ),
                   ],
 
-                  // ── Actions ──────────────────────────────────
-                  const SizedBox(height: ReadingRoomSpacing.xl),
-                  _ActionsRow(bookmark: bookmark),
-
-                  // ── Metadata block ───────────────────────────
-                  const SizedBox(height: ReadingRoomSpacing.xl),
-                  _MetadataBlock(bookmark: bookmark),
-
                   // ── Tags ─────────────────────────────────────
                   const SizedBox(height: ReadingRoomSpacing.xl),
                   _TagsSection(bookmark: bookmark),
@@ -147,6 +142,10 @@ class _DetailBody extends ConsumerWidget {
                   const SizedBox(height: ReadingRoomSpacing.xl),
                   _RemindersSection(bookmark: bookmark),
 
+                  // ── Metadata block ───────────────────────────
+                  const SizedBox(height: ReadingRoomSpacing.xl),
+                  _MetadataBlock(bookmark: bookmark),
+
                   const SizedBox(height: ReadingRoomSpacing.huge),
                 ],
               ),
@@ -160,23 +159,25 @@ class _DetailBody extends ConsumerWidget {
 
 // ─── Hero app bar ───────────────────────────────────────────────
 
-class _HeroAppBar extends StatelessWidget {
+class _HeroAppBar extends ConsumerWidget {
   const _HeroAppBar({required this.bookmark});
 
   final Bookmark bookmark;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final String? imageUrl = bookmark.heroImageUrl ?? bookmark.faviconUrl;
     final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
+    final List<Widget> actions = _buildActions(context, ref, theme, l10n);
 
     if (!hasImage) {
       return SliverAppBar(
         pinned: true,
         expandedHeight: 0,
         backgroundColor: theme.colorScheme.surface,
+        actions: actions,
       );
     }
 
@@ -184,6 +185,7 @@ class _HeroAppBar extends StatelessWidget {
       pinned: true,
       expandedHeight: 220,
       backgroundColor: theme.colorScheme.surface,
+      actions: actions,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -227,6 +229,159 @@ class _HeroAppBar extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildActions(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+    AppLocalizations? l10n,
+  ) {
+    return <Widget>[
+      IconButton(
+        icon: Icon(
+          bookmark.isFavorite ? Icons.favorite : Icons.favorite_outline,
+          color: bookmark.isFavorite ? theme.colorScheme.primary : null,
+        ),
+        tooltip: bookmark.isFavorite
+            ? (l10n?.detailActionUnfavorite ?? 'Unfav')
+            : (l10n?.labelFavorite ?? 'Favorite'),
+        onPressed: () {
+          unawaited(HapticFeedback.lightImpact());
+          unawaited(
+            _toggle(
+              ref,
+              (Bookmark b) => b.copyWith(isFavorite: !b.isFavorite),
+            ),
+          );
+        },
+      ),
+      IconButton(
+        icon: Icon(
+          bookmark.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+          color: bookmark.isPinned ? theme.colorScheme.primary : null,
+        ),
+        tooltip: bookmark.isPinned
+            ? (l10n?.detailActionUnpin ?? 'Unpin')
+            : (l10n?.detailActionPin ?? 'Pin'),
+        onPressed: () => _toggle(
+          ref,
+          (Bookmark b) => b.copyWith(isPinned: !b.isPinned),
+        ),
+      ),
+      IconButton(
+        icon: const Icon(Icons.share_outlined),
+        tooltip: l10n?.actionShare ?? 'Share',
+        onPressed: _share,
+      ),
+      PopupMenuButton<String>(
+        onSelected: (String value) {
+          switch (value) {
+            case 'edit':
+              unawaited(_editTitleAndDescription(context, ref));
+            case 'refetch':
+              unawaited(_refetchMetadata(context, ref));
+            case 'toggleRead':
+              unawaited(_toggleRead(ref));
+            case 'toggleArchive':
+              unawaited(
+                _toggle(
+                  ref,
+                  (Bookmark b) => b.copyWith(isArchived: !b.isArchived),
+                ),
+              );
+            case 'delete':
+              unawaited(_delete(context, ref));
+          }
+        },
+        itemBuilder: (BuildContext menuContext) => <PopupMenuEntry<String>>[
+          PopupMenuItem<String>(
+            value: 'edit',
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.edit_outlined, size: 18),
+                const SizedBox(width: ReadingRoomSpacing.md),
+                Flexible(child: Text(l10n?.actionEdit ?? 'Edit')),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'refetch',
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.refresh_rounded, size: 18),
+                const SizedBox(width: ReadingRoomSpacing.md),
+                Flexible(
+                  child: Text(l10n?.detailActionRefetch ?? 'Refetch'),
+                ),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'toggleRead',
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  bookmark.isRead
+                      ? Icons.visibility_off
+                      : Icons.check_circle_outline,
+                  size: 18,
+                ),
+                const SizedBox(width: ReadingRoomSpacing.md),
+                Flexible(
+                  child: Text(
+                    bookmark.isRead
+                        ? (l10n?.detailActionUnread ?? 'Unread')
+                        : (l10n?.detailActionRead ?? 'Read'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'toggleArchive',
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  bookmark.isArchived
+                      ? Icons.unarchive
+                      : Icons.archive_outlined,
+                  size: 18,
+                ),
+                const SizedBox(width: ReadingRoomSpacing.md),
+                Flexible(
+                  child: Text(
+                    bookmark.isArchived
+                        ? (l10n?.detailActionUnarchive ?? 'Unarchive')
+                        : (l10n?.actionArchive ?? 'Archive'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: theme.colorScheme.error,
+                ),
+                const SizedBox(width: ReadingRoomSpacing.md),
+                Flexible(
+                  child: Text(
+                    l10n?.actionDelete ?? 'Delete',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ];
   }
 
   void _openImagePreview(
@@ -276,6 +431,281 @@ class _HeroAppBar extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _editTitleAndDescription(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final String initialTitle = bookmark.title?.trim() ?? '';
+    final ({String title, String description})? updated =
+        await showDialog<({String title, String description})>(
+      context: context,
+      builder: (_) => _EditBookmarkDialog(
+        initialTitle:
+            initialTitle.isNotEmpty ? initialTitle : bookmark.displayTitle,
+        initialDescription: bookmark.description ?? '',
+      ),
+    );
+    if (updated == null) return;
+    await ref.read(bookmarkRepositoryProvider).save(
+          bookmark.copyWith(
+            title: updated.title,
+            description: updated.description,
+          ),
+        );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.snackbarBookmarkUpdated ??
+                'Bookmark updated',
+          ),
+        ),
+      );
+  }
+
+  Future<void> _share() async {
+    final String url = bookmark.canonicalUrl ?? bookmark.originalUrl;
+    final String? title = bookmark.title;
+    await Share.share(
+      url,
+      subject: title,
+    );
+  }
+
+  Future<void> _refetchMetadata(BuildContext context, WidgetRef ref) async {
+    if (bookmark.id == null) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.detailRefetchingMetadata ??
+                'Refetching metadata…',
+          ),
+        ),
+      );
+    await ref.read(scrapingOrchestratorProvider).enrich(bookmark.id!);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.detailMetadataRefreshed ??
+                'Metadata refreshed',
+          ),
+        ),
+      );
+  }
+
+  Future<void> _toggle(
+    WidgetRef ref,
+    Bookmark Function(Bookmark) transform,
+  ) async {
+    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
+    await repo.save(transform(bookmark));
+  }
+
+  Future<void> _toggleRead(WidgetRef ref) async {
+    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
+    await repo.save(bookmark.copyWith(isRead: !bookmark.isRead));
+    final AppSettings settings = ref.read(appSettingsProvider);
+    final UnreadReminderCadence cadence = settings.unreadReminderCadence;
+    if (cadence != UnreadReminderCadence.off) {
+      try {
+        await ref.read(unreadReminderSchedulerProvider).sync(
+              cadence,
+              weekday: settings.unreadReminderWeekday,
+              hour: settings.unreadReminderHour,
+              minute: settings.unreadReminderMinute,
+            );
+      } on Object {
+        return;
+      }
+    }
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text(
+          AppLocalizations.of(context)?.dialogDeleteTitle ?? 'Delete bookmark?',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.detailDeleteMessage ??
+              'This cannot be undone.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(AppLocalizations.of(context)?.actionCancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(AppLocalizations.of(context)?.actionDelete ?? 'Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (bookmark.id == null) return;
+    ref.read(scrapingOrchestratorProvider).cancel(bookmark.id!);
+    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
+    await repo.delete(bookmark.id!);
+    // Stream will emit null → screen auto-pops.
+  }
+}
+
+class _EditBookmarkDialog extends StatefulWidget {
+  const _EditBookmarkDialog({
+    required this.initialTitle,
+    required this.initialDescription,
+  });
+
+  final String initialTitle;
+  final String initialDescription;
+
+  @override
+  State<_EditBookmarkDialog> createState() => _EditBookmarkDialogState();
+}
+
+class _EditBookmarkDialogState extends State<_EditBookmarkDialog> {
+  late final TextEditingController _titleController = TextEditingController(
+    text: widget.initialTitle,
+  );
+  late final TextEditingController _descriptionController =
+      TextEditingController(
+    text: widget.initialDescription,
+  );
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n?.actionEdit ?? 'Edit'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                labelText: l10n?.captureTitleLabel ?? 'Title',
+              ),
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: ReadingRoomSpacing.md),
+            TextField(
+              controller: _descriptionController,
+              decoration: InputDecoration(
+                labelText: l10n?.detailDescriptionLabel ?? 'Description',
+              ),
+              minLines: 3,
+              maxLines: 6,
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n?.actionCancel ?? 'Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop((
+            title: _titleController.text.trim(),
+            description: _descriptionController.text.trim(),
+          )),
+          child: Text(l10n?.actionSave ?? 'Save'),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Sticky bottom action bar ───────────────────────────────────
+
+class _DetailBottomBar extends StatelessWidget {
+  const _DetailBottomBar({required this.bookmark});
+
+  final Bookmark bookmark;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final Color surfaceColor =
+        theme.scaffoldBackgroundColor == ReadingRoomColors.oledSurface
+            ? ReadingRoomColors.oledSurface
+            : theme.colorScheme.surface;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outline),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: ReadingRoomSpacing.lg,
+            vertical: ReadingRoomSpacing.md,
+          ),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => _openInBrowser(context),
+                  icon: const Icon(Icons.open_in_browser, size: 18),
+                  label: Text(l10n?.actionOpen ?? 'Open'),
+                ),
+              ),
+              const SizedBox(width: ReadingRoomSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: () => _copyUrl(context),
+                icon: const Icon(Icons.copy_outlined, size: 18),
+                label: Text(l10n?.actionCopy ?? 'Copy'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openInBrowser(BuildContext context) async {
+    final Uri? uri =
+        Uri.tryParse(bookmark.canonicalUrl ?? bookmark.originalUrl);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _copyUrl(BuildContext context) {
+    final String url = bookmark.canonicalUrl ?? bookmark.originalUrl;
+    Clipboard.setData(ClipboardData(text: url));
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.detailLinkCopied ?? 'Link copied',
+          ),
+        ),
+      );
   }
 }
 
@@ -354,353 +784,6 @@ class _DomainRow extends ConsumerWidget {
   static String _formatContentType(String raw) {
     if (raw.isEmpty) return '';
     return raw[0].toUpperCase() + raw.substring(1);
-  }
-}
-
-// ─── Actions row ────────────────────────────────────────────────
-
-class _ActionsRow extends ConsumerWidget {
-  const _ActionsRow({required this.bookmark});
-
-  final Bookmark bookmark;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ThemeData theme = Theme.of(context);
-    final AppLocalizations? l10n = AppLocalizations.of(context);
-
-    final List<_ActionChip> actions = <_ActionChip>[
-      _ActionChip(
-        icon: Icons.open_in_browser,
-        label: l10n?.actionOpen ?? 'Open',
-        onTap: () => _openInBrowser(context),
-      ),
-      _ActionChip(
-        icon: Icons.copy,
-        label: l10n?.actionCopy ?? 'Copy',
-        onTap: () => _copyUrl(context),
-      ),
-      _ActionChip(
-        icon: Icons.edit_outlined,
-        label: l10n?.actionEdit ?? 'Edit',
-        onTap: () => _editTitleAndDescription(context, ref),
-      ),
-      _ActionChip(
-        icon: Icons.refresh_rounded,
-        label: l10n?.detailActionRefetch ?? 'Refetch',
-        onTap: () => _refetchMetadata(context, ref),
-      ),
-      _ActionChip(
-        icon: bookmark.isFavorite ? Icons.favorite : Icons.favorite_outline,
-        label: bookmark.isFavorite
-            ? l10n?.detailActionUnfavorite ?? 'Unfav'
-            : l10n?.labelFavorite ?? 'Favorite',
-        onTap: () =>
-            _toggle(ref, (Bookmark b) => b.copyWith(isFavorite: !b.isFavorite)),
-      ),
-      _ActionChip(
-        icon: bookmark.isArchived ? Icons.unarchive : Icons.archive_outlined,
-        label: bookmark.isArchived
-            ? l10n?.detailActionUnarchive ?? 'Unarchive'
-            : l10n?.actionArchive ?? 'Archive',
-        onTap: () =>
-            _toggle(ref, (Bookmark b) => b.copyWith(isArchived: !b.isArchived)),
-      ),
-      _ActionChip(
-        icon:
-            bookmark.isRead ? Icons.visibility_off : Icons.check_circle_outline,
-        label: bookmark.isRead
-            ? l10n?.detailActionUnread ?? 'Unread'
-            : l10n?.detailActionRead ?? 'Read',
-        onTap: () => _toggleRead(ref),
-      ),
-      _ActionChip(
-        icon: bookmark.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-        label: bookmark.isPinned
-            ? l10n?.detailActionUnpin ?? 'Unpin'
-            : l10n?.detailActionPin ?? 'Pin',
-        onTap: () =>
-            _toggle(ref, (Bookmark b) => b.copyWith(isPinned: !b.isPinned)),
-      ),
-      _ActionChip(
-        icon: Icons.share_outlined,
-        label: l10n?.actionShare ?? 'Share',
-        onTap: _share,
-      ),
-      _ActionChip(
-        icon: Icons.delete_outline,
-        label: l10n?.actionDelete ?? 'Delete',
-        color: theme.colorScheme.error,
-        onTap: () => _delete(context, ref),
-      ),
-    ];
-
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final double itemWidth =
-            constraints.maxWidth >= 360 ? (constraints.maxWidth - 16) / 3 : 112;
-        return Wrap(
-          spacing: ReadingRoomSpacing.sm,
-          runSpacing: ReadingRoomSpacing.sm,
-          children: actions
-              .map(
-                (_ActionChip action) => SizedBox(
-                  width: itemWidth,
-                  child: action,
-                ),
-              )
-              .toList(growable: false),
-        );
-      },
-    );
-  }
-
-  Future<void> _openInBrowser(BuildContext context) async {
-    final Uri? uri =
-        Uri.tryParse(bookmark.canonicalUrl ?? bookmark.originalUrl);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  void _copyUrl(BuildContext context) {
-    final String url = bookmark.canonicalUrl ?? bookmark.originalUrl;
-    Clipboard.setData(ClipboardData(text: url));
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)?.detailLinkCopied ?? 'Link copied',
-          ),
-        ),
-      );
-  }
-
-  Future<void> _editTitleAndDescription(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final String initialTitle = bookmark.title?.trim() ?? '';
-    final TextEditingController titleController = TextEditingController(
-      text: initialTitle.isNotEmpty ? initialTitle : bookmark.displayTitle,
-    );
-    final TextEditingController descriptionController = TextEditingController(
-      text: bookmark.description ?? '',
-    );
-    try {
-      final AppLocalizations? l10n = AppLocalizations.of(context);
-      final bool? confirmed = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext dialogContext) => AlertDialog(
-          title: Text(l10n?.actionEdit ?? 'Edit'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: l10n?.captureTitleLabel ?? 'Title',
-                  ),
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: ReadingRoomSpacing.md),
-                TextField(
-                  controller: descriptionController,
-                  decoration: InputDecoration(
-                    labelText: l10n?.detailDescriptionLabel ?? 'Description',
-                  ),
-                  minLines: 3,
-                  maxLines: 6,
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n?.actionCancel ?? 'Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(l10n?.actionSave ?? 'Save'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
-      await ref.read(bookmarkRepositoryProvider).save(
-            bookmark.copyWith(
-              title: titleController.text.trim(),
-              description: descriptionController.text.trim(),
-            ),
-          );
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)?.snackbarBookmarkUpdated ??
-                  'Bookmark updated',
-            ),
-          ),
-        );
-    } finally {
-      titleController.dispose();
-      descriptionController.dispose();
-    }
-  }
-
-  Future<void> _share() async {
-    final String url = bookmark.canonicalUrl ?? bookmark.originalUrl;
-    final String? title = bookmark.title;
-    await Share.share(
-      url,
-      subject: title,
-    );
-  }
-
-  Future<void> _refetchMetadata(BuildContext context, WidgetRef ref) async {
-    if (bookmark.id == null) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-            content: Text(
-                AppLocalizations.of(context)?.detailRefetchingMetadata ??
-                    'Refetching metadata…')),
-      );
-    await ref.read(scrapingOrchestratorProvider).enrich(bookmark.id!);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-            content: Text(
-                AppLocalizations.of(context)?.detailMetadataRefreshed ??
-                    'Metadata refreshed')),
-      );
-  }
-
-  Future<void> _toggle(
-    WidgetRef ref,
-    Bookmark Function(Bookmark) transform,
-  ) async {
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.save(transform(bookmark));
-  }
-
-  Future<void> _toggleRead(WidgetRef ref) async {
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.save(bookmark.copyWith(isRead: !bookmark.isRead));
-    final AppSettings settings = ref.read(appSettingsProvider);
-    final UnreadReminderCadence cadence = settings.unreadReminderCadence;
-    if (cadence != UnreadReminderCadence.off) {
-      try {
-        await ref.read(unreadReminderSchedulerProvider).sync(
-              cadence,
-              weekday: settings.unreadReminderWeekday,
-              hour: settings.unreadReminderHour,
-              minute: settings.unreadReminderMinute,
-            );
-      } on Object {
-        return;
-      }
-    }
-  }
-
-  Future<void> _delete(BuildContext context, WidgetRef ref) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: Text(
-          AppLocalizations.of(context)?.dialogDeleteTitle ?? 'Delete bookmark?',
-        ),
-        content: Text(
-          AppLocalizations.of(context)?.detailDeleteMessage ??
-              'This cannot be undone.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(AppLocalizations.of(context)?.actionCancel ?? 'Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(AppLocalizations.of(context)?.actionDelete ?? 'Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    if (bookmark.id == null) return;
-    ref.read(scrapingOrchestratorProvider).cancel(bookmark.id!);
-    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    await repo.delete(bookmark.id!);
-    // Stream will emit null → screen auto-pops.
-  }
-}
-
-class _ActionChip extends StatelessWidget {
-  const _ActionChip({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color effectiveColor = color ?? theme.colorScheme.onSurface;
-
-    return Semantics(
-      button: true,
-      label: label,
-      child: Material(
-        color: theme.colorScheme.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
-          side: BorderSide(
-            color: effectiveColor.withValues(alpha: 0.32),
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: ReadingRoomSpacing.sm,
-              vertical: ReadingRoomSpacing.sm,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(icon, size: 18, color: effectiveColor),
-                const SizedBox(width: ReadingRoomSpacing.xs),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: effectiveColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

@@ -704,44 +704,95 @@ class _SwipeableCard extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
     final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
+    final SwipeAction rightAction = ref.watch(rightSwipeActionProvider);
+    final SwipeAction leftAction = ref.watch(leftSwipeActionProvider);
+
+    if (rightAction == SwipeAction.none && leftAction == SwipeAction.none) {
+      return child;
+    }
+
+    final DismissDirection direction = rightAction == SwipeAction.none
+        ? DismissDirection.endToStart
+        : leftAction == SwipeAction.none
+            ? DismissDirection.startToEnd
+            : DismissDirection.horizontal;
 
     return Dismissible(
       key: ValueKey<int>(bookmark.id!),
       movementDuration: ReadingRoomMotion.quick,
       resizeDuration: ReadingRoomMotion.quick,
-      confirmDismiss: (DismissDirection direction) async {
-        if (direction == DismissDirection.startToEnd) {
-          // Swipe right → toggle read/unread with haptic feedback
-          unawaited(HapticFeedback.lightImpact());
-          final bool newRead = !bookmark.isRead;
-          await repo.save(bookmark.copyWith(isRead: newRead));
-          if (context.mounted) {
-            final ScaffoldMessengerState messenger =
-                ScaffoldMessenger.of(context);
-            messenger.hideCurrentSnackBar();
-            final String message = newRead
-                ? (l10n?.snackbarMarkedAsRead ?? 'Marked as read')
-                : (l10n?.snackbarMarkedAsUnread ?? 'Marked as unread');
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(message),
-                action: SnackBarAction(
-                  label: l10n?.actionUndo ?? 'Undo',
-                  onPressed: () =>
-                      repo.save(bookmark.copyWith(isRead: !newRead)),
-                ),
-              ),
-            );
-          }
-          return false;
-        }
+      direction: direction,
+      confirmDismiss: (DismissDirection swipeDirection) async {
+        final SwipeAction action =
+            swipeDirection == DismissDirection.startToEnd
+                ? rightAction
+                : leftAction;
+        return _handleAction(
+          context: context,
+          ref: ref,
+          action: action,
+          bookmark: bookmark,
+          repo: repo,
+          l10n: l10n,
+        );
+      },
+      background: _buildBackground(
+        context: context,
+        action: rightAction,
+        bookmark: bookmark,
+        alignment: Alignment.centerLeft,
+        theme: theme,
+        l10n: l10n,
+      ),
+      secondaryBackground: _buildBackground(
+        context: context,
+        action: leftAction,
+        bookmark: bookmark,
+        alignment: Alignment.centerRight,
+        theme: theme,
+        l10n: l10n,
+      ),
+      child: child,
+    );
+  }
 
-        // Swipe left → archive or delete with haptic feedback
+  Future<bool> _handleAction({
+    required BuildContext context,
+    required WidgetRef ref,
+    required SwipeAction action,
+    required Bookmark bookmark,
+    required BookmarkRepository repo,
+    required AppLocalizations? l10n,
+  }) async {
+    switch (action) {
+      case SwipeAction.toggleRead:
+        unawaited(HapticFeedback.lightImpact());
+        final bool newRead = !bookmark.isRead;
+        await repo.save(bookmark.copyWith(isRead: newRead));
+        if (context.mounted) {
+          final ScaffoldMessengerState messenger =
+              ScaffoldMessenger.of(context);
+          messenger.hideCurrentSnackBar();
+          final String message = newRead
+              ? (l10n?.snackbarMarkedAsRead ?? 'Marked as read')
+              : (l10n?.snackbarMarkedAsUnread ?? 'Marked as unread');
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(message),
+              action: SnackBarAction(
+                label: l10n?.actionUndo ?? 'Undo',
+                onPressed: () =>
+                    repo.save(bookmark.copyWith(isRead: !newRead)),
+              ),
+            ),
+          );
+        }
+        return false;
+
+      case SwipeAction.toggleArchive:
         unawaited(HapticFeedback.mediumImpact());
         if (bookmark.isArchived) {
-          // In archive view: delete
-          ref.read(scrapingOrchestratorProvider).cancel(bookmark.id!);
-          await repo.delete(bookmark.id!);
+          await repo.save(bookmark.copyWith(isArchived: false));
           if (context.mounted) {
             final ScaffoldMessengerState messenger =
                 ScaffoldMessenger.of(context);
@@ -749,18 +800,18 @@ class _SwipeableCard extends ConsumerWidget {
             messenger.showSnackBar(
               SnackBar(
                 content: Text(
-                  l10n?.snackbarBookmarkDeleted ?? 'Bookmark deleted',
+                  l10n?.snackbarBookmarkUnarchived ?? 'Bookmark unarchived',
                 ),
                 action: SnackBarAction(
                   label: l10n?.actionUndo ?? 'Undo',
-                  onPressed: () => repo.save(bookmark),
+                  onPressed: () =>
+                      repo.save(bookmark.copyWith(isArchived: true)),
                 ),
               ),
             );
           }
           return true;
         } else {
-          // In active feed: archive
           await repo.save(bookmark.copyWith(isArchived: true));
           if (context.mounted) {
             final ScaffoldMessengerState messenger =
@@ -781,66 +832,149 @@ class _SwipeableCard extends ConsumerWidget {
           }
           return true;
         }
-      },
-      background: Container(
-        color: theme.colorScheme.primary.withValues(alpha: 0.12),
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: ReadingRoomSpacing.xl),
-        child: Row(
-          children: <Widget>[
-            Icon(
-              bookmark.isRead
-                  ? Icons.mark_email_unread_outlined
-                  : Icons.check_circle_outline,
-              color: theme.colorScheme.primary,
+
+      case SwipeAction.toggleFavorite:
+        unawaited(HapticFeedback.lightImpact());
+        final bool newFav = !bookmark.isFavorite;
+        await repo.save(bookmark.copyWith(isFavorite: newFav));
+        if (context.mounted) {
+          final ScaffoldMessengerState messenger =
+              ScaffoldMessenger.of(context);
+          messenger.hideCurrentSnackBar();
+          final String message = newFav
+              ? (l10n?.snackbarMarkedAsFavorite ?? 'Added to favorites')
+              : (l10n?.snackbarMarkedAsUnfavorite ?? 'Removed from favorites');
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(message),
+              action: SnackBarAction(
+                label: l10n?.actionUndo ?? 'Undo',
+                onPressed: () =>
+                    repo.save(bookmark.copyWith(isFavorite: !newFav)),
+              ),
             ),
+          );
+        }
+        return false;
+
+      case SwipeAction.delete:
+        unawaited(HapticFeedback.heavyImpact());
+        ref.read(scrapingOrchestratorProvider).cancel(bookmark.id!);
+        await repo.delete(bookmark.id!);
+        if (context.mounted) {
+          final ScaffoldMessengerState messenger =
+              ScaffoldMessenger.of(context);
+          messenger.hideCurrentSnackBar();
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n?.snackbarBookmarkDeleted ?? 'Bookmark deleted',
+              ),
+              action: SnackBarAction(
+                label: l10n?.actionUndo ?? 'Undo',
+                onPressed: () => repo.save(bookmark),
+              ),
+            ),
+          );
+        }
+        return true;
+
+      case SwipeAction.none:
+        return false;
+    }
+  }
+
+  Widget _buildBackground({
+    required BuildContext context,
+    required SwipeAction action,
+    required Bookmark bookmark,
+    required Alignment alignment,
+    required ThemeData theme,
+    required AppLocalizations? l10n,
+  }) {
+    if (action == SwipeAction.none) {
+      return const SizedBox.shrink();
+    }
+
+    final bool isLeftAligned = alignment == Alignment.centerLeft;
+    final Color actionColor;
+    final IconData icon;
+    final String label;
+
+    switch (action) {
+      case SwipeAction.toggleRead:
+        actionColor = theme.colorScheme.primary;
+        icon = bookmark.isRead
+            ? Icons.mark_email_unread_outlined
+            : Icons.check_circle_outline;
+        label = bookmark.isRead
+            ? (l10n?.detailActionUnread ?? 'Unread')
+            : (l10n?.detailActionRead ?? 'Read');
+        break;
+
+      case SwipeAction.toggleArchive:
+        if (bookmark.isArchived) {
+          actionColor = theme.colorScheme.secondary;
+          icon = Icons.unarchive_outlined;
+          label = l10n?.actionUnarchive ?? 'Unarchive';
+        } else {
+          actionColor = theme.colorScheme.onSurfaceVariant;
+          icon = Icons.archive_outlined;
+          label = l10n?.actionArchive ?? 'Archive';
+        }
+        break;
+
+      case SwipeAction.toggleFavorite:
+        actionColor = Colors.pinkAccent;
+        icon = bookmark.isFavorite ? Icons.favorite_outline : Icons.favorite;
+        label = bookmark.isFavorite
+            ? (l10n?.detailActionUnfavorite ?? 'Unfav')
+            : (l10n?.labelFavorite ?? 'Favorite');
+        break;
+
+      case SwipeAction.delete:
+        actionColor = theme.colorScheme.error;
+        icon = Icons.delete_outline;
+        label = l10n?.actionDelete ?? 'Delete';
+        break;
+
+      case SwipeAction.none:
+        return const SizedBox.shrink();
+    }
+
+    return Container(
+      color: actionColor.withValues(alpha: 0.12),
+      alignment: alignment,
+      padding: EdgeInsets.only(
+        left: isLeftAligned ? ReadingRoomSpacing.xl : 0,
+        right: isLeftAligned ? 0 : ReadingRoomSpacing.xl,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (isLeftAligned) ...<Widget>[
+            Icon(icon, color: actionColor),
             const SizedBox(width: ReadingRoomSpacing.sm),
             Text(
-              bookmark.isRead
-                  ? (l10n?.detailActionUnread ?? 'Unread')
-                  : (l10n?.detailActionRead ?? 'Read'),
+              label,
               style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.primary,
+                color: actionColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ],
-        ),
-      ),
-      secondaryBackground: Container(
-        color: (bookmark.isArchived
-                ? theme.colorScheme.error
-                : theme.colorScheme.onSurfaceVariant)
-            .withValues(alpha: 0.12),
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: ReadingRoomSpacing.xl),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
+          ] else ...<Widget>[
             Text(
-              bookmark.isArchived
-                  ? (l10n?.actionDelete ?? 'Delete')
-                  : (l10n?.actionArchive ?? 'Archive'),
+              label,
               style: theme.textTheme.labelMedium?.copyWith(
-                color: bookmark.isArchived
-                    ? theme.colorScheme.error
-                    : theme.colorScheme.onSurfaceVariant,
+                color: actionColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(width: ReadingRoomSpacing.sm),
-            Icon(
-              bookmark.isArchived
-                  ? Icons.delete_outline
-                  : Icons.archive_outlined,
-              color: bookmark.isArchived
-                  ? theme.colorScheme.error
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
+            Icon(icon, color: actionColor),
           ],
-        ),
+        ],
       ),
-      child: child,
     );
   }
 }

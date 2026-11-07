@@ -247,6 +247,10 @@ const _AutomationRuleEntitytriggerTypeEnumValueMap = {
   r'tagContains': r'tagContains',
   r'unreadForDays': r'unreadForDays',
   r'addedWithinDays': r'addedWithinDays',
+  r'contentTypeEquals': r'contentTypeEquals',
+  r'readingTimeGreaterThan': r'readingTimeGreaterThan',
+  r'titleContains': r'titleContains',
+  r'titleMatchesRegex': r'titleMatchesRegex',
 };
 const _AutomationRuleEntitytriggerTypeValueEnumMap = {
   r'domainEquals': AutomationTriggerType.domainEquals,
@@ -256,6 +260,10 @@ const _AutomationRuleEntitytriggerTypeValueEnumMap = {
   r'tagContains': AutomationTriggerType.tagContains,
   r'unreadForDays': AutomationTriggerType.unreadForDays,
   r'addedWithinDays': AutomationTriggerType.addedWithinDays,
+  r'contentTypeEquals': AutomationTriggerType.contentTypeEquals,
+  r'readingTimeGreaterThan': AutomationTriggerType.readingTimeGreaterThan,
+  r'titleContains': AutomationTriggerType.titleContains,
+  r'titleMatchesRegex': AutomationTriggerType.titleMatchesRegex,
 };
 
 Id _automationRuleEntityGetId(AutomationRuleEntity object) {

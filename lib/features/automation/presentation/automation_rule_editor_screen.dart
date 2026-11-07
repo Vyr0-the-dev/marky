@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -246,6 +247,24 @@ class _AutomationRuleEditorScreenState
       return;
     }
 
+    for (final AutomationCondition condition in conditions) {
+      if (condition.type == AutomationTriggerType.readingTimeGreaterThan) {
+        final int? minutes = int.tryParse(condition.value);
+        if (minutes == null || minutes <= 0) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Reading time must be greater than 0 minutes.',
+                ),
+              ),
+            );
+          return;
+        }
+      }
+    }
+
     setState(() => _saving = true);
 
     try {
@@ -319,7 +338,14 @@ class _AutomationRuleEditorScreenState
                         .toList(),
                     onChanged: (AutomationTriggerType? value) {
                       if (value == null) return;
-                      setState(() => condition.type = value);
+                      setState(() {
+                        condition.type = value;
+                        if (value == AutomationTriggerType.contentTypeEquals &&
+                            (condition.value.text.trim().isEmpty ||
+                                !_isValidContentType(condition.value.text))) {
+                          condition.value.text = 'article';
+                        }
+                      });
                     },
                   ),
                 ),
@@ -334,16 +360,113 @@ class _AutomationRuleEditorScreenState
               ],
             ),
             const SizedBox(height: ReadingRoomSpacing.md),
-            TextField(
-              controller: condition.value,
-              decoration: InputDecoration(
-                labelText: _triggerHint(condition.type),
-                border: const OutlineInputBorder(),
+            if (condition.type == AutomationTriggerType.contentTypeEquals)
+              _buildContentTypeSelector(context, condition)
+            else if (condition.type ==
+                AutomationTriggerType.readingTimeGreaterThan)
+              _buildReadingTimeInput(context, condition)
+            else
+              TextField(
+                controller: condition.value,
+                decoration: InputDecoration(
+                  labelText: _triggerLabel(condition.type),
+                  hintText: _triggerHint(condition.type),
+                  helperText: _triggerHelperText(condition.type),
+                  border: const OutlineInputBorder(),
+                ),
               ),
-            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildContentTypeSelector(
+    BuildContext context,
+    _ConditionDraft condition,
+  ) {
+    final ThemeData theme = Theme.of(context);
+    final String current = condition.value.text.trim().toLowerCase();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Select content type',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        const SizedBox(height: ReadingRoomSpacing.sm),
+        Wrap(
+          spacing: ReadingRoomSpacing.sm,
+          runSpacing: ReadingRoomSpacing.xs,
+          children: _contentTypeOptions.map((option) {
+            final bool isSelected = current == option.value ||
+                (option.value == 'tweet' && current == 'discussion') ||
+                (option.value == 'repository' && current == 'code');
+
+            return FilterChip(
+              selected: isSelected,
+              showCheckmark: false,
+              avatar: Icon(
+                option.icon,
+                size: 16,
+                color: isSelected
+                    ? theme.colorScheme.onPrimaryContainer
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+              label: Text(option.label),
+              labelStyle: theme.textTheme.labelMedium?.copyWith(
+                color: isSelected
+                    ? theme.colorScheme.onPrimaryContainer
+                    : theme.colorScheme.onSurface,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
+              ),
+              onSelected: (bool selected) {
+                if (selected) {
+                  setState(() {
+                    condition.value.text = option.value;
+                  });
+                }
+              },
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReadingTimeInput(
+    BuildContext context,
+    _ConditionDraft condition,
+  ) {
+    final String text = condition.value.text.trim();
+    final int? parsed = int.tryParse(text);
+    final bool hasError = text.isNotEmpty && (parsed == null || parsed <= 0);
+
+    return TextField(
+      controller: condition.value,
+      keyboardType: TextInputType.number,
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+      ],
+      decoration: InputDecoration(
+        labelText: 'Reading time greater than',
+        hintText: 'e.g. 5',
+        suffixText: 'mins',
+        errorText: hasError ? 'Enter a positive number of minutes' : null,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (_) => setState(() {}),
     );
   }
 
@@ -431,6 +554,23 @@ class _AutomationRuleEditorScreenState
 
   // ── Labels ──────────────────────────────────────────────────────
 
+  static const List<({String value, String label, IconData icon})>
+      _contentTypeOptions = <({String value, String label, IconData icon})>[
+    (value: 'article', label: 'Article', icon: Icons.article_outlined),
+    (value: 'video', label: 'Video', icon: Icons.videocam_outlined),
+    (value: 'image', label: 'Image', icon: Icons.image_outlined),
+    (value: 'audio', label: 'Audio', icon: Icons.audiotrack_outlined),
+    (value: 'tweet', label: 'Tweet / Social Post', icon: Icons.tag_rounded),
+    (value: 'repository', label: 'Code Repository', icon: Icons.code_rounded),
+  ];
+
+  static bool _isValidContentType(String value) {
+    final String clean = value.trim().toLowerCase();
+    return _contentTypeOptions.any((option) => option.value == clean) ||
+        clean == 'discussion' ||
+        clean == 'code';
+  }
+
   static String _triggerLabel(AutomationTriggerType t) {
     switch (t) {
       case AutomationTriggerType.domainEquals:
@@ -447,6 +587,14 @@ class _AutomationRuleEditorScreenState
         return 'Unread for days';
       case AutomationTriggerType.addedWithinDays:
         return 'Added within days';
+      case AutomationTriggerType.contentTypeEquals:
+        return 'Content type is…';
+      case AutomationTriggerType.readingTimeGreaterThan:
+        return 'Reading time > (mins)';
+      case AutomationTriggerType.titleContains:
+        return 'Title contains...';
+      case AutomationTriggerType.titleMatchesRegex:
+        return 'Title matches regex...';
     }
   }
 
@@ -466,6 +614,33 @@ class _AutomationRuleEditorScreenState
         return 'Days';
       case AutomationTriggerType.addedWithinDays:
         return 'Days';
+      case AutomationTriggerType.contentTypeEquals:
+        return 'Content type';
+      case AutomationTriggerType.readingTimeGreaterThan:
+        return 'Minutes (e.g. 5)';
+      case AutomationTriggerType.titleContains:
+        return 'e.g. Tutorial, Release, Flutter';
+      case AutomationTriggerType.titleMatchesRegex:
+        return r'e.g. v[0-9]+\.[0-9]+';
+    }
+  }
+
+  static String? _triggerHelperText(AutomationTriggerType t) {
+    switch (t) {
+      case AutomationTriggerType.titleContains:
+        return 'Case-insensitive substring match in title';
+      case AutomationTriggerType.titleMatchesRegex:
+        return 'Case-insensitive regular expression pattern';
+      case AutomationTriggerType.domainEquals:
+      case AutomationTriggerType.domainContains:
+      case AutomationTriggerType.urlContains:
+      case AutomationTriggerType.sourceTypeEquals:
+      case AutomationTriggerType.tagContains:
+      case AutomationTriggerType.unreadForDays:
+      case AutomationTriggerType.addedWithinDays:
+      case AutomationTriggerType.contentTypeEquals:
+      case AutomationTriggerType.readingTimeGreaterThan:
+        return null;
     }
   }
 
@@ -510,7 +685,12 @@ class _ConditionDraft {
   _ConditionDraft({
     this.type = AutomationTriggerType.domainEquals,
     String value = '',
-  }) : value = TextEditingController(text: value);
+  }) : value = TextEditingController(
+          text: (type == AutomationTriggerType.contentTypeEquals &&
+                  value.trim().isEmpty)
+              ? 'article'
+              : value,
+        );
 
   factory _ConditionDraft.fromCondition(AutomationCondition condition) {
     return _ConditionDraft(type: condition.type, value: condition.value);

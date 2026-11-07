@@ -121,6 +121,29 @@ void main() {
     expect(loaded.triggerValue, 'github');
   });
 
+  test('save round-trips titleContains and titleMatchesRegex triggers',
+      () async {
+    final AutomationRule savedContains = await repo.save(_rule(
+      name: 'contains-rule',
+      trigger: AutomationTriggerType.titleContains,
+      value: 'Flutter',
+    ));
+    final AutomationRule savedRegex = await repo.save(_rule(
+      name: 'regex-rule',
+      trigger: AutomationTriggerType.titleMatchesRegex,
+      value: r'v[0-9]+\.[0-9]+',
+    ));
+
+    final AutomationRule? loadedContains =
+        await repo.getById(savedContains.id!);
+    final AutomationRule? loadedRegex = await repo.getById(savedRegex.id!);
+
+    expect(loadedContains!.triggerType, AutomationTriggerType.titleContains);
+    expect(loadedContains.triggerValue, 'Flutter');
+    expect(loadedRegex!.triggerType, AutomationTriggerType.titleMatchesRegex);
+    expect(loadedRegex.triggerValue, r'v[0-9]+\.[0-9]+');
+  });
+
   test('getAll sorts by priority ASC then createdAt ASC', () async {
     // Sleep micros are flaky, so use distinct created times.
     final AutomationRule low =

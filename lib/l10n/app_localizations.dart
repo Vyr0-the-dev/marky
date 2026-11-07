@@ -1257,6 +1257,78 @@ abstract class AppLocalizations {
   /// **'Marky backup'**
   String get settingsBackupShareText;
 
+  /// No description provided for @settingsSectionGestures.
+  ///
+  /// In en, this message translates to:
+  /// **'Gestures'**
+  String get settingsSectionGestures;
+
+  /// No description provided for @settingsSwipeRightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe right'**
+  String get settingsSwipeRightLabel;
+
+  /// No description provided for @settingsSwipeLeftLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left'**
+  String get settingsSwipeLeftLabel;
+
+  /// No description provided for @settingsSwipeActionDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select swipe action'**
+  String get settingsSwipeActionDialogTitle;
+
+  /// No description provided for @swipeActionToggleRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read / Unread'**
+  String get swipeActionToggleRead;
+
+  /// No description provided for @swipeActionToggleArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive / Unarchive'**
+  String get swipeActionToggleArchive;
+
+  /// No description provided for @swipeActionToggleFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite / Unfavorite'**
+  String get swipeActionToggleFavorite;
+
+  /// No description provided for @swipeActionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get swipeActionDelete;
+
+  /// No description provided for @swipeActionNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get swipeActionNone;
+
+  /// No description provided for @snackbarMarkedAsFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to favorites'**
+  String get snackbarMarkedAsFavorite;
+
+  /// No description provided for @snackbarMarkedAsUnfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from favorites'**
+  String get snackbarMarkedAsUnfavorite;
+
+  /// No description provided for @actionUnarchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive'**
+  String get actionUnarchive;
+
   /// No description provided for @shareLinkSaved.
   ///
   /// In en, this message translates to:

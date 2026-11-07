@@ -298,8 +298,6 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.scrollUntilVisible(find.text('Open'), 200);
-        await tester.pumpAndSettle();
 
         expect(
           find.bySemanticsLabel('Filter by domain a11y.example.com'),
@@ -307,11 +305,17 @@ void main() {
         );
         expect(find.text('Open'), findsAtLeastNWidgets(1));
         expect(find.text('Copy'), findsAtLeastNWidgets(1));
-        expect(find.text('Favorite'), findsAtLeastNWidgets(1));
-        expect(find.text('Archive'), findsAtLeastNWidgets(1));
+        expect(find.byTooltip('Favorite'), findsOneWidget);
+        expect(find.byTooltip('Pin'), findsOneWidget);
+        expect(find.byTooltip('Share'), findsOneWidget);
+
+        await tester.tap(find.byType(PopupMenuButton<String>));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit'), findsAtLeastNWidgets(1));
+        expect(find.text('Refetch'), findsAtLeastNWidgets(1));
         expect(find.text('Read'), findsAtLeastNWidgets(1));
-        expect(find.text('Pin'), findsAtLeastNWidgets(1));
-        expect(find.text('Share'), findsAtLeastNWidgets(1));
+        expect(find.text('Archive'), findsAtLeastNWidgets(1));
         expect(find.text('Delete'), findsAtLeastNWidgets(1));
         expect(tester.takeException(), isNull);
       } finally {

@@ -15,6 +15,8 @@ void main() {
       expect(settings.unreadReminderWeekday, DateTime.saturday);
       expect(settings.unreadReminderHour, 20);
       expect(settings.unreadReminderMinute, 0);
+      expect(settings.leftSwipeAction, SwipeAction.toggleArchive);
+      expect(settings.rightSwipeAction, SwipeAction.toggleRead);
     });
   });
 
@@ -85,6 +87,34 @@ void main() {
     });
   });
 
+  group('SwipeAction', () {
+    test('fromString parses valid actions', () {
+      expect(SwipeAction.fromString('toggleRead'), SwipeAction.toggleRead);
+      expect(
+        SwipeAction.fromString('toggleArchive'),
+        SwipeAction.toggleArchive,
+      );
+      expect(
+        SwipeAction.fromString('toggleFavorite'),
+        SwipeAction.toggleFavorite,
+      );
+      expect(SwipeAction.fromString('delete'), SwipeAction.delete);
+      expect(SwipeAction.fromString('none'), SwipeAction.none);
+    });
+
+    test('fromString falls back on unknown or null values', () {
+      expect(SwipeAction.fromString(null), SwipeAction.none);
+      expect(SwipeAction.fromString('invalid_action'), SwipeAction.none);
+      expect(
+        SwipeAction.fromString(
+          'unknown',
+          fallback: SwipeAction.toggleArchive,
+        ),
+        SwipeAction.toggleArchive,
+      );
+    });
+  });
+
   group('AppSettings equality', () {
     test('two defaults are equal and hash to the same value', () {
       const AppSettings a = AppSettings.defaults();
@@ -125,6 +155,8 @@ void main() {
         unreadReminderWeekday: DateTime.friday,
         unreadReminderHour: 22,
         unreadReminderMinute: 30,
+        leftSwipeAction: SwipeAction.delete,
+        rightSwipeAction: SwipeAction.toggleFavorite,
       );
       await repo.save(written);
 

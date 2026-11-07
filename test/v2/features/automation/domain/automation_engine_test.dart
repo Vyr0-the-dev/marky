@@ -26,6 +26,8 @@ Bookmark _bm({
   String url = 'https://www.youtube.com/watch?v=abc',
   String? host = 'www.youtube.com',
   BookmarkSourceType source = BookmarkSourceType.manual,
+  BookmarkContentType contentType = BookmarkContentType.video,
+  int? readingTimeMinutes,
   List<int> tagIds = const <int>[],
   List<int> collectionIds = const <int>[],
   bool fav = false,
@@ -42,7 +44,8 @@ Bookmark _bm({
     canonicalUrl: url,
     normalizedHost: host,
     sourceType: source,
-    contentType: BookmarkContentType.video,
+    contentType: contentType,
+    readingTimeMinutes: readingTimeMinutes,
     title: title,
     tagIds: tagIds,
     collectionIds: collectionIds,
@@ -217,6 +220,276 @@ void main() {
       );
 
       expect(fired, hasLength(1));
+    });
+
+    test('contentTypeEquals matches exact content type (case-insensitive)',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.contentTypeEquals,
+          value: 'Article',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(contentType: BookmarkContentType.article),
+      );
+
+      expect(fired, hasLength(1));
+    });
+
+    test('contentTypeEquals does NOT match different content type', () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.contentTypeEquals,
+          value: 'video',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(contentType: BookmarkContentType.article),
+      );
+
+      expect(fired, isEmpty);
+    });
+
+    test('contentTypeEquals matches aliases like tweet and repository',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.contentTypeEquals,
+          value: 'tweet',
+        ),
+        _rule(
+          id: 2,
+          trigger: AutomationTriggerType.contentTypeEquals,
+          value: 'repository',
+        ),
+      ];
+
+      final List<AutomationRule> firedDiscussion = await engine.evaluate(
+        _bm(contentType: BookmarkContentType.discussion),
+      );
+      expect(firedDiscussion, hasLength(1));
+      expect(firedDiscussion.first.id, 1);
+
+      final List<AutomationRule> firedCode = await engine.evaluate(
+        _bm(contentType: BookmarkContentType.code),
+      );
+      expect(firedCode, hasLength(1));
+      expect(firedCode.first.id, 2);
+    });
+
+    test('readingTimeGreaterThan matches when reading time strictly greater',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.readingTimeGreaterThan,
+          value: '5',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(readingTimeMinutes: 8),
+      );
+
+      expect(fired, hasLength(1));
+    });
+
+    test(
+        'readingTimeGreaterThan does NOT match when reading time less or equal',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.readingTimeGreaterThan,
+          value: '5',
+        ),
+      ];
+
+      final List<AutomationRule> equalFired = await engine.evaluate(
+        _bm(readingTimeMinutes: 5),
+      );
+      expect(equalFired, isEmpty);
+
+      final List<AutomationRule> lessFired = await engine.evaluate(
+        _bm(readingTimeMinutes: 3),
+      );
+      expect(lessFired, isEmpty);
+    });
+
+    test(
+        'readingTimeGreaterThan does NOT match when readingTimeMinutes is null',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.readingTimeGreaterThan,
+          value: '5',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(_bm());
+
+      expect(fired, isEmpty);
+    });
+
+    test(
+        'readingTimeGreaterThan does NOT match when value is invalid integer',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.readingTimeGreaterThan,
+          value: 'not-a-number',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(readingTimeMinutes: 10),
+      );
+
+      expect(fired, isEmpty);
+    });
+
+    test('titleContains matches substring in bookmark title case-insensitively',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleContains,
+          value: 'FLUTTER',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(title: 'Getting started with Flutter development'),
+      );
+
+      expect(fired, hasLength(1));
+    });
+
+    test('titleContains does not fire when keyword is absent', () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleContains,
+          value: 'Dart',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(title: 'React Native guide'),
+      );
+
+      expect(fired, isEmpty);
+    });
+
+    test('titleContains returns false when bookmark title is null', () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleContains,
+          value: 'Flutter',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(),
+      );
+
+      expect(fired, isEmpty);
+    });
+
+    test('titleContains returns false when condition value is empty or whitespace',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleContains,
+          value: '   ',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(title: 'Some title'),
+      );
+
+      expect(fired, isEmpty);
+    });
+
+    test(
+        'titleMatchesRegex matches bookmark title with regex pattern case-insensitively',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleMatchesRegex,
+          value: r'v[0-9]+\.[0-9]+',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(title: 'Marky Release v1.2 is here'),
+      );
+
+      expect(fired, hasLength(1));
+    });
+
+    test('titleMatchesRegex does not match non-matching regex', () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleMatchesRegex,
+          value: '^Tutorial:',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(title: 'Reference guide: Dart & Flutter'),
+      );
+
+      expect(fired, isEmpty);
+    });
+
+    test('titleMatchesRegex returns false when bookmark title is null',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleMatchesRegex,
+          value: r'v[0-9]+\.[0-9]+',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(),
+      );
+
+      expect(fired, isEmpty);
+    });
+
+    test('titleMatchesRegex safely handles invalid regex syntax without throwing',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleMatchesRegex,
+          value: '[invalid(regex',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(title: 'Any title'),
+      );
+
+      expect(fired, isEmpty);
+    });
+
+    test(
+        'titleMatchesRegex returns false when condition value is empty or whitespace',
+        () async {
+      ruleRepo.rules = <AutomationRule>[
+        _rule(
+          trigger: AutomationTriggerType.titleMatchesRegex,
+          value: '   ',
+        ),
+      ];
+
+      final List<AutomationRule> fired = await engine.evaluate(
+        _bm(title: 'Any title'),
+      );
+
+      expect(fired, isEmpty);
     });
 
     test('AND logic requires all conditions to match', () async {

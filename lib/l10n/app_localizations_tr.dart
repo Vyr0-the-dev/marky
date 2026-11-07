@@ -210,7 +210,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get snackbarBookmarkArchived => 'Yer imi arşivlendi';
 
   @override
-  String get snackbarBookmarkUnarchived => 'Yer imi arşivden çıkarıldı';
+  String get snackbarBookmarkUnarchived => 'Yer işareti arşivden çıkarıldı';
 
   @override
   String get snackbarMarkedAsRead => 'Okundu olarak işaretlendi';
@@ -640,6 +640,42 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsBackupShareText => 'Marky yedeği';
+
+  @override
+  String get settingsSectionGestures => 'Hareketler';
+
+  @override
+  String get settingsSwipeRightLabel => 'Sağa kaydırma';
+
+  @override
+  String get settingsSwipeLeftLabel => 'Sola kaydırma';
+
+  @override
+  String get settingsSwipeActionDialogTitle => 'Kaydırma eylemi seçin';
+
+  @override
+  String get swipeActionToggleRead => 'Okundu / Okunmadı';
+
+  @override
+  String get swipeActionToggleArchive => 'Arşivle / Arşivden çıkar';
+
+  @override
+  String get swipeActionToggleFavorite => 'Favorilere ekle / çıkar';
+
+  @override
+  String get swipeActionDelete => 'Sil';
+
+  @override
+  String get swipeActionNone => 'Yok';
+
+  @override
+  String get snackbarMarkedAsFavorite => 'Favorilere eklendi';
+
+  @override
+  String get snackbarMarkedAsUnfavorite => 'Favorilerden çıkarıldı';
+
+  @override
+  String get actionUnarchive => 'Arşivden çıkar';
 
   @override
   String get shareLinkSaved => 'Paylaşılan bağlantı kaydedildi';

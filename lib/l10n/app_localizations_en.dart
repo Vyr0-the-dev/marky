@@ -638,6 +638,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBackupShareText => 'Marky backup';
 
   @override
+  String get settingsSectionGestures => 'Gestures';
+
+  @override
+  String get settingsSwipeRightLabel => 'Swipe right';
+
+  @override
+  String get settingsSwipeLeftLabel => 'Swipe left';
+
+  @override
+  String get settingsSwipeActionDialogTitle => 'Select swipe action';
+
+  @override
+  String get swipeActionToggleRead => 'Read / Unread';
+
+  @override
+  String get swipeActionToggleArchive => 'Archive / Unarchive';
+
+  @override
+  String get swipeActionToggleFavorite => 'Favorite / Unfavorite';
+
+  @override
+  String get swipeActionDelete => 'Delete';
+
+  @override
+  String get swipeActionNone => 'None';
+
+  @override
+  String get snackbarMarkedAsFavorite => 'Added to favorites';
+
+  @override
+  String get snackbarMarkedAsUnfavorite => 'Removed from favorites';
+
+  @override
+  String get actionUnarchive => 'Unarchive';
+
+  @override
   String get shareLinkSaved => 'Shared link saved';
 
   @override

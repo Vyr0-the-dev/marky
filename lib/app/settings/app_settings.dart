@@ -88,6 +88,35 @@ enum UnreadReminderCadence {
   }
 }
 
+/// Available swipe actions for bookmarks in the library feed.
+enum SwipeAction {
+  /// Toggles read / unread state.
+  toggleRead,
+
+  /// Toggles archive state (or deletes if already in archive).
+  toggleArchive,
+
+  /// Toggles favorite state.
+  toggleFavorite,
+
+  /// Permanently removes the bookmark.
+  delete,
+
+  /// Disables swipe in that direction.
+  none;
+
+  static SwipeAction fromString(
+    String? value, {
+    SwipeAction fallback = SwipeAction.none,
+  }) {
+    if (value == null) return fallback;
+    for (final SwipeAction action in SwipeAction.values) {
+      if (action.name == value) return action;
+    }
+    return fallback;
+  }
+}
+
 /// Immutable snapshot of Marky's v2 user preferences.
 ///
 /// Intentionally **not** a Freezed union — this is a simple record
@@ -110,6 +139,8 @@ class AppSettings {
     required this.unreadReminderWeekday,
     required this.unreadReminderHour,
     required this.unreadReminderMinute,
+    required this.leftSwipeAction,
+    required this.rightSwipeAction,
   });
 
   /// Factory-reset defaults. Safe to materialise before
@@ -121,7 +152,9 @@ class AppSettings {
         unreadReminderCadence = UnreadReminderCadence.off,
         unreadReminderWeekday = DateTime.saturday,
         unreadReminderHour = 20,
-        unreadReminderMinute = 0;
+        unreadReminderMinute = 0,
+        leftSwipeAction = SwipeAction.toggleArchive,
+        rightSwipeAction = SwipeAction.toggleRead;
 
   final AppThemeMode themeMode;
   final AppLocaleChoice locale;
@@ -132,6 +165,9 @@ class AppSettings {
   final int unreadReminderHour;
   final int unreadReminderMinute;
 
+  final SwipeAction leftSwipeAction;
+  final SwipeAction rightSwipeAction;
+
   AppSettings copyWith({
     AppThemeMode? themeMode,
     AppLocaleChoice? locale,
@@ -140,6 +176,8 @@ class AppSettings {
     int? unreadReminderWeekday,
     int? unreadReminderHour,
     int? unreadReminderMinute,
+    SwipeAction? leftSwipeAction,
+    SwipeAction? rightSwipeAction,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -151,6 +189,8 @@ class AppSettings {
           unreadReminderWeekday ?? this.unreadReminderWeekday,
       unreadReminderHour: unreadReminderHour ?? this.unreadReminderHour,
       unreadReminderMinute: unreadReminderMinute ?? this.unreadReminderMinute,
+      leftSwipeAction: leftSwipeAction ?? this.leftSwipeAction,
+      rightSwipeAction: rightSwipeAction ?? this.rightSwipeAction,
     );
   }
 
@@ -197,7 +237,9 @@ class AppSettings {
         other.unreadReminderCadence == unreadReminderCadence &&
         other.unreadReminderWeekday == unreadReminderWeekday &&
         other.unreadReminderHour == unreadReminderHour &&
-        other.unreadReminderMinute == unreadReminderMinute;
+        other.unreadReminderMinute == unreadReminderMinute &&
+        other.leftSwipeAction == leftSwipeAction &&
+        other.rightSwipeAction == rightSwipeAction;
   }
 
   @override
@@ -209,6 +251,8 @@ class AppSettings {
         unreadReminderWeekday,
         unreadReminderHour,
         unreadReminderMinute,
+        leftSwipeAction,
+        rightSwipeAction,
       );
 
   @override
@@ -216,5 +260,6 @@ class AppSettings {
       'animations: $animationsEnabled, '
       'unreadReminderCadence: $unreadReminderCadence, '
       'unreadReminderWeekday: $unreadReminderWeekday, '
-      'unreadReminderTime: ${unreadReminderHour.toString().padLeft(2, '0')}:${unreadReminderMinute.toString().padLeft(2, '0')})';
+      'unreadReminderTime: ${unreadReminderHour.toString().padLeft(2, '0')}:${unreadReminderMinute.toString().padLeft(2, '0')}, '
+      'leftSwipeAction: $leftSwipeAction, rightSwipeAction: $rightSwipeAction)';
 }

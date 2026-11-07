@@ -9,14 +9,52 @@ import 'package:marky/features/automation/data/automation_rule_providers.dart';
 import 'package:marky/features/automation/domain/automation_debug_log.dart';
 import 'package:marky/features/automation/domain/automation_rule.dart';
 import 'package:marky/features/automation/domain/automation_rule_repository.dart';
+import 'package:marky/features/automation/presentation/automations_tour_sheet.dart';
 import 'package:marky/l10n/app_localizations.dart';
 
 /// Lists all automation rules with toggle and delete.
-class AutomationRulesScreen extends ConsumerWidget {
+class AutomationRulesScreen extends ConsumerStatefulWidget {
   const AutomationRulesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AutomationRulesScreen> createState() =>
+      _AutomationRulesScreenState();
+}
+
+class _AutomationRulesScreenState extends ConsumerState<AutomationRulesScreen> {
+  bool _tourChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowTour();
+    });
+  }
+
+  Future<void> _checkAndShowTour() async {
+    if (_tourChecked || !mounted) return;
+    _tourChecked = true;
+    final bool seen = await hasSeenAutomationsTour();
+    if (!seen && mounted) {
+      await showAutomationsTour(context);
+    }
+  }
+
+  void _showGuide(BuildContext context) {
+    showAutomationsTour(context);
+  }
+
+  void _showDebugLogs(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => const _AutomationDebugLogSheet(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final AsyncValue<List<AutomationRule>> rulesAsync =
         ref.watch(automationRulesProvider);
     final AppLocalizations? l10n = AppLocalizations.of(context);
@@ -40,7 +78,7 @@ class AutomationRulesScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
             tooltip: 'Debug logs',
-            onPressed: () => _showDebugLogs(context, ref),
+            onPressed: () => _showDebugLogs(context),
           ),
           IconButton(
             icon: const Icon(Icons.add),
@@ -95,22 +133,6 @@ class AutomationRulesScreen extends ConsumerWidget {
                 AppLocalizations.of(context)?.detailInlineError(e.toString()) ??
                     'Error: $e')),
       ),
-    );
-  }
-
-  void _showGuide(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (_) => const _AutomationGuideSheet(),
-    );
-  }
-
-  void _showDebugLogs(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (_) => const _AutomationDebugLogSheet(),
     );
   }
 }
@@ -240,120 +262,6 @@ class _AutomationGuideCard extends StatelessWidget {
   }
 }
 
-class _AutomationGuideSheet extends StatefulWidget {
-  const _AutomationGuideSheet();
-
-  @override
-  State<_AutomationGuideSheet> createState() => _AutomationGuideSheetState();
-}
-
-class _AutomationGuideSheetState extends State<_AutomationGuideSheet> {
-  late final PageController _pageController = PageController();
-  int _currentPage = 0;
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final AppLocalizations? l10n = AppLocalizations.of(context);
-
-    final List<_GuidePage> pages = <_GuidePage>[
-      _GuidePage(
-        icon: Icons.travel_explore_rounded,
-        title: l10n?.automationGuideTriggerTitle ?? '1. Choose a trigger',
-        body: l10n?.automationGuideTriggerBody ??
-            'Use domain equals for exact sites like youtube.com, '
-                'domain contains for broader matches like github, or URL '
-                'contains for folders such as /blog/.',
-      ),
-      _GuidePage(
-        icon: Icons.auto_fix_high_rounded,
-        title: l10n?.automationGuideActionTitle ?? '2. Choose an action',
-        body: l10n?.automationGuideActionBody ??
-            'Add a tag, add to a collection, archive, mark read, '
-                'pin, favorite, or add a reminder.',
-      ),
-      _GuidePage(
-        icon: Icons.science_rounded,
-        title: l10n?.automationGuideTestTitle ?? '3. Test with one link',
-        body: l10n?.automationGuideTestBody ??
-            'Save a matching link, then open Debug logs from this screen '
-                'to see whether the rule matched and what it changed.',
-      ),
-      _GuidePage(
-        icon: Icons.lightbulb_rounded,
-        title: l10n?.automationGuideExamplesTitle ?? 'Examples',
-        body: l10n?.automationGuideExamplesBody ??
-            'github → add tag "Code"; youtube.com → add to collection '
-                '"Watch later"; /pricing → archive; unread for 30 days → '
-                'add tag "Review".',
-      ),
-    ];
-
-    return SafeArea(
-      child: SizedBox(
-        height: 420,
-        child: Column(
-          children: <Widget>[
-            const SizedBox(height: ReadingRoomSpacing.sm),
-            Text(
-              l10n?.automationGuideTitle ?? 'Automation guide',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: ReadingRoomSpacing.lg),
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (int page) {
-                  setState(() {
-                    _currentPage = page;
-                  });
-                },
-                itemCount: pages.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: ReadingRoomSpacing.xl,
-                    ),
-                    child: pages[index],
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: ReadingRoomSpacing.md),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List<Widget>.generate(pages.length, (int index) {
-                final bool active = index == _currentPage;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: active ? 24 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: active
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: ReadingRoomSpacing.lg),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _TemplateChip extends StatelessWidget {
   const _TemplateChip({required this.label});
 
@@ -369,59 +277,6 @@ class _TemplateChip extends StatelessWidget {
       side: BorderSide(
         color: theme.colorScheme.primary.withValues(alpha: 0.18),
       ),
-    );
-  }
-}
-
-class _GuidePage extends StatelessWidget {
-  const _GuidePage({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.10),
-            shape: BoxShape.circle,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Icon(
-              icon,
-              size: 40,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-        ),
-        const SizedBox(height: ReadingRoomSpacing.xl),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: ReadingRoomSpacing.sm),
-        Text(
-          body,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            height: 1.45,
-          ),
-        ),
-      ],
     );
   }
 }

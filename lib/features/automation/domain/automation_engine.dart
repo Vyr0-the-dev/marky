@@ -118,6 +118,32 @@ class AutomationEngine {
         if (days == null || days < 0) return false;
         final DateTime threshold = _now().subtract(Duration(days: days));
         return !bookmark.createdAt.isBefore(threshold);
+      case AutomationTriggerType.contentTypeEquals:
+        final String currentType = bookmark.contentType.name.toLowerCase();
+        if (currentType == value) return true;
+        return switch (value) {
+          'tweet' || 'twitter' || 'social' => currentType == 'discussion',
+          'repository' || 'repo' => currentType == 'code',
+          _ => false,
+        };
+      case AutomationTriggerType.readingTimeGreaterThan:
+        final int? targetMinutes = int.tryParse(value);
+        if (targetMinutes == null || bookmark.readingTimeMinutes == null) {
+          return false;
+        }
+        return bookmark.readingTimeMinutes! > targetMinutes;
+      case AutomationTriggerType.titleContains:
+        return bookmark.title
+                ?.toLowerCase()
+                .contains(condition.value.trim().toLowerCase()) ??
+            false;
+      case AutomationTriggerType.titleMatchesRegex:
+        try {
+          final RegExp regExp = RegExp(condition.value, caseSensitive: false);
+          return regExp.hasMatch(bookmark.title ?? '');
+        } catch (_) {
+          return false;
+        }
     }
   }
 

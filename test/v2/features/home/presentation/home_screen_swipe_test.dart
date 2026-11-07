@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
@@ -107,6 +108,142 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.savedBookmarks.last.isArchived, isFalse);
+  });
+
+  testWidgets('customized swipe right toggles favorite with undo option',
+      (WidgetTester tester) async {
+    final _SwipeMockBookmarkRepository repository =
+        _SwipeMockBookmarkRepository(<Bookmark>[
+      Bookmark(
+        id: 3,
+        originalUrl: 'https://example.com/item3',
+        canonicalUrl: 'https://example.com/item3',
+        normalizedHost: 'example.com',
+        title: 'Favorite Candidate',
+        scrapingStatus: BookmarkScrapingStatus.done,
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      ),
+    ]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: <Override>[
+          ...testAppSettingsOverrides(
+            initial: const AppSettings.defaults().copyWith(
+              rightSwipeAction: SwipeAction.toggleFavorite,
+            ),
+          ),
+          bookmarkRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: HomeScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Swipe right (start to end)
+    await tester.fling(find.byType(BookmarkCard), const Offset(500, 0), 1000);
+    await tester.pumpAndSettle();
+
+    expect(repository.savedBookmarks, isNotEmpty);
+    expect(repository.savedBookmarks.last.isFavorite, isTrue);
+    expect(find.text('Added to favorites'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(repository.savedBookmarks.last.isFavorite, isFalse);
+  });
+
+  testWidgets('customized swipe left deletes bookmark with undo option',
+      (WidgetTester tester) async {
+    final _SwipeMockBookmarkRepository repository =
+        _SwipeMockBookmarkRepository(<Bookmark>[
+      Bookmark(
+        id: 4,
+        originalUrl: 'https://example.com/item4',
+        canonicalUrl: 'https://example.com/item4',
+        normalizedHost: 'example.com',
+        title: 'Deletable Bookmark',
+        scrapingStatus: BookmarkScrapingStatus.done,
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      ),
+    ]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: <Override>[
+          ...testAppSettingsOverrides(
+            initial: const AppSettings.defaults().copyWith(
+              leftSwipeAction: SwipeAction.delete,
+            ),
+          ),
+          bookmarkRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: HomeScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Swipe left (end to start)
+    await tester.fling(find.byType(BookmarkCard), const Offset(-500, 0), 1000);
+    await tester.pumpAndSettle();
+
+    expect(repository.deletedIds, contains(4));
+    expect(find.text('Bookmark deleted'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(repository.savedBookmarks.last.id, 4);
+  });
+
+  testWidgets('swiping is disabled when action is set to none',
+      (WidgetTester tester) async {
+    final _SwipeMockBookmarkRepository repository =
+        _SwipeMockBookmarkRepository(<Bookmark>[
+      Bookmark(
+        id: 5,
+        originalUrl: 'https://example.com/item5',
+        canonicalUrl: 'https://example.com/item5',
+        normalizedHost: 'example.com',
+        title: 'Locked Bookmark',
+        scrapingStatus: BookmarkScrapingStatus.done,
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      ),
+    ]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: <Override>[
+          ...testAppSettingsOverrides(
+            initial: const AppSettings.defaults().copyWith(
+              leftSwipeAction: SwipeAction.none,
+              rightSwipeAction: SwipeAction.none,
+            ),
+          ),
+          bookmarkRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: HomeScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dismissible), findsNothing);
   });
 }
 
