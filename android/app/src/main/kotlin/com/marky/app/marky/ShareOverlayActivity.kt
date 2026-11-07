@@ -52,7 +52,7 @@ class ShareOverlayActivity : Activity() {
         if (!isWarm) {
             showStartupOverlay()
         }
-        attachFlutterAfterFirstNativeDraw(root)
+        attachFlutterEngine()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -139,17 +139,7 @@ class ShareOverlayActivity : Activity() {
     }
 
     private fun attachFlutterAfterFirstNativeDraw(root: View) {
-        root.viewTreeObserver.addOnPreDrawListener(
-            object : ViewTreeObserver.OnPreDrawListener {
-                override fun onPreDraw(): Boolean {
-                    if (root.viewTreeObserver.isAlive) {
-                        root.viewTreeObserver.removeOnPreDrawListener(this)
-                    }
-                    root.post(attachFlutterRunnable)
-                    return true
-                }
-            },
-        )
+        attachFlutterEngine()
     }
 
     private fun extractPayload(intent: Intent?): String? {

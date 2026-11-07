@@ -42,34 +42,12 @@ Future<void> runShareOverlayApp() async {
     return ProviderContainer();
   }));
 
-  String? payload;
-  AppLocaleChoice localeChoice = AppLocaleChoice.system;
-  try {
-    payload = await ShareOverlayBridge.getInitialPayload();
-  } on Object {
-    payload = null;
-  }
-  try {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final SharedPreferencesAppSettingsRepository settingsRepository =
-        SharedPreferencesAppSettingsRepository(prefs);
-    final AppSettings settings = await settingsRepository.load();
-    localeChoice = settings.locale;
-  } on Object {
-    localeChoice = AppLocaleChoice.system;
-  }
-
-  runApp(
-    ShareOverlayApp(
-      initialPayload: payload,
-      localeChoice: localeChoice,
-    ),
-  );
+  runApp(const ShareOverlayApp());
 }
 
-class ShareOverlayApp extends StatelessWidget {
+class ShareOverlayApp extends StatefulWidget {
   const ShareOverlayApp({
-    required this.initialPayload,
+    this.initialPayload,
     this.autoCloseAfter = const Duration(seconds: 4),
     this.exitAnimationDuration = const Duration(milliseconds: 240),
     this.localeChoice = AppLocaleChoice.system,
@@ -88,20 +66,57 @@ class ShareOverlayApp extends StatelessWidget {
   final Future<void> Function()? openMainApp;
 
   @override
+  State<ShareOverlayApp> createState() => _ShareOverlayAppState();
+}
+
+class _ShareOverlayAppState extends State<ShareOverlayApp> {
+  late AppLocaleChoice _localeChoice = widget.localeChoice;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.localeChoice == AppLocaleChoice.system) {
+      _loadSavedLocale();
+    }
+  }
+
+  @override
+  void didUpdateWidget(ShareOverlayApp oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.localeChoice != oldWidget.localeChoice) {
+      _localeChoice = widget.localeChoice;
+    }
+  }
+
+  void _loadSavedLocale() {
+    SharedPreferences.getInstance().then((SharedPreferences prefs) {
+      final SharedPreferencesAppSettingsRepository repo =
+          SharedPreferencesAppSettingsRepository(prefs);
+      return repo.load();
+    }).then((AppSettings settings) {
+      if (mounted && _localeChoice != settings.locale) {
+        setState(() {
+          _localeChoice = settings.locale;
+        });
+      }
+    }).catchError((Object _) {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ReadingRoomTheme.build(ReadingRoomVariant.oled),
-      locale: _resolveLocale(localeChoice),
+      locale: _resolveLocale(_localeChoice),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: _ShareOverlayHost(
-        initialPayload: initialPayload,
-        autoCloseAfter: autoCloseAfter,
-        exitAnimationDuration: exitAnimationDuration,
-        capturePayload: capturePayload ?? _captureSharedPayload,
-        finishOverlay: finishOverlay,
-        openMainApp: openMainApp,
+        initialPayload: widget.initialPayload,
+        autoCloseAfter: widget.autoCloseAfter,
+        exitAnimationDuration: widget.exitAnimationDuration,
+        capturePayload: widget.capturePayload ?? _captureSharedPayload,
+        finishOverlay: widget.finishOverlay,
+        openMainApp: widget.openMainApp,
       ),
     );
   }
@@ -167,6 +182,14 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
       _lastCaptureTime = DateTime.now();
       unawaited(_executeCapture(payload));
     } else {
+      ShareOverlayBridge.getInitialPayload().then((String? bridgePayload) {
+        if (!mounted) return;
+        final String? trimmed = bridgePayload?.trim();
+        if (trimmed != null && trimmed.isNotEmpty) {
+          _handleIncomingPayload(trimmed);
+        }
+      }).catchError((Object _) {});
+
       _captureTimeoutTimer = Timer(const Duration(seconds: 4), () {
         if (_resolvedResult == null && mounted) {
           setState(() {

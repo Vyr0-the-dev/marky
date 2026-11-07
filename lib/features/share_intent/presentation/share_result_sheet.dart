@@ -5,7 +5,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'package:marky/app/theme/reading_room_tokens.dart';
-import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/capture/domain/capture_result.dart';
 import 'package:marky/l10n/app_localizations.dart';
 
@@ -103,7 +102,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
   int _resultGeneration = 0;
   bool _isDismissing = false;
 
-  static const double _compactHeight = 384;
+  static const double _compactHeight = 320;
   static const double _dismissThreshold = 56;
 
   final ValueNotifier<double> _dragOffsetNotifier = ValueNotifier<double>(0);
@@ -447,12 +446,6 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
                   height: 1.35,
                 ),
               ),
-              if (result.bookmark != null) ...<Widget>[
-                const SizedBox(height: ReadingRoomSpacing.md),
-                RepaintBoundary(
-                  child: _BookmarkQuickInfo(bookmark: result.bookmark!),
-                ),
-              ],
               const Spacer(),
               SizedBox(
                 width: double.infinity,
@@ -549,56 +542,6 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
           child: animatedSheet,
         ),
       ],
-    );
-  }
-}
-
-class _BookmarkQuickInfo extends StatelessWidget {
-  const _BookmarkQuickInfo({required this.bookmark});
-
-  final Bookmark bookmark;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final String url = (bookmark.canonicalUrl?.isNotEmpty ?? false)
-        ? bookmark.canonicalUrl!
-        : bookmark.originalUrl;
-    final String host =
-        bookmark.normalizedHost ?? Uri.tryParse(url)?.host ?? '';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color:
-            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Row(
-        children: <Widget>[
-          Icon(
-            Icons.link_rounded,
-            size: 18,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              host.isNotEmpty ? host : url,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
