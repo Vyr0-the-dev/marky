@@ -20,4 +20,17 @@ class ShareOverlayBridge {
   static Future<void> openMainApp() async {
     await _channel.invokeMethod<void>('openMainApp');
   }
+
+  static void setPayloadHandler(void Function(String?) handler) {
+    _channel.setMethodCallHandler((MethodCall call) async {
+      if (call.method == 'newPayload') {
+        final dynamic arg = call.arguments;
+        handler(arg is String ? arg : null);
+      }
+    });
+  }
+
+  static void clearPayloadHandler() {
+    _channel.setMethodCallHandler(null);
+  }
 }

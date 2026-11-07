@@ -1,12 +1,14 @@
 package com.marky.app.marky
 
 import android.app.Activity
+import android.content.Context
 import android.graphics.Color
 import android.widget.FrameLayout
 import io.flutter.FlutterInjector
 import io.flutter.embedding.android.FlutterTextureView
 import io.flutter.embedding.android.FlutterView
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.embedding.engine.renderer.FlutterUiDisplayListener
 import io.flutter.plugin.common.MethodChannel
@@ -19,15 +21,59 @@ internal class ShareOverlayFlutterHost(
     private val onFinishOverlay: () -> Unit,
     private val onOpenMainApp: () -> Unit,
 ) : ShareOverlayHost {
+    companion object {
+        const val ENGINE_CACHE_ID = "marky_share_overlay_engine"
+
+        fun warmUpEngine(context: Context) {
+            val cache = FlutterEngineCache.getInstance()
+            if (cache.contains(ENGINE_CACHE_ID)) return
+
+            val appContext = context.applicationContext
+            val loader = FlutterInjector.instance().flutterLoader()
+            loader.startInitialization(appContext)
+            loader.ensureInitializationComplete(appContext, null)
+
+            val engine = FlutterEngine(appContext)
+            engine.dartExecutor.executeDartEntrypoint(
+                DartExecutor.DartEntrypoint(
+                    loader.findAppBundlePath(),
+                    "shareOverlayMain",
+                ),
+            )
+            cache.put(ENGINE_CACHE_ID, engine)
+        }
+    }
+
     private val shareOverlayChannel = "marky/share_overlay"
     private var flutterEngine: FlutterEngine? = null
     private var flutterView: FlutterView? = null
     private var flutterUiDisplayListener: FlutterUiDisplayListener? = null
+    private var methodChannel: MethodChannel? = null
 
     override fun attach() {
         if (flutterEngine != null) return
 
-        val engine = FlutterEngine(activity)
+        val cache = FlutterEngineCache.getInstance()
+        var engine = cache.get(ENGINE_CACHE_ID)
+        val isWarmEngine = engine != null
+
+        if (engine == null) {
+            val appContext = activity.applicationContext
+            val loader = FlutterInjector.instance().flutterLoader()
+            loader.startInitialization(appContext)
+            loader.ensureInitializationComplete(appContext, null)
+
+            engine = FlutterEngine(appContext)
+            engine.dartExecutor.executeDartEntrypoint(
+                DartExecutor.DartEntrypoint(
+                    loader.findAppBundlePath(),
+                    "shareOverlayMain",
+                ),
+            )
+            cache.put(ENGINE_CACHE_ID, engine)
+        }
+
+        flutterEngine = engine
         configureShareOverlayChannel(engine)
 
         val flutterTextureView = FlutterTextureView(activity).apply {
@@ -36,6 +82,7 @@ internal class ShareOverlayFlutterHost(
         val view = FlutterView(activity, flutterTextureView)
         view.setBackgroundColor(Color.TRANSPARENT)
         container.setBackgroundColor(Color.TRANSPARENT)
+
         val uiDisplayListener = object : FlutterUiDisplayListener {
             override fun onFlutterUiDisplayed() {
                 onFlutterReady()
@@ -45,6 +92,7 @@ internal class ShareOverlayFlutterHost(
         }
         flutterUiDisplayListener = uiDisplayListener
         view.addOnFirstFrameRenderedListener(uiDisplayListener)
+
         container.addView(
             view,
             FrameLayout.LayoutParams(
@@ -53,19 +101,17 @@ internal class ShareOverlayFlutterHost(
             ),
         )
         view.attachToFlutterEngine(engine)
-
-        val loader = FlutterInjector.instance().flutterLoader()
-        loader.startInitialization(activity)
-        loader.ensureInitializationComplete(activity, null)
-        engine.dartExecutor.executeDartEntrypoint(
-            DartExecutor.DartEntrypoint(
-                loader.findAppBundlePath(),
-                "shareOverlayMain",
-            ),
-        )
         engine.lifecycleChannel.appIsResumed()
 
-        flutterEngine = engine
+        if (isWarmEngine) {
+            container.post {
+                onFlutterReady()
+            }
+            initialPayloadProvider()?.let { payload ->
+                onNewPayload(payload)
+            }
+        }
+
         flutterView = view
     }
 
@@ -87,17 +133,32 @@ internal class ShareOverlayFlutterHost(
         }
         flutterUiDisplayListener = null
         flutterView?.detachFromFlutterEngine()
+        container.removeView(flutterView)
         flutterView = null
-        flutterEngine?.lifecycleChannel?.appIsDetached()
-        flutterEngine?.destroy()
+        methodChannel?.setMethodCallHandler(null)
+        methodChannel = null
+
+        // Pause lifecycle instead of destroying the FlutterEngine so it remains warm in FlutterEngineCache
+        flutterEngine?.lifecycleChannel?.appIsPaused()
         flutterEngine = null
     }
 
-    private fun configureShareOverlayChannel(flutterEngine: FlutterEngine) {
-        MethodChannel(
-            flutterEngine.dartExecutor.binaryMessenger,
+    override fun onNewPayload(payload: String?) {
+        flutterEngine?.let { engine ->
+            MethodChannel(
+                engine.dartExecutor.binaryMessenger,
+                shareOverlayChannel,
+            ).invokeMethod("newPayload", payload)
+        }
+    }
+
+    private fun configureShareOverlayChannel(engine: FlutterEngine) {
+        val channel = MethodChannel(
+            engine.dartExecutor.binaryMessenger,
             shareOverlayChannel,
-        ).setMethodCallHandler { call, result ->
+        )
+        methodChannel = channel
+        channel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getInitialPayload" -> result.success(initialPayloadProvider())
                 "flutterReady" -> {

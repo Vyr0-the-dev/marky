@@ -13,6 +13,24 @@
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+
+    <style name="ShareOverlayAnimation">
+        <item name="android:activityOpenEnterAnimation">@anim/no_animation</item>
+        <item name="android:activityOpenExitAnimation">@anim/no_animation</item>
+        <item name="android:activityCloseEnterAnimation">@anim/no_animation</item>
+        <item name="android:activityCloseExitAnimation">@anim/no_animation</item>
+        <item name="android:taskOpenEnterAnimation">@anim/no_animation</item>
+        <item name="android:taskOpenExitAnimation">@anim/no_animation</item>
+        <item name="android:taskCloseEnterAnimation">@anim/no_animation</item>
+        <item name="android:taskCloseExitAnimation">@anim/no_animation</item>
+        <item name="android:taskToFrontEnterAnimation">@anim/no_animation</item>
+        <item name="android:taskToFrontExitAnimation">@anim/no_animation</item>
+        <item name="android:taskToBackEnterAnimation">@anim/no_animation</item>
+        <item name="android:taskToBackExitAnimation">@anim/no_animation</item>
+        <item name="android:windowEnterAnimation">@anim/no_animation</item>
+        <item name="android:windowExitAnimation">@anim/no_animation</item>
+    </style>
+
     <style name="ShareOverlayTheme" parent="@android:style/Theme.NoTitleBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@drawable/share_overlay_dim_background</item>
@@ -20,5 +38,6 @@
         <item name="android:windowIsFloating">false</item>
         <item name="android:backgroundDimEnabled">false</item>
         <item name="android:windowContentTransitions">false</item>
+        <item name="android:windowAnimationStyle">@style/ShareOverlayAnimation</item>
     </style>
 </resources>

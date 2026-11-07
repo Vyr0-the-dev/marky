@@ -21,6 +21,9 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        try {
+            ShareOverlayFlutterHost.warmUpEngine(applicationContext)
+        } catch (_: Throwable) {}
         pendingInitialShortcutRoute = shortcutRouteFrom(intent)
         quickActionsMethodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,

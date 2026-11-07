@@ -6,4 +6,5 @@ internal interface ShareOverlayHost {
     fun onPause()
     fun onStop()
     fun destroy()
+    fun onNewPayload(payload: String?) {}
 }

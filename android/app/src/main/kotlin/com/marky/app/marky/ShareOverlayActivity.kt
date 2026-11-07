@@ -49,7 +49,7 @@ class ShareOverlayActivity : Activity() {
             val loader = io.flutter.FlutterInjector.instance().flutterLoader()
             loader.startInitialization(applicationContext)
         } catch (_: Throwable) {}
-        window.setBackgroundDrawableResource(R.drawable.share_overlay_dim_background)
+        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         val root = FrameLayout(this).apply {
             setBackgroundColor(Color.TRANSPARENT)
             val flutterHost = FrameLayout(this@ShareOverlayActivity)
@@ -64,14 +64,19 @@ class ShareOverlayActivity : Activity() {
         }
         rootLayout = root
         setContentView(root)
-        showStartupOverlay()
+        val isWarm = io.flutter.embedding.engine.FlutterEngineCache.getInstance().contains(ShareOverlayFlutterHost.ENGINE_CACHE_ID)
+        if (!isWarm) {
+            showStartupOverlay()
+        }
         attachFlutterAfterFirstNativeDraw(root)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        initialPayload = extractPayload(intent)
+        val payload = extractPayload(intent)
+        initialPayload = payload
+        flutterHost?.onNewPayload(payload)
     }
 
     override fun onResume() {
@@ -100,6 +105,11 @@ class ShareOverlayActivity : Activity() {
 
     override fun onBackPressed() {
         finishOverlayNow()
+    }
+
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(0, 0)
     }
 
     private fun attachFlutterEngine() {
@@ -319,10 +329,14 @@ class ShareOverlayActivity : Activity() {
         startupOverlay = null
         startupPulse?.cancel()
         startupPulse = null
-        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        overlay.post {
-            (overlay.parent as? ViewGroup)?.removeView(overlay)
-        }
+        overlay.animate()
+            .alpha(0f)
+            .setDuration(100L)
+            .withEndAction {
+                overlay.visibility = View.GONE
+                (overlay.parent as? ViewGroup)?.removeView(overlay)
+            }
+            .start()
     }
 
     private fun startPulse(view: View) {
