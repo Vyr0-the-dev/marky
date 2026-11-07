@@ -23,6 +23,17 @@ Future<void> showMarkyShareResultSheet(
     'Either result or resultFuture must be provided.',
   );
 
+  CaptureResult? resolvedResult = result;
+  if (resolvedResult == null && resultFuture != null) {
+    try {
+      resolvedResult = await resultFuture;
+    } on Object {
+      resolvedResult = CaptureResult.error('share_result_failed');
+    }
+  }
+
+  if (!context.mounted) return;
+
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -32,7 +43,7 @@ Future<void> showMarkyShareResultSheet(
     builder: (BuildContext sheetContext) {
       return MarkyShareResultPanel(
         hasInternalScrim: false,
-        resultFuture: resultFuture ?? Future<CaptureResult>.value(result!),
+        result: resolvedResult,
         autoCloseAfter: autoCloseAfter,
         onAutoClose: () {
           final NavigatorState? navigator = Navigator.maybeOf(sheetContext);
@@ -58,7 +69,8 @@ Future<void> showMarkyShareResultSheet(
 
 class MarkyShareResultPanel extends StatefulWidget {
   const MarkyShareResultPanel({
-    required this.resultFuture,
+    this.result,
+    this.resultFuture,
     required this.autoCloseAfter,
     this.exitDuration = const Duration(milliseconds: 240),
     this.hasInternalScrim = true,
@@ -66,9 +78,13 @@ class MarkyShareResultPanel extends StatefulWidget {
     this.onOpenApp,
     this.onDismiss,
     super.key,
-  });
+  }) : assert(
+          result != null || resultFuture != null,
+          'Either result or resultFuture must be provided.',
+        );
 
-  final Future<CaptureResult> resultFuture;
+  final CaptureResult? result;
+  final Future<CaptureResult>? resultFuture;
   final Duration autoCloseAfter;
   final Duration exitDuration;
   final bool hasInternalScrim;
@@ -102,6 +118,8 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
   @override
   void initState() {
     super.initState();
+    _result = widget.result;
+
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 280),
@@ -117,14 +135,32 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
       duration: widget.exitDuration,
     )..addListener(_handleExitTick);
 
-    _entranceController.forward();
-    unawaited(_waitForResult(++_resultGeneration));
+    if (_result != null) {
+      _entranceController.forward();
+      _startAutoCloseTimer();
+    } else if (widget.resultFuture != null) {
+      unawaited(_waitForResult(++_resultGeneration));
+    }
+  }
+
+  void _startAutoCloseTimer() {
+    if (widget.autoCloseAfter > Duration.zero) {
+      _autoCloseTimer?.cancel();
+      _autoCloseTimer = Timer(widget.autoCloseAfter, () {
+        if (!mounted || _isDismissing) return;
+        animateDismiss(isAutoClose: true);
+      });
+    }
   }
 
   @override
   void didUpdateWidget(MarkyShareResultPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.resultFuture != oldWidget.resultFuture) {
+    if (widget.result != oldWidget.result && widget.result != null) {
+      _result = widget.result;
+      _startAutoCloseTimer();
+    } else if (widget.resultFuture != oldWidget.resultFuture &&
+        widget.resultFuture != null) {
       _autoCloseTimer?.cancel();
       _result = null;
       _resultGeneration++;
@@ -166,7 +202,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
   Future<void> _waitForResult(int generation) async {
     CaptureResult result;
     try {
-      result = await widget.resultFuture;
+      result = await widget.resultFuture!;
     } on Object {
       result = CaptureResult.error('share_result_failed');
     }
@@ -175,13 +211,8 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
     setState(() {
       _result = result;
     });
-
-    if (widget.autoCloseAfter > Duration.zero) {
-      _autoCloseTimer = Timer(widget.autoCloseAfter, () {
-        if (!mounted || _isDismissing) return;
-        animateDismiss(isAutoClose: true);
-      });
-    }
+    unawaited(_entranceController.forward(from: 0));
+    _startAutoCloseTimer();
   }
 
   void animateDismiss({bool isAutoClose = false}) {
@@ -291,20 +322,21 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
 
   @override
   Widget build(BuildContext context) {
+    final CaptureResult? result = _result;
+    if (result == null) {
+      return const SizedBox.shrink();
+    }
+
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
-    final CaptureResult? result = _result;
     final _ShareSheetCopy copy = _ShareSheetCopy.from(result, l10n);
-    final bool pending = result == null;
-    final bool isSaved = result?.status == CaptureStatus.saved;
-    final bool isDuplicate = result?.status == CaptureStatus.duplicate;
+    final bool isSaved = result.status == CaptureStatus.saved;
+    final bool isDuplicate = result.status == CaptureStatus.duplicate;
     final double bottomInset = MediaQuery.of(context).padding.bottom;
     final double totalHeight = _compactHeight + bottomInset;
 
     final Widget indicatorWidget;
-    if (pending) {
-      indicatorWidget = const _PendingShareIndicator(key: ValueKey('pending'));
-    } else if (isSaved) {
+    if (isSaved) {
       indicatorWidget = const _AnimatedCheckmark(key: ValueKey('saved'));
     } else if (isDuplicate) {
       indicatorWidget = DecoratedBox(
@@ -393,10 +425,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
                 width: 104,
                 height: 104,
                 child: RepaintBoundary(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 280),
-                    child: indicatorWidget,
-                  ),
+                  child: indicatorWidget,
                 ),
               ),
               const SizedBox(height: ReadingRoomSpacing.md),
@@ -418,10 +447,10 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
                   height: 1.35,
                 ),
               ),
-              if (result?.bookmark != null) ...<Widget>[
+              if (result.bookmark != null) ...<Widget>[
                 const SizedBox(height: ReadingRoomSpacing.md),
                 RepaintBoundary(
-                  child: _BookmarkQuickInfo(bookmark: result!.bookmark!),
+                  child: _BookmarkQuickInfo(bookmark: result.bookmark!),
                 ),
               ],
               const Spacer(),
@@ -429,9 +458,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: pending || widget.onOpenApp == null
-                      ? null
-                      : widget.onOpenApp,
+                  onPressed: widget.onOpenApp,
                   style: ElevatedButton.styleFrom(
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -439,9 +466,7 @@ class MarkyShareResultPanelState extends State<MarkyShareResultPanel>
                     ),
                   ),
                   child: Text(
-                    pending
-                        ? l10n?.statusSaving ?? 'Saving...'
-                        : l10n?.shareOverlayOpenApp ?? 'Open app',
+                    l10n?.shareOverlayOpenApp ?? 'Open app',
                   ),
                 ),
               ),
@@ -573,78 +598,6 @@ class _BookmarkQuickInfo extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PendingShareIndicator extends StatefulWidget {
-  const _PendingShareIndicator({super.key});
-
-  @override
-  State<_PendingShareIndicator> createState() => _PendingShareIndicatorState();
-}
-
-class _PendingShareIndicatorState extends State<_PendingShareIndicator>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  )..repeat(reverse: true);
-
-  late final Animation<double> _scale = Tween<double>(
-    begin: 0.94,
-    end: 1.04,
-  ).animate(
-    CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ),
-  );
-
-  late final Animation<double> _opacity = Tween<double>(
-    begin: 0.72,
-    end: 1,
-  ).animate(
-    CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ),
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final Color accent = Theme.of(context).colorScheme.primary;
-    return RepaintBoundary(
-      child: SizedBox.square(
-        dimension: 104,
-        child: ScaleTransition(
-          scale: _scale,
-          child: FadeTransition(
-            opacity: _opacity,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const SizedBox.square(dimension: 34),
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

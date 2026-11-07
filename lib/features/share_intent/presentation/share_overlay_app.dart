@@ -140,8 +140,7 @@ class _ShareOverlayHost extends StatefulWidget {
 class _ShareOverlayHostState extends State<_ShareOverlayHost> {
   final GlobalKey<MarkyShareResultPanelState> _panelKey =
       GlobalKey<MarkyShareResultPanelState>();
-  late Future<CaptureResult> _resultFuture;
-  late Completer<CaptureResult> _resultCompleter;
+  CaptureResult? _resolvedResult;
   Timer? _captureTimeoutTimer;
   String? _activePayload;
   bool _isCapturing = false;
@@ -152,19 +151,17 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
   @override
   void initState() {
     super.initState();
-    _resultCompleter = Completer<CaptureResult>();
-    _resultFuture = _resultCompleter.future;
 
     final String? payload = widget.initialPayload?.trim();
     if (payload != null && payload.isNotEmpty) {
       _activePayload = payload;
-      _captureTimeoutTimer = Timer(const Duration(milliseconds: 150), () {
-        unawaited(_executeCapture(payload));
-      });
+      unawaited(_executeCapture(payload));
     } else {
       _captureTimeoutTimer = Timer(const Duration(seconds: 4), () {
-        if (!_resultCompleter.isCompleted) {
-          _resultCompleter.complete(const CaptureResult.invalidUrl());
+        if (_resolvedResult == null && mounted) {
+          setState(() {
+            _resolvedResult = const CaptureResult.invalidUrl();
+          });
         }
       });
     }
@@ -179,9 +176,6 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
   void dispose() {
     ShareOverlayBridge.clearPayloadHandler();
     _captureTimeoutTimer?.cancel();
-    if (!_resultCompleter.isCompleted) {
-      _resultCompleter.complete(CaptureResult.error('share_overlay_disposed'));
-    }
     super.dispose();
   }
 
@@ -191,7 +185,7 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
     if (trimmed == null || trimmed.isEmpty) return;
 
     // Prevent duplicate concurrent execution for the identical payload
-    if (_activePayload == trimmed && (_isCapturing || _resultCompleter.isCompleted)) {
+    if (_activePayload == trimmed && (_isCapturing || _resolvedResult != null)) {
       return;
     }
 
@@ -199,8 +193,7 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
     _activePayload = trimmed;
 
     setState(() {
-      _resultCompleter = Completer<CaptureResult>();
-      _resultFuture = _resultCompleter.future;
+      _resolvedResult = null;
       _closing = false;
       _openAppRequested = false;
     });
@@ -216,21 +209,17 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
     if (_isCapturing) return;
     _isCapturing = true;
     try {
-      final DateTime startTime = DateTime.now();
       final CaptureResult result = await widget.capturePayload(payload);
-      if (widget.autoCloseAfter > const Duration(seconds: 1)) {
-        final int elapsed = DateTime.now().difference(startTime).inMilliseconds;
-        if (elapsed < 480) {
-          await Future<void>.delayed(Duration(milliseconds: 480 - elapsed));
-        }
-      }
-      if (!_resultCompleter.isCompleted) {
-        _resultCompleter.complete(result);
-      }
-    } on Object catch (error, stackTrace) {
-      if (!_resultCompleter.isCompleted) {
-        _resultCompleter.completeError(error, stackTrace);
-      }
+      if (!mounted) return;
+      setState(() {
+        _resolvedResult = result;
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _resolvedResult =
+            CaptureResult.error('share_overlay_capture_failed: $error');
+      });
     } finally {
       _isCapturing = false;
     }
@@ -284,20 +273,23 @@ class _ShareOverlayHostState extends State<_ShareOverlayHost> {
 
   @override
   Widget build(BuildContext context) {
+    final CaptureResult? result = _resolvedResult;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (_, __) => _handleBackPress(),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: MarkyShareResultPanel(
-          key: _panelKey,
-          resultFuture: _resultFuture,
-          autoCloseAfter: widget.autoCloseAfter,
-          exitDuration: widget.exitAnimationDuration,
-          onAutoClose: _requestClose,
-          onOpenApp: _requestOpenMainApp,
-          onDismiss: _requestClose,
-        ),
+        body: result == null
+            ? const SizedBox.expand()
+            : MarkyShareResultPanel(
+                key: _panelKey,
+                result: result,
+                autoCloseAfter: widget.autoCloseAfter,
+                exitDuration: widget.exitAnimationDuration,
+                onAutoClose: _requestClose,
+                onOpenApp: _requestOpenMainApp,
+                onDismiss: _requestClose,
+              ),
       ),
     );
   }

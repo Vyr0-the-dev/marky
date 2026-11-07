@@ -13,7 +13,7 @@ import 'package:marky/features/share_intent/presentation/share_result_sheet.dart
 
 void main() {
   testWidgets(
-    'shows the share sheet immediately and finishes on close',
+    'shows the share sheet once capture resolves and finishes on close',
     (WidgetTester tester) async {
       final Completer<CaptureResult> captureCompleter =
           Completer<CaptureResult>();
@@ -42,7 +42,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
-      expect(find.text('Saving'), findsOneWidget);
+      expect(find.text('Saving'), findsNothing);
+      expect(find.byType(MarkyShareResultPanel), findsNothing);
       expect(
         capturedPayload,
         'Shared text https://example.com/article',
@@ -52,6 +53,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Could not save'), findsOneWidget);
+      expect(find.byType(MarkyShareResultPanel), findsOneWidget);
 
       await tester.tap(find.text('Open app'));
       await tester.pumpAndSettle();
