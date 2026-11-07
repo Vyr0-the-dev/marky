@@ -67,7 +67,7 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(
@@ -107,7 +107,7 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     Text(
-                      l10n?.actionEdit ?? 'Edit Bookmark',
+                      'Yer İşaretini Düzenle',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -137,7 +137,7 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
                   textInputAction: TextInputAction.next,
                   style: theme.textTheme.bodyMedium,
                   decoration: InputDecoration(
-                    hintText: 'Enter title...',
+                    hintText: 'Başlık girin...',
                     filled: true,
                     fillColor: theme.colorScheme.surfaceContainerHigh,
                     border: OutlineInputBorder(
@@ -181,7 +181,7 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
                   maxLines: 6,
                   style: theme.textTheme.bodyMedium,
                   decoration: InputDecoration(
-                    hintText: 'Add an optional description...',
+                    hintText: 'Açıklama ekleyin (isteğe bağlı)...',
                     filled: true,
                     fillColor: theme.colorScheme.surfaceContainerHigh,
                     border: OutlineInputBorder(
@@ -218,7 +218,7 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
                     onPressed: _onSave,
                     icon: const Icon(Icons.check_rounded, size: 20),
                     label: Text(
-                      l10n?.actionSave ?? 'Save Changes',
+                      l10n?.actionSave ?? 'Değişiklikleri Kaydet',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),

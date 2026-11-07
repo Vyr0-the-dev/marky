@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
+import 'package:marky/features/reader/domain/article_content.dart';
+import 'package:marky/features/reader/presentation/reader_providers.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum ReaderThemeMode {
   light(
-    name: 'Paper',
+    name: 'Kağıt',
     background: Color(0xFFFDFBF7),
     surface: Color(0xFFF5F0E6),
     text: Color(0xFF1E1E1E),
@@ -15,7 +18,7 @@ enum ReaderThemeMode {
     border: Color(0xFFE8E2D5),
   ),
   sepia(
-    name: 'Sepia',
+    name: 'Sepya',
     background: Color(0xFFF4ECD8),
     surface: Color(0xFFEADFCA),
     text: Color(0xFF382C1E),
@@ -24,7 +27,7 @@ enum ReaderThemeMode {
     border: Color(0xFFDDD2BC),
   ),
   dark(
-    name: 'Dark',
+    name: 'Koyu',
     background: Color(0xFF141413),
     surface: Color(0xFF20201E),
     text: Color(0xFFE6E5E3),
@@ -53,15 +56,15 @@ enum ReaderThemeMode {
 }
 
 enum ReaderFontFamily {
-  serif('Serif'),
-  sans('Sans');
+  serif('Serif (Tırnaklı)'),
+  sans('Sans (Düz)');
 
   const ReaderFontFamily(this.label);
   final String label;
 }
 
 /// Immersive, distraction-free reader mode for articles and long-form bookmarks.
-class ReaderScreen extends StatefulWidget {
+class ReaderScreen extends ConsumerStatefulWidget {
   const ReaderScreen({
     required this.bookmark,
     super.key,
@@ -76,10 +79,10 @@ class ReaderScreen extends StatefulWidget {
   }
 
   @override
-  State<ReaderScreen> createState() => _ReaderScreenState();
+  ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
 }
 
-class _ReaderScreenState extends State<ReaderScreen> {
+class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final ScrollController _scrollController = ScrollController();
   double _readingProgress = 0;
   double _fontSize = 17;
@@ -115,20 +118,28 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  TextStyle _getTextStyle(ReaderThemeMode theme, {double? size, FontWeight? weight, double? height}) {
+  TextStyle _getTextStyle(
+    ReaderThemeMode theme, {
+    double? size,
+    FontWeight? weight,
+    double? height,
+    FontStyle? fontStyle,
+  }) {
     final double effectiveSize = size ?? _fontSize;
-    final double effectiveHeight = height ?? 1.65;
+    final double effectiveHeight = height ?? 1.68;
     return switch (_fontFamily) {
       ReaderFontFamily.serif => GoogleFonts.merriweather(
           fontSize: effectiveSize,
           fontWeight: weight ?? FontWeight.normal,
           height: effectiveHeight,
+          fontStyle: fontStyle,
           color: theme.text,
         ),
       ReaderFontFamily.sans => GoogleFonts.inter(
           fontSize: effectiveSize,
           fontWeight: weight ?? FontWeight.normal,
           height: effectiveHeight,
+          fontStyle: fontStyle,
           color: theme.text,
         ),
     };
@@ -171,7 +182,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
                         Text(
-                          'Typography & Theme',
+                          'Yazı Tipi & Tema',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -236,7 +247,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                backgroundColor: isSelected ? _themeMode.accent.withValues(alpha: 0.15) : Colors.transparent,
+                                backgroundColor: isSelected
+                                    ? _themeMode.accent.withValues(alpha: 0.15)
+                                    : Colors.transparent,
                                 side: BorderSide(
                                   color: isSelected ? _themeMode.accent : _themeMode.border,
                                 ),
@@ -307,20 +320,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
     );
   }
 
-  int _calculateReadingMinutes(String content) {
-    final int wordCount = content.split(RegExp(r'\s+')).where((String w) => w.isNotEmpty).length;
-    final int minutes = (wordCount / 200).ceil();
-    return minutes < 1 ? 1 : minutes;
-  }
-
   @override
   Widget build(BuildContext context) {
     final Bookmark bookmark = widget.bookmark;
-    final String rawText = (bookmark.description ?? '') + (bookmark.snippet != null ? '\n\n${bookmark.snippet}' : '');
-    final String content = rawText.trim().isNotEmpty
-        ? rawText.trim()
-        : 'Bu yer işareti için henüz uzun makale metni çıkarılmamış. Orijinal sayfayı web görünümünde açarak okuyabilirsiniz.';
-    final int estMinutes = bookmark.readingTimeMinutes ?? _calculateReadingMinutes(content);
+    final AsyncValue<ArticleContent> articleAsync =
+        ref.watch(readerArticleProvider(bookmark));
 
     return Scaffold(
       backgroundColor: _themeMode.background,
@@ -349,30 +353,41 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     tooltip: 'Geri',
                   ),
                   const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _themeMode.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _themeMode.border),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Icon(Icons.schedule_rounded, size: 14, color: _themeMode.subtext),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$estMinutes dk okuma',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: _themeMode.subtext,
+                  articleAsync.when(
+                    data: (ArticleContent article) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _themeMode.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _themeMode.border),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Icon(Icons.schedule_rounded, size: 14, color: _themeMode.subtext),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${article.readingTimeMinutes} dk okuma',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _themeMode.subtext,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
                   ),
                   const SizedBox(width: 6),
+                  IconButton(
+                    icon: Icon(Icons.refresh_rounded, color: _themeMode.text),
+                    tooltip: 'Yeniden Ayrıştır',
+                    onPressed: () {
+                      ref.read(readerArticleProvider(bookmark).notifier).refresh();
+                    },
+                  ),
                   IconButton(
                     icon: Icon(Icons.text_fields_rounded, color: _themeMode.text),
                     tooltip: 'Yazı Tipi & Tema',
@@ -382,127 +397,381 @@ class _ReaderScreenState extends State<ReaderScreen> {
               ),
             ),
 
-            // ── Scrollable Article ────────────────────────
+            // ── Article Body ──────────────────────────────
             Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: ReadingRoomSpacing.xl,
-                  vertical: ReadingRoomSpacing.md,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    // Domain / Site Name
-                    if (bookmark.siteName != null || bookmark.normalizedHost != null)
-                      Text(
-                        (bookmark.siteName ?? bookmark.normalizedHost!).toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.w600,
-                          color: _themeMode.accent,
-                        ),
-                      ),
-                    const SizedBox(height: ReadingRoomSpacing.sm),
-
-                    // Article Title
-                    Text(
-                      bookmark.displayTitle,
-                      style: _getTextStyle(
-                        _themeMode,
-                        size: _fontSize * 1.45,
-                        weight: FontWeight.bold,
-                        height: 1.3,
-                      ),
-                    ),
-                    const SizedBox(height: ReadingRoomSpacing.md),
-
-                    // Author & Date
-                    Row(
-                      children: <Widget>[
-                        if (bookmark.author != null && bookmark.author!.isNotEmpty) ...<Widget>[
-                          Icon(Icons.person_outline_rounded, size: 14, color: _themeMode.subtext),
-                          const SizedBox(width: 4),
-                          Text(
-                            bookmark.author!,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: _themeMode.subtext,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                        ],
-                        if (bookmark.publishDate != null) ...<Widget>[
-                          Icon(Icons.calendar_today_outlined, size: 12, color: _themeMode.subtext),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${bookmark.publishDate!.day}.${bookmark.publishDate!.month}.${bookmark.publishDate!.year}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _themeMode.subtext,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: ReadingRoomSpacing.lg),
-
-                    // Hero Image
-                    if (bookmark.heroImageUrl != null && bookmark.heroImageUrl!.isNotEmpty)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-                        child: Image.network(
-                          bookmark.heroImageUrl!,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                        ),
-                      ),
-                    const SizedBox(height: ReadingRoomSpacing.xl),
-
-                    // Content Paragraphs
-                    ...content.split('\n\n').map((String p) {
-                      final String trimmed = p.trim();
-                      if (trimmed.isEmpty) return const SizedBox.shrink();
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
-                        child: Text(
-                          trimmed,
-                          style: _getTextStyle(_themeMode),
-                        ),
-                      );
-                    }),
-
-                    const SizedBox(height: ReadingRoomSpacing.huge),
-
-                    // Bottom Open in Web action
-                    Center(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _themeMode.text,
-                          side: BorderSide(color: _themeMode.border),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        ),
-                        onPressed: () {
-                          final Uri? uri = Uri.tryParse(bookmark.canonicalUrl ?? bookmark.originalUrl);
-                          if (uri != null) {
-                            launchUrl(uri, mode: LaunchMode.externalApplication);
-                          }
-                        },
-                        icon: const Icon(Icons.open_in_browser_rounded, size: 18),
-                        label: const Text('Orijinal Sayfayı Tarayıcıda Aç'),
-                      ),
-                    ),
-                    const SizedBox(height: ReadingRoomSpacing.huge),
-                  ],
-                ),
+              child: articleAsync.when(
+                data: _buildArticleScroll,
+                loading: _buildLoadingState,
+                error: (Object err, _) => _buildErrorState(err),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(ReadingRoomSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            SizedBox(
+              width: 36,
+              height: 36,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: _themeMode.accent,
+              ),
+            ),
+            const SizedBox(height: ReadingRoomSpacing.lg),
+            Text(
+              'Makale içeriği çıkarılıyor…',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: _themeMode.text,
+              ),
+            ),
+            const SizedBox(height: ReadingRoomSpacing.xs),
+            Text(
+              'Gereksiz ögeler ve reklamlar temizleniyor',
+              style: TextStyle(
+                fontSize: 13,
+                color: _themeMode.subtext,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(Object error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(ReadingRoomSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(Icons.error_outline_rounded, size: 48, color: _themeMode.accent),
+            const SizedBox(height: ReadingRoomSpacing.md),
+            Text(
+              'Makale içeriği çıkarılamadı',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: _themeMode.text,
+              ),
+            ),
+            const SizedBox(height: ReadingRoomSpacing.sm),
+            Text(
+              'Sayfa sunucusu isteği engellemiş olabilir veya internet bağlantınız kesilmiş olabilir.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: _themeMode.subtext),
+            ),
+            const SizedBox(height: ReadingRoomSpacing.lg),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _themeMode.accent,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                ref.read(readerArticleProvider(widget.bookmark).notifier).refresh();
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArticleScroll(ArticleContent article) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(
+        horizontal: ReadingRoomSpacing.xl,
+        vertical: ReadingRoomSpacing.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Fallback notice banner if article couldn't be fully fetched
+          if (article.isFallback) ...<Widget>[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(ReadingRoomSpacing.md),
+              margin: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
+              decoration: BoxDecoration(
+                color: _themeMode.surface,
+                borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+                border: Border.all(color: _themeMode.border),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(Icons.info_outline_rounded, size: 18, color: _themeMode.accent),
+                  const SizedBox(width: ReadingRoomSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Tam metin çıkarılamadı; özet ve önizleme gösteriliyor.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _themeMode.subtext,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Domain / Site Name
+          if (article.siteName != null && article.siteName!.isNotEmpty)
+            Text(
+              article.siteName!.toUpperCase(),
+              style: TextStyle(
+                fontSize: 12,
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w600,
+                color: _themeMode.accent,
+              ),
+            ),
+          const SizedBox(height: ReadingRoomSpacing.sm),
+
+          // Article Title
+          Text(
+            article.title,
+            style: _getTextStyle(
+              _themeMode,
+              size: _fontSize * 1.45,
+              weight: FontWeight.bold,
+              height: 1.28,
+            ),
+          ),
+          const SizedBox(height: ReadingRoomSpacing.md),
+
+          // Author & Date
+          Row(
+            children: <Widget>[
+              if (article.author != null && article.author!.isNotEmpty) ...<Widget>[
+                Icon(Icons.person_outline_rounded, size: 14, color: _themeMode.subtext),
+                const SizedBox(width: 4),
+                Text(
+                  article.author!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: _themeMode.subtext,
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (article.publishDate != null) ...<Widget>[
+                Icon(Icons.calendar_today_outlined, size: 12, color: _themeMode.subtext),
+                const SizedBox(width: 4),
+                Text(
+                  '${article.publishDate!.day}.${article.publishDate!.month}.${article.publishDate!.year}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _themeMode.subtext,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: ReadingRoomSpacing.lg),
+
+          // Hero Image
+          if (article.heroImageUrl != null && article.heroImageUrl!.isNotEmpty) ...<Widget>[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+              child: Image.network(
+                article.heroImageUrl!,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(height: ReadingRoomSpacing.xl),
+          ],
+
+          // Render Rich Article Blocks
+          ...article.blocks.map(_buildBlock),
+
+          const SizedBox(height: ReadingRoomSpacing.huge),
+
+          // Bottom Open in Web action
+          Center(
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _themeMode.text,
+                side: BorderSide(color: _themeMode.border),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              onPressed: () {
+                final String url = widget.bookmark.canonicalUrl ?? widget.bookmark.originalUrl;
+                final Uri? uri = Uri.tryParse(url);
+                if (uri != null) {
+                  launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+              icon: const Icon(Icons.open_in_browser_rounded, size: 18),
+              label: const Text('Orijinal Sayfayı Tarayıcıda Aç'),
+            ),
+          ),
+          const SizedBox(height: ReadingRoomSpacing.huge),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlock(ArticleBlock block) {
+    switch (block.type) {
+      case ArticleBlockType.heading:
+        final double scale = switch (block.level) {
+          1 => 1.35,
+          2 => 1.22,
+          _ => 1.1,
+        };
+        return Padding(
+          padding: const EdgeInsets.only(
+            top: ReadingRoomSpacing.xl,
+            bottom: ReadingRoomSpacing.sm,
+          ),
+          child: Text(
+            block.text,
+            style: _getTextStyle(
+              _themeMode,
+              size: _fontSize * scale,
+              weight: FontWeight.bold,
+              height: 1.3,
+            ),
+          ),
+        );
+
+      case ArticleBlockType.paragraph:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
+          child: Text(
+            block.text,
+            style: _getTextStyle(_themeMode),
+          ),
+        );
+
+      case ArticleBlockType.blockquote:
+        return Container(
+          margin: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: ReadingRoomSpacing.md,
+            vertical: ReadingRoomSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: _themeMode.surface.withValues(alpha: 0.5),
+            border: Border(
+              left: BorderSide(color: _themeMode.accent, width: 3.5),
+            ),
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(8),
+            ),
+          ),
+          child: Text(
+            block.text,
+            style: _getTextStyle(
+              _themeMode,
+              fontStyle: FontStyle.italic,
+              height: 1.55,
+            ),
+          ),
+        );
+
+      case ArticleBlockType.code:
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
+          padding: const EdgeInsets.all(ReadingRoomSpacing.md),
+          decoration: BoxDecoration(
+            color: _themeMode.surface,
+            borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+            border: Border.all(color: _themeMode.border),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Text(
+              block.text,
+              style: GoogleFonts.firaCode(
+                fontSize: _fontSize * 0.85,
+                color: _themeMode.text,
+                height: 1.5,
+              ),
+            ),
+          ),
+        );
+
+      case ArticleBlockType.list:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: block.listItems.asMap().entries.map((MapEntry<int, String> entry) {
+              final String prefix = block.isOrdered ? '${entry.key + 1}. ' : '• ';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.xs),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      prefix,
+                      style: _getTextStyle(_themeMode, weight: FontWeight.bold),
+                    ),
+                    Expanded(
+                      child: Text(
+                        entry.value,
+                        style: _getTextStyle(_themeMode),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        );
+
+      case ArticleBlockType.image:
+        if (block.imageUrl == null || block.imageUrl!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+                child: Image.network(
+                  block.imageUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+              if (block.caption != null && block.caption!.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 6),
+                Text(
+                  block.caption!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: _themeMode.subtext,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+    }
   }
 }

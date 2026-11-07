@@ -170,7 +170,7 @@ void main() {
     );
 
     test('manages tags and updates tag usage counts', () async {
-      final DateTime now = DateTime.utc(2026, 3, 1);
+      final DateTime now = DateTime.utc(2026, 3);
       tagRepo.tags.addAll(<Tag>[
         Tag(id: 1, name: 'Flutter', slug: 'flutter', createdAt: now, updatedAt: now),
         Tag(id: 2, name: 'Dart', slug: 'dart', createdAt: now, updatedAt: now),
@@ -190,7 +190,7 @@ void main() {
     });
 
     test('manages collections and updates collection item counts', () async {
-      final DateTime now = DateTime.utc(2026, 3, 1);
+      final DateTime now = DateTime.utc(2026, 3);
       collectionRepo.collections.addAll(<BookmarkCollection>[
         BookmarkCollection(
           id: 5,
@@ -231,7 +231,7 @@ void main() {
     });
 
     test('cancelReminder delegates to ReminderScheduler', () async {
-      final DateTime now = DateTime.utc(2026, 3, 1);
+      final DateTime now = DateTime.utc(2026, 3);
       reminderRepo.items[99] = Reminder(
         id: 99,
         bookmarkId: 10,
@@ -402,7 +402,7 @@ class _FakeNoteRepository implements NoteRepository {
 
   @override
   Future<Note> createForBookmark(int bookmarkId, String content) async {
-    final DateTime now = DateTime.utc(2026, 3, 1);
+    final DateTime now = DateTime.utc(2026, 3);
     final Note note = Note(
       id: notes.length + 1,
       bookmarkId: bookmarkId,
@@ -487,28 +487,19 @@ class _FakeReminderRepository implements ReminderRepository {
   @override
   Future<List<Reminder>> getAllActive() async => <Reminder>[];
   @override
-  Future<List<Reminder>> getDueBefore(DateTime cutoff) async => <Reminder>[];
-  @override
   Future<Reminder?> markFired(int id, {DateTime? firedAt}) async => null;
-  @override
-  Future<Reminder?> snooze(int id, DateTime until) async => null;
   @override
   Future<Reminder?> markSnoozed(int id, {required DateTime until}) async =>
       null;
   @override
   Future<List<Reminder>> getUpcoming({
     required DateTime now,
-    int? limit,
+    required Duration window,
   }) async =>
       <Reminder>[];
-  @override
-  Future<int> countActive() async => 0;
   @override
   Stream<Reminder?> watchById(int id) => const Stream<Reminder?>.empty();
   @override
   Stream<List<Reminder>> watchByBookmarkId(int bookmarkId) =>
-      const Stream<List<Reminder>>.empty();
-  @override
-  Stream<List<Reminder>> watchAllActive() =>
       const Stream<List<Reminder>>.empty();
 }

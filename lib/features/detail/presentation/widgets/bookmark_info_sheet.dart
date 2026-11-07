@@ -31,7 +31,7 @@ class BookmarkInfoSheet extends StatelessWidget {
     final Color surfaceColor = theme.colorScheme.surface;
     final Color outlineColor = theme.colorScheme.outline;
 
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: const BorderRadius.vertical(
@@ -70,7 +70,7 @@ class BookmarkInfoSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   Text(
-                    l10n?.detailMetadataTitle ?? 'Metadata & Details',
+                    l10n?.detailMetadataTitle ?? 'Meta Veri ve Ayrıntılar',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -95,7 +95,7 @@ class BookmarkInfoSheet extends StatelessWidget {
                       context,
                       icon: Icons.visibility_outlined,
                       label: l10n?.detailOpenedTimes(bookmark.openCount) ??
-                          '${bookmark.openCount} views',
+                          '${bookmark.openCount} görüntülenme',
                     ),
                     const SizedBox(width: ReadingRoomSpacing.sm),
                     _buildStatChip(
@@ -141,24 +141,24 @@ class BookmarkInfoSheet extends StatelessWidget {
                       ),
                     _buildInfoRow(
                       context,
-                      label: l10n?.detailMetaType ?? 'Content Type',
-                      value: bookmark.contentType.name.toUpperCase(),
+                      label: l10n?.detailMetaType ?? 'İçerik Türü',
+                      value: _formatContentType(bookmark.contentType.name),
                     ),
                     _buildInfoRow(
                       context,
-                      label: l10n?.detailMetaSource ?? 'Source',
-                      value: bookmark.sourceType.name,
+                      label: l10n?.detailMetaSource ?? 'Kaynak',
+                      value: _formatSourceType(bookmark.sourceType.name),
                     ),
                     if (bookmark.publishDate != null)
                       _buildInfoRow(
                         context,
-                        label: l10n?.detailMetaPublished ?? 'Published',
+                        label: l10n?.detailMetaPublished ?? 'Yayın Tarihi',
                         value: _formatDate(bookmark.publishDate),
                       ),
                     if (bookmark.lastOpenedAt != null)
                       _buildInfoRow(
                         context,
-                        label: l10n?.detailMetaLastOpened ?? 'Last opened',
+                        label: l10n?.detailMetaLastOpened ?? 'Son Açılma',
                         value: _formatDate(bookmark.lastOpenedAt),
                         isLast: true,
                       )
@@ -228,22 +228,22 @@ class BookmarkInfoSheet extends StatelessWidget {
       BookmarkScrapingStatus.done => (
           Colors.greenAccent.shade700,
           Icons.check_circle_outline,
-          'Synced',
+          'Senkronize Edildi',
         ),
       BookmarkScrapingStatus.failed => (
           theme.colorScheme.error,
           Icons.error_outline,
-          'Failed',
+          'Başarısız',
         ),
       BookmarkScrapingStatus.processing => (
           Colors.orangeAccent,
           Icons.sync,
-          'Processing',
+          'İşleniyor',
         ),
       BookmarkScrapingStatus.pending => (
           Colors.orangeAccent,
           Icons.hourglass_empty_rounded,
-          'Pending',
+          'Bekliyor',
         ),
     };
 
@@ -354,14 +354,14 @@ class BookmarkInfoSheet extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.copy_rounded, size: 16),
-            tooltip: 'Copy URL',
+            tooltip: 'URL Kopyala',
             onPressed: () {
               Clipboard.setData(ClipboardData(text: url));
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
                   const SnackBar(
-                    content: Text('URL copied to clipboard'),
+                    content: Text('URL panoya kopyalandı'),
                     duration: Duration(seconds: 2),
                   ),
                 );
@@ -371,6 +371,29 @@ class BookmarkInfoSheet extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static String _formatContentType(String name) {
+    return switch (name.toLowerCase()) {
+      'article' => 'Makale',
+      'video' => 'Video',
+      'tweet' => 'Gönderi',
+      'audio' => 'Ses',
+      'document' => 'Belge',
+      'image' => 'Görsel',
+      'repository' => 'Depo (Repo)',
+      _ => 'Bilinmiyor',
+    };
+  }
+
+  static String _formatSourceType(String name) {
+    return switch (name.toLowerCase()) {
+      'manual' => 'Manuel',
+      'sharetarget' => 'Paylaşım Menüsü',
+      'browserextension' => 'Tarayıcı Eklentisi',
+      'import' => 'İçe Aktarma',
+      _ => name,
+    };
   }
 
   static String _formatDate(DateTime? dt) {

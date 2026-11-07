@@ -167,10 +167,6 @@ class _DetailBody extends ConsumerWidget {
                   const SizedBox(height: ReadingRoomSpacing.xl),
                   _RemindersSection(bookmark: bookmark),
 
-                  // ── Metadata tile ────────────────────────────
-                  const SizedBox(height: ReadingRoomSpacing.xl),
-                  _MetadataOpenTile(bookmark: bookmark),
-
                   const SizedBox(height: ReadingRoomSpacing.huge),
                 ],
               ),
@@ -352,7 +348,7 @@ class _HeroAppBar extends ConsumerWidget {
           color: defaultColor,
           shadows: iconShadows,
         ),
-        tooltip: 'Reader Mode',
+        tooltip: 'Okuma Modu',
         onPressed: () {
           Navigator.of(context).push(ReaderScreen.route(bookmark));
         },
@@ -885,81 +881,6 @@ class _DomainRow extends ConsumerWidget {
   static String _formatContentType(String raw) {
     if (raw.isEmpty) return '';
     return raw[0].toUpperCase() + raw.substring(1);
-  }
-}
-
-// ─── Metadata open tile ──────────────────────────────────────────
-
-class _MetadataOpenTile extends StatelessWidget {
-  const _MetadataOpenTile({required this.bookmark});
-
-  final Bookmark bookmark;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final AppLocalizations? l10n = AppLocalizations.of(context);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => BookmarkInfoSheet.show(context, bookmark),
-        borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(
-            horizontal: ReadingRoomSpacing.md,
-            vertical: ReadingRoomSpacing.md,
-          ),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-            border: Border.all(color: theme.colorScheme.outline),
-          ),
-          child: Row(
-            children: <Widget>[
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.info_outline_rounded,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: ReadingRoomSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      l10n?.detailMetadataTitle ?? 'Metadata & Info',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${bookmark.contentType.name.toUpperCase()} • ${bookmark.sourceType.name} • ${bookmark.openCount} views',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -1697,16 +1618,16 @@ class _NoteCard extends StatelessWidget {
   /// detail screen uses, kept inline to avoid pulling a date package.
   static String _relativeTime(DateTime ts) {
     final Duration delta = DateTime.now().difference(ts);
-    if (delta.inMinutes < 1) return 'just now';
-    if (delta.inMinutes < 60) return '${delta.inMinutes}m ago';
-    if (delta.inHours < 24) return '${delta.inHours}h ago';
-    if (delta.inDays < 7) return '${delta.inDays}d ago';
+    if (delta.inMinutes < 1) return 'az önce';
+    if (delta.inMinutes < 60) return '${delta.inMinutes} dk önce';
+    if (delta.inHours < 24) return '${delta.inHours} sa önce';
+    if (delta.inDays < 7) return '${delta.inDays} gün önce';
     final int weeks = delta.inDays ~/ 7;
-    if (weeks < 5) return '${weeks}w ago';
+    if (weeks < 5) return '$weeks hf önce';
     final int months = delta.inDays ~/ 30;
-    if (months < 12) return '${months}mo ago';
+    if (months < 12) return '$months ay önce';
     final int years = delta.inDays ~/ 365;
-    return '${years}y ago';
+    return '$years yıl önce';
   }
 }
 
