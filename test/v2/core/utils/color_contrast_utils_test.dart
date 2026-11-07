@@ -83,7 +83,7 @@ void main() {
         ),
       );
 
-      expect(lightStyle.baseColor.value, equals(darkPurpleArgb));
+      expect(lightStyle.baseColor.toARGB32(), equals(darkPurpleArgb));
       expect(
         ColorContrastUtils.contrastRatio(
             lightStyle.textColor, ReadingRoomColors.lightSurface),

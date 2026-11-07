@@ -2,7 +2,7 @@
 ///
 /// The capture pipeline saves the bookmark immediately so the user
 /// gets instant feedback, then fires this orchestrator off to
-/// fetch and merge metadata asynchronously.  The bookmark stream
+/// fetch and merge metadata asynchronously. The bookmark stream
 /// updates reactively when scraping completes.
 ///
 /// Implementations must:
@@ -14,4 +14,8 @@ abstract interface class ScrapingOrchestrator {
   /// Enriches the bookmark identified by [bookmarkId] with scraped
   /// metadata. Safe to fire-and-forget — never throws.
   Future<void> enrich(int bookmarkId);
+
+  /// Cancels in-flight metadata scraping and network operations for
+  /// [bookmarkId] if active.
+  void cancel(int bookmarkId);
 }

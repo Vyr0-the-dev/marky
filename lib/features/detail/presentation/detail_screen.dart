@@ -635,6 +635,7 @@ class _ActionsRow extends ConsumerWidget {
     );
     if (confirmed != true) return;
     if (bookmark.id == null) return;
+    ref.read(scrapingOrchestratorProvider).cancel(bookmark.id!);
     final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
     await repo.delete(bookmark.id!);
     // Stream will emit null → screen auto-pops.

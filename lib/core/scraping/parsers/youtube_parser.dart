@@ -31,13 +31,23 @@ class YouTubeParser implements SourceParser {
   }
 
   @override
-  Future<MetadataResult> parse(String url, {String? html}) async {
+  Future<MetadataResult> parse(
+    String url, {
+    String? html,
+    CancelToken? cancelToken,
+  }) async {
+    if (cancelToken?.isCancelled ?? false) {
+      return const MetadataResult(siteName: 'YouTube');
+    }
     try {
       final String oEmbedUrl =
           'https://www.youtube.com/oembed?url=${Uri.encodeComponent(url)}&format=json';
 
       final Response<Map<String, dynamic>> response =
-          await _dio.get<Map<String, dynamic>>(oEmbedUrl);
+          await _dio.get<Map<String, dynamic>>(
+        oEmbedUrl,
+        cancelToken: cancelToken,
+      );
 
       final Map<String, dynamic>? data = response.data;
       if (data == null) return const MetadataResult();

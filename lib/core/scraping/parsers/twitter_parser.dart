@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:marky/core/scraping/metadata_result.dart';
 import 'package:marky/core/scraping/source_parser.dart';
 
@@ -25,7 +26,11 @@ class TwitterParser implements SourceParser {
   }
 
   @override
-  Future<MetadataResult> parse(String url, {String? html}) async {
+  Future<MetadataResult> parse(
+    String url, {
+    String? html,
+    CancelToken? cancelToken,
+  }) async {
     // Twitter blocks most scraping; we return the siteName and let
     // the generic HTML parser fill OG fields from pre-fetched html.
     // The MetadataScraperService merges both results.

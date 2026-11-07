@@ -35,7 +35,14 @@ class GitHubParser implements SourceParser {
   }
 
   @override
-  Future<MetadataResult> parse(String url, {String? html}) async {
+  Future<MetadataResult> parse(
+    String url, {
+    String? html,
+    CancelToken? cancelToken,
+  }) async {
+    if (cancelToken?.isCancelled ?? false) {
+      return const MetadataResult(siteName: 'GitHub');
+    }
     final Uri? uri = Uri.tryParse(url);
     if (uri == null) return const MetadataResult(siteName: 'GitHub');
 
@@ -54,6 +61,7 @@ class GitHubParser implements SourceParser {
       final Response<Map<String, dynamic>> response =
           await _dio.get<Map<String, dynamic>>(
         'https://api.github.com/repos/$owner/$repo',
+        cancelToken: cancelToken,
       );
 
       final Map<String, dynamic>? data = response.data;

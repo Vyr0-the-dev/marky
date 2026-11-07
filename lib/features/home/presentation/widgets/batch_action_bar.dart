@@ -7,6 +7,8 @@ import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
+import 'package:marky/features/capture/data/capture_providers.dart';
+import 'package:marky/features/capture/domain/scraping_orchestrator.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/home/presentation/feed_state.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
@@ -128,6 +130,12 @@ class BatchActionBar extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
+
+    final ScrapingOrchestrator orchestrator =
+        ref.read(scrapingOrchestratorProvider);
+    for (final int id in ids) {
+      orchestrator.cancel(id);
+    }
 
     final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
     await repo.deleteAll(ids.toList());

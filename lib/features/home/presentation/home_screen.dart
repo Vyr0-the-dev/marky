@@ -13,6 +13,7 @@ import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
+import 'package:marky/features/capture/data/capture_providers.dart';
 import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
 import 'package:marky/features/collections/domain/bookmark_collection.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';
@@ -723,7 +724,6 @@ class _SwipeableCard extends ConsumerWidget {
                 : (l10n?.snackbarMarkedAsUnread ?? 'Marked as unread');
             messenger.showSnackBar(
               SnackBar(
-                duration: const Duration(seconds: 4),
                 content: Text(message),
                 action: SnackBarAction(
                   label: l10n?.actionUndo ?? 'Undo',
@@ -740,6 +740,7 @@ class _SwipeableCard extends ConsumerWidget {
         unawaited(HapticFeedback.mediumImpact());
         if (bookmark.isArchived) {
           // In archive view: delete
+          ref.read(scrapingOrchestratorProvider).cancel(bookmark.id!);
           await repo.delete(bookmark.id!);
           if (context.mounted) {
             final ScaffoldMessengerState messenger =
@@ -747,7 +748,6 @@ class _SwipeableCard extends ConsumerWidget {
             messenger.hideCurrentSnackBar();
             messenger.showSnackBar(
               SnackBar(
-                duration: const Duration(seconds: 4),
                 content: Text(
                   l10n?.snackbarBookmarkDeleted ?? 'Bookmark deleted',
                 ),
@@ -768,7 +768,6 @@ class _SwipeableCard extends ConsumerWidget {
             messenger.hideCurrentSnackBar();
             messenger.showSnackBar(
               SnackBar(
-                duration: const Duration(seconds: 4),
                 content: Text(
                   l10n?.snackbarBookmarkArchived ?? 'Bookmark archived',
                 ),

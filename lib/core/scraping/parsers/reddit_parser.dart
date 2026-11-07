@@ -36,10 +36,22 @@ class RedditParser implements SourceParser {
   }
 
   @override
-  Future<MetadataResult> parse(String url, {String? html}) async {
-    final MetadataResult jsonResult = await _parseJsonEndpoint(url);
+  Future<MetadataResult> parse(
+    String url, {
+    String? html,
+    CancelToken? cancelToken,
+  }) async {
+    if (cancelToken?.isCancelled ?? false) {
+      return const MetadataResult(siteName: 'Reddit', faviconUrl: _faviconUrl);
+    }
+    final MetadataResult jsonResult =
+        await _parseJsonEndpoint(url, cancelToken: cancelToken);
     if (!jsonResult.isEmpty) return jsonResult;
-    final MetadataResult embedResult = await _parseOEmbed(url);
+    if (cancelToken?.isCancelled ?? false) {
+      return const MetadataResult(siteName: 'Reddit', faviconUrl: _faviconUrl);
+    }
+    final MetadataResult embedResult =
+        await _parseOEmbed(url, cancelToken: cancelToken);
     if (!embedResult.isEmpty) return embedResult;
     return const MetadataResult(
       siteName: 'Reddit',
@@ -47,10 +59,15 @@ class RedditParser implements SourceParser {
     );
   }
 
-  Future<MetadataResult> _parseJsonEndpoint(String url) async {
+  Future<MetadataResult> _parseJsonEndpoint(
+    String url, {
+    CancelToken? cancelToken,
+  }) async {
     try {
-      final Response<dynamic> response =
-          await _dio.getUri<dynamic>(_jsonUriFor(url));
+      final Response<dynamic> response = await _dio.getUri<dynamic>(
+        _jsonUriFor(url),
+        cancelToken: cancelToken,
+      );
 
       final dynamic data = response.data;
       final Map<String, dynamic>? postData = _firstPostData(data);
@@ -104,11 +121,12 @@ class RedditParser implements SourceParser {
     }
   }
 
-  Future<MetadataResult> _parseOEmbed(String url) async {
+  Future<MetadataResult> _parseOEmbed(String url, {CancelToken? cancelToken}) async {
     try {
       final Response<dynamic> response = await _dio.get<dynamic>(
         'https://www.reddit.com/oembed',
         queryParameters: <String, dynamic>{'url': url},
+        cancelToken: cancelToken,
       );
       final dynamic data = response.data;
       if (data is! Map<String, dynamic>) return const MetadataResult();

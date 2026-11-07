@@ -583,10 +583,16 @@ class _StubRedirectResolver implements RedirectResolver {
 
 class _RecordingOrchestrator implements ScrapingOrchestrator {
   final List<int> calls = <int>[];
+  final List<int> cancelled = <int>[];
 
   @override
   Future<void> enrich(int bookmarkId) async {
     calls.add(bookmarkId);
+  }
+
+  @override
+  void cancel(int bookmarkId) {
+    cancelled.add(bookmarkId);
   }
 }
 
@@ -595,6 +601,9 @@ class _ThrowingOrchestrator implements ScrapingOrchestrator {
   Future<void> enrich(int bookmarkId) async {
     throw Exception('boom');
   }
+
+  @override
+  void cancel(int bookmarkId) {}
 }
 
 class _BlockingOrchestrator implements ScrapingOrchestrator {
@@ -606,6 +615,9 @@ class _BlockingOrchestrator implements ScrapingOrchestrator {
     await _completer.future;
     completed = true;
   }
+
+  @override
+  void cancel(int bookmarkId) {}
 
   void complete() {
     if (!_completer.isCompleted) {

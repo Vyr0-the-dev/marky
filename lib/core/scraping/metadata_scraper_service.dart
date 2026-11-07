@@ -41,25 +41,44 @@ class MetadataScraperService implements MetadataScraper {
   /// Scrapes metadata for [url].
   ///
   /// Never throws — returns an empty [MetadataResult] on total
-  /// failure so the capture pipeline can proceed with a bare
-  /// bookmark.
+  /// failure or cancellation so the capture pipeline can proceed
+  /// with a bare bookmark.
   @override
-  Future<MetadataResult> scrape(String url) async {
+  Future<MetadataResult> scrape(String url, {CancelToken? cancelToken}) async {
     try {
+      if (cancelToken?.isCancelled ?? false) {
+        return const MetadataResult();
+      }
+
       // Step 1: Fetch HTML once, share with parsers.
-      final String? html = await _fetchHtml(url);
+      final String? html = await _fetchHtml(url, cancelToken: cancelToken);
+
+      if (cancelToken?.isCancelled ?? false) {
+        return const MetadataResult();
+      }
 
       // Step 2: Find the best platform-specific parser.
       final SourceParser? platformParser = _registry.resolve(url);
 
       MetadataResult platformResult = const MetadataResult();
       if (platformParser != null && platformParser is! GenericHtmlParser) {
-        platformResult = await platformParser.parse(url, html: html);
+        platformResult = await platformParser.parse(
+          url,
+          html: html,
+          cancelToken: cancelToken,
+        );
+      }
+
+      if (cancelToken?.isCancelled ?? false) {
+        return const MetadataResult();
       }
 
       // Step 3: Always run generic OG/meta extraction.
-      final MetadataResult genericResult =
-          await _genericParser.parse(url, html: html);
+      final MetadataResult genericResult = await _genericParser.parse(
+        url,
+        html: html,
+        cancelToken: cancelToken,
+      );
 
       // Step 4: Platform-specific wins, generic fills gaps.
       return platformResult.mergeWith(genericResult);
@@ -68,9 +87,12 @@ class MetadataScraperService implements MetadataScraper {
     }
   }
 
-  Future<String?> _fetchHtml(String url) async {
+  Future<String?> _fetchHtml(String url, {CancelToken? cancelToken}) async {
     try {
-      final Response<String> response = await _dio.get<String>(url);
+      final Response<String> response = await _dio.get<String>(
+        url,
+        cancelToken: cancelToken,
+      );
       return response.data;
     } catch (_) {
       return null;

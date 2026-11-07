@@ -23,10 +23,8 @@ void main() {
         normalizedHost: 'example.com',
         title: 'Test Article',
         scrapingStatus: BookmarkScrapingStatus.done,
-        isRead: false,
-        isArchived: false,
-        createdAt: DateTime(2026, 1, 1),
-        updatedAt: DateTime(2026, 1, 1),
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
       ),
     ]);
 
@@ -75,10 +73,8 @@ void main() {
         normalizedHost: 'example.com',
         title: 'Archivable Bookmark',
         scrapingStatus: BookmarkScrapingStatus.done,
-        isRead: false,
-        isArchived: false,
-        createdAt: DateTime(2026, 1, 1),
-        updatedAt: DateTime(2026, 1, 1),
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
       ),
     ]);
 

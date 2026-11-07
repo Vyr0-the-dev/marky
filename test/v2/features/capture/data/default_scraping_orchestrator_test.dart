@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
@@ -22,18 +24,32 @@ class _FakeMetadataScraper implements MetadataScraper {
 
   final MetadataResult _result;
   String? lastUrlScraped;
+  CancelToken? lastCancelToken;
 
   @override
-  Future<MetadataResult> scrape(String url) async {
+  Future<MetadataResult> scrape(String url, {CancelToken? cancelToken}) async {
     lastUrlScraped = url;
+    lastCancelToken = cancelToken;
     return _result;
   }
 }
 
 class _ThrowingMetadataScraper implements MetadataScraper {
   @override
-  Future<MetadataResult> scrape(String url) async {
+  Future<MetadataResult> scrape(String url, {CancelToken? cancelToken}) async {
     throw Exception('network down');
+  }
+}
+
+class _BlockingScraper implements MetadataScraper {
+  _BlockingScraper({required this.onScrape});
+
+  final Future<void> Function(CancelToken? token) onScrape;
+
+  @override
+  Future<MetadataResult> scrape(String url, {CancelToken? cancelToken}) async {
+    await onScrape(cancelToken);
+    return const MetadataResult(title: 'Blocked Scraped');
   }
 }
 
@@ -275,6 +291,43 @@ void main() {
 
       final Bookmark after = (await repo.getById(seeded.id!))!;
       expect(after.scrapingStatus, BookmarkScrapingStatus.failed);
+    });
+
+    test('cancel aborts active scraper token and leaves bookmark untouched',
+        () async {
+      final Bookmark seeded = await seed();
+      final Completer<void> startedCompleter = Completer<void>();
+      final Completer<void> scrapeCompleter = Completer<void>();
+      CancelToken? capturedToken;
+
+      final _BlockingScraper blockingScraper = _BlockingScraper(
+        onScrape: (CancelToken? token) {
+          capturedToken = token;
+          if (!startedCompleter.isCompleted) {
+            startedCompleter.complete();
+          }
+          return scrapeCompleter.future;
+        },
+      );
+
+      final DefaultScrapingOrchestrator orchestrator =
+          DefaultScrapingOrchestrator(
+        bookmarkRepo: repo,
+        scraper: blockingScraper,
+        merger: const DefaultUpsertMergeService(),
+      );
+
+      final Future<void> enrichFuture = orchestrator.enrich(seeded.id!);
+
+      await startedCompleter.future;
+      expect(capturedToken, isNotNull);
+      expect(capturedToken!.isCancelled, isFalse);
+
+      orchestrator.cancel(seeded.id!);
+      expect(capturedToken!.isCancelled, isTrue);
+
+      scrapeCompleter.complete();
+      await enrichFuture;
     });
   });
 }

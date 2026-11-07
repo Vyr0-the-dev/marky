@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/core/scraping/metadata_result.dart';
 import 'package:marky/core/scraping/metadata_scraper.dart';
@@ -11,12 +12,12 @@ import 'package:marky/features/capture/domain/upsert_merge_service.dart';
 /// Pipeline:
 /// 1. Load bookmark by id.
 /// 2. Mark scrapingStatus → processing, persist.
-/// 3. Run [MetadataScraperService.scrape] on the original URL.
+/// 3. Run [MetadataScraperService.scrape] on the original URL with a bound [CancelToken].
 /// 4. Convert [MetadataResult] into a stub [Bookmark] for merging.
 /// 5. Call [UpsertMergeService.merge] to fill gaps.
 /// 6. Mark scrapingStatus → done (or failed) and persist.
 class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
-  const DefaultScrapingOrchestrator({
+  DefaultScrapingOrchestrator({
     required BookmarkRepository bookmarkRepo,
     required MetadataScraper scraper,
     required UpsertMergeService merger,
@@ -27,65 +28,91 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
   final BookmarkRepository _bookmarkRepo;
   final MetadataScraper _scraper;
   final UpsertMergeService _merger;
+  final Map<int, CancelToken> _activeTokens = <int, CancelToken>{};
+
+  @override
+  void cancel(int bookmarkId) {
+    final CancelToken? token = _activeTokens.remove(bookmarkId);
+    if (token != null && !token.isCancelled) {
+      token.cancel('Scraping cancelled for bookmark #$bookmarkId');
+    }
+  }
 
   @override
   Future<void> enrich(int bookmarkId) async {
-    Bookmark? bookmark = await _bookmarkRepo.getById(bookmarkId);
-    if (bookmark == null) return; // deleted while we were preparing
+    final CancelToken token = CancelToken();
+    _activeTokens[bookmarkId] = token;
 
-    // Step 1: mark processing.
     try {
-      bookmark = await _bookmarkRepo.save(
-        bookmark.copyWith(scrapingStatus: BookmarkScrapingStatus.processing),
-      );
-    } catch (_) {
-      return; // can't even mark — give up.
-    }
+      Bookmark? bookmark = await _bookmarkRepo.getById(bookmarkId);
+      if (bookmark == null || token.isCancelled) return; // deleted while we were preparing
 
-    // Step 2: scrape. Contract says never-throws, but be defensive.
-    MetadataResult result;
-    try {
-      result = await _scraper.scrape(bookmark.originalUrl);
-    } catch (_) {
-      result = const MetadataResult();
-    }
-
-    // Step 3: merge into existing bookmark.
-    // Re-read the bookmark so we don't overwrite changes made by
-    // automation rules (or any other concurrent modifier) since we
-    // started scraping.
-    try {
-      final Bookmark? fresh = await _bookmarkRepo.getById(bookmarkId);
-      if (fresh == null) return; // deleted while scraping
-      final Bookmark stub = _stubFromMetadata(fresh, result);
-      final Bookmark merged = _merger.merge(fresh, stub);
-
-      // Mark final status. If the scrape produced nothing useful
-      // (no title, no description, no image), surface as failed so
-      // the UI can show a fallback.
-      final BookmarkScrapingStatus finalStatus = _isUseful(result)
-          ? BookmarkScrapingStatus.done
-          : BookmarkScrapingStatus.failed;
-
-      await _bookmarkRepo.save(
-        merged.copyWith(scrapingStatus: finalStatus),
-      );
-    } catch (_) {
-      // Mark failed but never throw out of this orchestrator.
+      // Step 1: mark processing.
       try {
-        await _bookmarkRepo.save(
-          bookmark.copyWith(scrapingStatus: BookmarkScrapingStatus.failed),
+        bookmark = await _bookmarkRepo.save(
+          bookmark.copyWith(scrapingStatus: BookmarkScrapingStatus.processing),
         );
       } catch (_) {
-        // Database is in trouble — nothing more we can do.
+        return; // can't even mark — give up.
       }
+
+      if (token.isCancelled) return;
+
+      // Step 2: scrape. Contract says never-throws, but be defensive.
+      MetadataResult result;
+      try {
+        result = await _scraper.scrape(
+          bookmark.originalUrl,
+          cancelToken: token,
+        );
+      } catch (_) {
+        result = const MetadataResult();
+      }
+
+      if (token.isCancelled) return;
+
+      // Step 3: merge into existing bookmark.
+      // Re-read the bookmark so we don't overwrite changes made by
+      // automation rules (or any other concurrent modifier) since we
+      // started scraping.
+      try {
+        final Bookmark? fresh = await _bookmarkRepo.getById(bookmarkId);
+        if (fresh == null || token.isCancelled) return; // deleted or cancelled while scraping
+        final Bookmark stub = _stubFromMetadata(fresh, result);
+        final Bookmark merged = _merger.merge(fresh, stub);
+
+        if (token.isCancelled) return;
+
+        // Mark final status. If the scrape produced nothing useful
+        // (no title, no description, no image), surface as failed so
+        // the UI can show a fallback.
+        final BookmarkScrapingStatus finalStatus = _isUseful(result)
+            ? BookmarkScrapingStatus.done
+            : BookmarkScrapingStatus.failed;
+
+        await _bookmarkRepo.save(
+          merged.copyWith(scrapingStatus: finalStatus),
+        );
+      } catch (_) {
+        if (token.isCancelled) return;
+        // Mark failed but never throw out of this orchestrator.
+        try {
+          await _bookmarkRepo.save(
+            bookmark.copyWith(scrapingStatus: BookmarkScrapingStatus.failed),
+          );
+        } catch (_) {
+          // Database is in trouble — nothing more we can do.
+        }
+      }
+    } finally {
+      _activeTokens.remove(bookmarkId);
     }
   }
 
   // ─── Helpers ───────────────────────────────────────────────────
 
   /// Builds a transient [Bookmark] from a [MetadataResult] suitable
-  /// for [UpsertMergeService.merge].  Only metadata-derived fields
+  /// for [UpsertMergeService.merge]. Only metadata-derived fields
   /// are populated; identity / flags come from the existing record.
   static Bookmark _stubFromMetadata(Bookmark existing, MetadataResult m) {
     return existing.copyWith(

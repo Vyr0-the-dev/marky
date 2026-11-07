@@ -39,9 +39,16 @@ class GenericHtmlParser implements SourceParser {
   bool canHandle(String url) => true; // universal fallback
 
   @override
-  Future<MetadataResult> parse(String url, {String? html}) async {
-    final String? body = html ?? await _fetchHtml(url);
-    if (body == null) return const MetadataResult();
+  Future<MetadataResult> parse(
+    String url, {
+    String? html,
+    CancelToken? cancelToken,
+  }) async {
+    if (cancelToken?.isCancelled ?? false) return const MetadataResult();
+    final String? body = html ?? await _fetchHtml(url, cancelToken: cancelToken);
+    if (body == null || (cancelToken?.isCancelled ?? false)) {
+      return const MetadataResult();
+    }
 
     return _extractInBackground(url, body);
   }
@@ -75,9 +82,12 @@ class GenericHtmlParser implements SourceParser {
 
   // ─── HTTP ──────────────────────────────────────────────────────
 
-  Future<String?> _fetchHtml(String url) async {
+  Future<String?> _fetchHtml(String url, {CancelToken? cancelToken}) async {
     try {
-      final Response<String> response = await _dio.get<String>(url);
+      final Response<String> response = await _dio.get<String>(
+        url,
+        cancelToken: cancelToken,
+      );
       return response.data;
     } catch (_) {
       return null;
