@@ -18,4 +18,9 @@ abstract interface class ScrapingOrchestrator {
   /// Cancels in-flight metadata scraping and network operations for
   /// [bookmarkId] if active.
   void cancel(int bookmarkId);
+
+  /// Automatically discovers bookmarks with missing thumbnails or
+  /// incomplete/abandoned scraping states and enriches them in the
+  /// background. Safe to fire-and-forget — never throws.
+  Future<void> enrichIncomplete({int limit = 15});
 }

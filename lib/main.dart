@@ -24,18 +24,25 @@ Future<void> shareOverlayMain() => runShareOverlayApp();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  unawaited(
+    SystemChrome.setPreferredOrientations(<DeviceOrientation>[
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]).catchError((Object _) {}),
+  );
 
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-  final SharedPreferencesAppSettingsRepository settingsRepository =
-      SharedPreferencesAppSettingsRepository(prefs);
-  await settingsRepository.load();
-
-  final ({Isar isar, List<Override> overrides}) databaseBootstrap =
-      await markyDatabaseBootstrap();
+  final (
+    SharedPreferencesAppSettingsRepository settingsRepository,
+    ({Isar isar, List<Override> overrides}) databaseBootstrap,
+  ) = await (
+    SharedPreferences.getInstance().then((SharedPreferences prefs) async {
+      final SharedPreferencesAppSettingsRepository repo =
+          SharedPreferencesAppSettingsRepository(prefs);
+      await repo.load();
+      return repo;
+    }),
+    markyDatabaseBootstrap(),
+  ).wait;
 
   runApp(
     ProviderScope(

@@ -21,9 +21,13 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        try {
-            ShareOverlayFlutterHost.warmUpEngine(applicationContext)
-        } catch (_: Throwable) {}
+        // Defer warming up secondary engine until the main thread has rendered and is idle
+        android.os.Looper.myQueue().addIdleHandler {
+            try {
+                ShareOverlayFlutterHost.warmUpEngine(applicationContext)
+            } catch (_: Throwable) {}
+            false
+        }
         pendingInitialShortcutRoute = shortcutRouteFrom(intent)
         quickActionsMethodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,

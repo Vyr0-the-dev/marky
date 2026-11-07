@@ -29,8 +29,10 @@ class MetadataScraperService implements MetadataScraper {
               receiveTimeout: const Duration(seconds: 10),
               headers: <String, dynamic>{
                 'User-Agent':
-                    'Mozilla/5.0 (compatible; MarkyBot/1.0; +https://marky.app)',
-                'Accept': 'text/html,application/xhtml+xml',
+                    'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.171 Mobile Safari/537.36',
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,tr;q=0.8',
               },
             ));
 

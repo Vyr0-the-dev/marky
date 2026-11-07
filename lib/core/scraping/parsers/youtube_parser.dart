@@ -23,6 +23,14 @@ class YouTubeParser implements SourceParser {
     caseSensitive: false,
   );
 
+  static final RegExp _videoIdPattern = RegExp(
+    r'(?:v=|\/embed\/|\/shorts\/|youtu\.be\/|\/v\/)([a-zA-Z0-9_-]{11})',
+  );
+
+  static String? _extractVideoId(String url) {
+    return _videoIdPattern.firstMatch(url)?.group(1);
+  }
+
   @override
   bool canHandle(String url) {
     final Uri? uri = Uri.tryParse(url);
@@ -36,8 +44,17 @@ class YouTubeParser implements SourceParser {
     String? html,
     CancelToken? cancelToken,
   }) async {
+    final String? videoId = _extractVideoId(url);
+    final String? fallbackThumbnail = videoId != null
+        ? 'https://i.ytimg.com/vi/$videoId/hqdefault.jpg'
+        : null;
+
     if (cancelToken?.isCancelled ?? false) {
-      return const MetadataResult(siteName: 'YouTube');
+      return MetadataResult(
+        siteName: 'YouTube',
+        heroImageUrl: fallbackThumbnail,
+        faviconUrl: 'https://www.youtube.com/favicon.ico',
+      );
     }
     try {
       final String oEmbedUrl =
@@ -50,20 +67,28 @@ class YouTubeParser implements SourceParser {
       );
 
       final Map<String, dynamic>? data = response.data;
-      if (data == null) return const MetadataResult();
+      if (data == null) {
+        return MetadataResult(
+          siteName: 'YouTube',
+          heroImageUrl: fallbackThumbnail,
+          faviconUrl: 'https://www.youtube.com/favicon.ico',
+        );
+      }
 
       return MetadataResult(
         title: data['title'] as String?,
         author: data['author_name'] as String?,
         siteName: 'YouTube',
-        heroImageUrl: data['thumbnail_url'] as String?,
+        heroImageUrl:
+            (data['thumbnail_url'] as String?) ?? fallbackThumbnail,
         faviconUrl: 'https://www.youtube.com/favicon.ico',
       );
     } catch (_) {
-      // oEmbed failed — return minimal result, let generic parser
-      // fill from OG tags if html is available.
-      return const MetadataResult(
+      // oEmbed failed — return fallback thumbnail directly so
+      // video bookmarks always have a visible card image.
+      return MetadataResult(
         siteName: 'YouTube',
+        heroImageUrl: fallbackThumbnail,
         faviconUrl: 'https://www.youtube.com/favicon.ico',
       );
     }

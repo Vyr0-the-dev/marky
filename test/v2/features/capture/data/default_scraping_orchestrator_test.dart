@@ -329,5 +329,74 @@ void main() {
       scrapeCompleter.complete();
       await enrichFuture;
     });
+
+    test(
+        'enrichIncomplete recovers pending, processing, and image-less failed bookmarks',
+        () async {
+      final Bookmark pendingBookmark = await repo.save(
+        Bookmark(
+          originalUrl: 'https://example.com/pending',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      final Bookmark processingBookmark = await repo.save(
+        Bookmark(
+          originalUrl: 'https://example.com/processing',
+          scrapingStatus: BookmarkScrapingStatus.processing,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      final Bookmark failedWithoutImage = await repo.save(
+        Bookmark(
+          originalUrl: 'https://example.com/failed-no-img',
+          scrapingStatus: BookmarkScrapingStatus.failed,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      final Bookmark doneBookmark = await repo.save(
+        Bookmark(
+          originalUrl: 'https://example.com/done',
+          title: 'Already Done',
+          heroImageUrl: 'https://example.com/done.jpg',
+          scrapingStatus: BookmarkScrapingStatus.done,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      final _FakeMetadataScraper scraper = _FakeMetadataScraper(
+        const MetadataResult(
+          title: 'Recovered Title',
+          heroImageUrl: 'https://example.com/recovered.jpg',
+        ),
+      );
+      final DefaultScrapingOrchestrator orchestrator =
+          DefaultScrapingOrchestrator(
+        bookmarkRepo: repo,
+        scraper: scraper,
+        merger: const DefaultUpsertMergeService(),
+      );
+
+      await orchestrator.enrichIncomplete();
+
+      final Bookmark afterPending = (await repo.getById(pendingBookmark.id!))!;
+      final Bookmark afterProcessing =
+          (await repo.getById(processingBookmark.id!))!;
+      final Bookmark afterFailed =
+          (await repo.getById(failedWithoutImage.id!))!;
+      final Bookmark afterDone = (await repo.getById(doneBookmark.id!))!;
+
+      expect(afterPending.scrapingStatus, BookmarkScrapingStatus.done);
+      expect(afterPending.heroImageUrl, 'https://example.com/recovered.jpg');
+      expect(afterProcessing.scrapingStatus, BookmarkScrapingStatus.done);
+      expect(afterProcessing.heroImageUrl, 'https://example.com/recovered.jpg');
+      expect(afterFailed.scrapingStatus, BookmarkScrapingStatus.done);
+      expect(afterFailed.heroImageUrl, 'https://example.com/recovered.jpg');
+      expect(afterDone.title, 'Already Done');
+      expect(afterDone.heroImageUrl, 'https://example.com/done.jpg');
+    });
   });
 }

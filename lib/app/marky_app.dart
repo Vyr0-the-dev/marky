@@ -9,6 +9,7 @@ import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/core/notifications/notification_service.dart';
+import 'package:marky/features/capture/data/capture_providers.dart';
 import 'package:marky/features/capture/domain/capture_result.dart';
 import 'package:marky/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:marky/features/quick_actions/data/quick_action_providers.dart';
@@ -70,6 +71,7 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
       unawaited(_showOnboardingIfNeeded());
       unawaited(_consumeInitialQuickActionRoute());
       unawaited(_consumeInitialNotificationPayload());
+      unawaited(_enrichPendingBookmarks());
     });
   }
 
@@ -88,6 +90,7 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
+        unawaited(_enrichPendingBookmarks());
         return;
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
@@ -204,6 +207,15 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
   void _openRoute(String route) {
     if (!mounted) return;
     GoRouter.of(context).go(route);
+  }
+
+  Future<void> _enrichPendingBookmarks() async {
+    if (!mounted) return;
+    try {
+      await ref.read(scrapingOrchestratorProvider).enrichIncomplete();
+    } on Object {
+      return;
+    }
   }
 
   Future<void> _consumeInitialNotificationPayload() async {

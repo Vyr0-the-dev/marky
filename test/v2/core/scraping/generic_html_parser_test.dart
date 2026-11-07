@@ -187,6 +187,107 @@ void main() {
     });
   });
 
+  // ─── Rich image & icon fallbacks ───────────────────────────────
+
+  group('rich image & icon fallbacks', () {
+    test('extracts og:image:secure_url and twitter:image:src', () async {
+      const String html = '''
+<html>
+<head>
+  <meta property="og:image:secure_url" content="https://img.com/secure.jpg">
+</head>
+<body></body>
+</html>
+''';
+      final MetadataResult result = await parser.parse(
+        'https://example.com/sec',
+        html: html,
+      );
+      expect(result.heroImageUrl, 'https://img.com/secure.jpg');
+    });
+
+    test('extracts <link rel="image_src">', () async {
+      const String html = '''
+<html>
+<head>
+  <link rel="image_src" href="/assets/preview.png">
+</head>
+<body></body>
+</html>
+''';
+      final MetadataResult result = await parser.parse(
+        'https://example.com/post',
+        html: html,
+      );
+      expect(result.heroImageUrl, 'https://example.com/assets/preview.png');
+    });
+
+    test('extracts image from JSON-LD structured data', () async {
+      const String html = '''
+<html>
+<head>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": "JSON-LD Article",
+      "image": {
+        "@type": "ImageObject",
+        "url": "https://img.com/jsonld-hero.webp"
+      }
+    }
+  </script>
+</head>
+<body></body>
+</html>
+''';
+      final MetadataResult result = await parser.parse(
+        'https://example.com/news',
+        html: html,
+      );
+      expect(result.heroImageUrl, 'https://img.com/jsonld-hero.webp');
+    });
+
+    test('falls back to first valid article <img> and skips 1x1 trackers',
+        () async {
+      const String html = '''
+<html>
+<head><title>Article With Inline Image</title></head>
+<body>
+  <article>
+    <img src="https://tracker.com/pixel.gif" width="1" height="1">
+    <img src="/uploads/article-cover.jpg" width="800" height="450">
+  </article>
+</body>
+</html>
+''';
+      final MetadataResult result = await parser.parse(
+        'https://example.com/blog',
+        html: html,
+      );
+      expect(result.heroImageUrl, 'https://example.com/uploads/article-cover.jpg');
+    });
+
+    test(
+        'falls back to apple-touch-icon for hero image and favicon when no og:image or rel="icon"',
+        () async {
+      const String html = '''
+<html>
+<head>
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body></body>
+</html>
+''';
+      final MetadataResult result = await parser.parse(
+        'https://example.com/app',
+        html: html,
+      );
+      expect(result.heroImageUrl, 'https://example.com/apple-touch-icon.png');
+      expect(result.faviconUrl, 'https://example.com/apple-touch-icon.png');
+    });
+  });
+
   // ─── Canonical fallback to og:url ──────────────────────────────
 
   group('canonical fallback', () {

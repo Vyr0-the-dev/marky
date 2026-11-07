@@ -138,9 +138,16 @@ internal class ShareOverlayFlutterHost(
         methodChannel?.setMethodCallHandler(null)
         methodChannel = null
 
-        // Pause lifecycle instead of destroying the FlutterEngine so it remains warm in FlutterEngineCache
-        flutterEngine?.lifecycleChannel?.appIsPaused()
+        // Delay pausing the engine lifecycle so background scraping in Dart has time to complete
+        val engineToPause = flutterEngine
         flutterEngine = null
+        if (engineToPause != null) {
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                try {
+                    engineToPause.lifecycleChannel.appIsPaused()
+                } catch (_: Throwable) {}
+            }, 5000)
+        }
     }
 
     override fun onNewPayload(payload: String?) {

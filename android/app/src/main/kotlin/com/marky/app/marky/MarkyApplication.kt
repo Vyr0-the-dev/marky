@@ -9,7 +9,6 @@ class MarkyApplication : FlutterApplication() {
         try {
             val loader = FlutterInjector.instance().flutterLoader()
             loader.startInitialization(this)
-            ShareOverlayFlutterHost.warmUpEngine(this)
         } catch (_: Throwable) {}
     }
 }

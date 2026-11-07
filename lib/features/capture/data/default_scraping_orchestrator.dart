@@ -3,6 +3,7 @@ import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/core/scraping/metadata_result.dart';
 import 'package:marky/core/scraping/metadata_scraper.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
+import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
 import 'package:marky/features/capture/domain/scraping_orchestrator.dart';
 import 'package:marky/features/capture/domain/upsert_merge_service.dart';
@@ -40,6 +41,9 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
 
   @override
   Future<void> enrich(int bookmarkId) async {
+    if (_activeTokens.containsKey(bookmarkId)) {
+      return;
+    }
     final CancelToken token = CancelToken();
     _activeTokens[bookmarkId] = token;
 
@@ -106,6 +110,31 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
       }
     } finally {
       _activeTokens.remove(bookmarkId);
+    }
+  }
+
+  @override
+  Future<void> enrichIncomplete({int limit = 15}) async {
+    try {
+      final List<Bookmark> recent = await _bookmarkRepo.feed(
+        const BookmarkFeedQuery(
+          limit: 50,
+        ),
+      );
+      final List<Bookmark> incomplete = recent.where((Bookmark b) {
+        if (b.id == null) return false;
+        return (b.heroImageUrl == null || b.heroImageUrl!.isEmpty) ||
+            b.scrapingStatus == BookmarkScrapingStatus.pending ||
+            b.scrapingStatus == BookmarkScrapingStatus.processing;
+      }).take(limit).toList();
+
+      for (final Bookmark b in incomplete) {
+        if (b.id != null) {
+          await enrich(b.id!);
+        }
+      }
+    } catch (_) {
+      // Incomplete enrichment is best-effort.
     }
   }
 

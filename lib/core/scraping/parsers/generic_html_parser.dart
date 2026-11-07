@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:dio/dio.dart';
@@ -28,8 +29,10 @@ class GenericHtmlParser implements SourceParser {
               receiveTimeout: const Duration(seconds: 10),
               headers: <String, dynamic>{
                 'User-Agent':
-                    'Mozilla/5.0 (compatible; MarkyBot/1.0; +https://marky.app)',
-                'Accept': 'text/html,application/xhtml+xml',
+                    'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.171 Mobile Safari/537.36',
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,tr;q=0.8',
               },
             ));
 
@@ -145,8 +148,113 @@ class GenericHtmlParser implements SourceParser {
 
   static String? _extractHeroImage(Document doc) {
     return _extractOg(doc, 'og:image') ??
+        _extractOg(doc, 'og:image:url') ??
+        _extractOg(doc, 'og:image:secure_url') ??
         _extractMeta(doc, 'twitter:image') ??
-        _extractMeta(doc, 'twitter:image:src');
+        _extractMeta(doc, 'twitter:image', attribute: 'property') ??
+        _extractMeta(doc, 'twitter:image:src') ??
+        _extractMeta(doc, 'twitter:image:src', attribute: 'property') ??
+        _extractMeta(doc, 'image', attribute: 'itemprop') ??
+        _extractMeta(doc, 'thumbnail') ??
+        _extractMeta(doc, 'thumbnail', attribute: 'property') ??
+        _extractLinkRel(doc, 'image_src') ??
+        _extractJsonLdImage(doc) ??
+        _extractFirstContentImage(doc) ??
+        _extractLinkRel(doc, 'apple-touch-icon') ??
+        _extractLinkRel(doc, 'apple-touch-icon-precomposed');
+  }
+
+  static String? _extractLinkRel(Document doc, String rel) {
+    final Element? link = doc.querySelector('link[rel="$rel"]');
+    final String? href = link?.attributes['href']?.trim();
+    return (href != null && href.isNotEmpty) ? href : null;
+  }
+
+  static String? _extractJsonLdImage(Document doc) {
+    final List<Element> scripts =
+        doc.querySelectorAll('script[type="application/ld+json"]');
+    for (final Element script in scripts) {
+      final String raw = script.text.trim();
+      if (raw.isEmpty) continue;
+      try {
+        final Object? decoded = jsonDecode(raw);
+        final String? found = _findImageInJsonLd(decoded);
+        if (found != null && found.isNotEmpty) return found;
+      } catch (_) {
+        continue;
+      }
+    }
+    return null;
+  }
+
+  static String? _findImageInJsonLd(Object? node) {
+    if (node is Map) {
+      final Object? image = node['image'] ?? node['thumbnailUrl'];
+      final String? extracted = _extractImageValue(image);
+      if (extracted != null) return extracted;
+      final Object? graph = node['@graph'];
+      if (graph is List) {
+        for (final Object? item in graph) {
+          final String? nested = _findImageInJsonLd(item);
+          if (nested != null) return nested;
+        }
+      }
+    } else if (node is List) {
+      for (final Object? item in node) {
+        final String? nested = _findImageInJsonLd(item);
+        if (nested != null) return nested;
+      }
+    }
+    return null;
+  }
+
+  static String? _extractImageValue(Object? value) {
+    if (value is String) {
+      final String trimmed = value.trim();
+      return trimmed.isNotEmpty ? trimmed : null;
+    }
+    if (value is Map) {
+      final Object? url = value['url'] ?? value['contentUrl'];
+      if (url is String && url.trim().isNotEmpty) {
+        return url.trim();
+      }
+    }
+    if (value is List) {
+      for (final Object? item in value) {
+        final String? nested = _extractImageValue(item);
+        if (nested != null) return nested;
+      }
+    }
+    return null;
+  }
+
+  static String? _extractFirstContentImage(Document doc) {
+    final List<Element> images = doc.querySelectorAll(
+      'article img, main img, [role="main"] img',
+    );
+    for (final Element img in images) {
+      final String? src = (img.attributes['src'] ??
+              img.attributes['data-src'] ??
+              img.attributes['data-lazy-src'])
+          ?.trim();
+      if (src == null || src.isEmpty || src.startsWith('data:')) continue;
+      final int? width = int.tryParse(img.attributes['width'] ?? '');
+      final int? height = int.tryParse(img.attributes['height'] ?? '');
+      if ((width != null && width < 64) || (height != null && height < 64)) {
+        continue;
+      }
+      final String lower = src.toLowerCase();
+      if (lower.contains('avatar') ||
+          lower.contains('icon') ||
+          lower.contains('logo') ||
+          lower.contains('pixel') ||
+          lower.contains('spacer') ||
+          lower.endsWith('.svg')) {
+        continue;
+      }
+      return src;
+    }
+    return null;
   }
 
   static String? _extractFavicon(Document doc, Uri baseUri) {
