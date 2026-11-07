@@ -1,195 +1,148 @@
 <div align="center">
 
-<img src="assets/icon/marky_logo.png" alt="Marky Logo" width="120">
+<img src="assets/icon/marky_logo.png" alt="Marky" width="112">
 
 # Marky
 
-**Offline-First Personal Link Manager for Android**  
-*Çevrimdışı öncelikli kişisel yer imi yöneticisi — bağlantılarını hızlı yakala, düzenle, hatırla.*
+### Save links. Read later. Keep it all on your phone.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+An offline-first personal link manager and reading library for Android.
+<br>
+*Çevrimdışı öncelikli kişisel bağlantı yöneticisi ve okuma kütüphanesi.*
+
+<br>
+
+[![Download APK](https://img.shields.io/github/v/release/Vyr0-the-dev/marky?label=Download%20APK&logo=android&logoColor=white&color=D8A868&style=for-the-badge)](https://github.com/Vyr0-the-dev/marky/releases/latest)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/Vyr0-the-dev/marky/ci.yml?branch=main&label=build&logo=githubactions&logoColor=white)](https://github.com/Vyr0-the-dev/marky/actions)
 [![Flutter](https://img.shields.io/badge/Flutter-3.22+-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.4+-0175C2?logo=dart&logoColor=white)](https://dart.dev)
-[![Database](https://img.shields.io/badge/Database-Isar%20(Local)-F6AB2F)](https://isar.dev)
-[![Platform](https://img.shields.io/badge/Platform-Android%20(SDK%2035%2F36)-3DDC84?logo=android&logoColor=white)](android)
-[![Version](https://img.shields.io/badge/Version-1.0.0%2B1-blue)](CHANGELOG.md)
-[![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero%20Server-10B981)](PRIVACY.md)
+[![Android](https://img.shields.io/badge/Android-7.0+-3DDC84?logo=android&logoColor=white)](android)
+[![Privacy](https://img.shields.io/badge/Data-100%25%20local-10B981)](PRIVACY.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
 
 </div>
 
 ---
 
-## Overview / Genel Bakış
+## Why Marky?
 
-**Marky** is an offline-first, privacy-respecting link manager and personal reading library built for Android with Flutter and the Isar local database. It captures web links from your browser or apps, enriches them with metadata, deduplicates them through an intelligent URL normalization engine, and lets you organize your reading life without ever syncing to a third-party cloud.
+Browsers bury bookmarks, read-later services want an account, and "send to self" chats turn into a graveyard. Marky is a quiet, local library for the links you actually want to come back to:
 
-*Marky, bağlantılarını kaydetmek, düzenlemek ve gerektiğinde anında yeniden bulmak için tasarlanmış, çevrimdışı öncelikli bir Android uygulamasıdır. Yer imleri, etiketler, koleksiyonlar, notlar, hatırlatıcılar ve otomasyonlar tamamen cihazınızda yerel Isar veritabanı ile saklanır. Sunucu yoktur, verileriniz cihazınızdan çıkmaz.*
-
----
-
-## 📚 Documentation / Dokümantasyon
-
-Comprehensive documentation is organized under the [`docs/`](docs/) directory and project root:
-
-- 🎨 **[Interface & System Design Specification](docs/DESIGN.md):** Complete UI/UX design system (Reading Room tokens, palettes, typography, components) and end-to-end system design (Isar database schema, capture pipeline, scrapers, automation, and native Android integration).
-- 🏛️ **[System Architecture Guide](docs/ARCHITECTURE.md):** Clean Architecture layers, Isar schema v1, URL intelligence pipeline, source scraper registry, automation engine, and native Android integration.
-- 🧪 **[Testing & Verification Manual](docs/TESTING.md):** 500+ unit/widget test suite, native Android contract guards, PowerShell release gates, and Maestro human-like UI automation.
-- 🗺️ **[Roadmap & Release Tracker](docs/ROADMAP.md):** Completed hardening milestones (Phases A through G1, J4) and pending Google Play release gates.
-- 🛡️ **[Privacy Policy](PRIVACY.md):** Explicit statement on local storage, camera permissions, network usage, and zero third-party telemetry.
-- 📜 **[Changelog](CHANGELOG.md):** Version history and verified release notes.
+- **No account, no server.** Everything lives in an on-device Isar database.
+- **One tap to save.** Share from any app — a native overlay saves without leaving what you're doing.
+- **Built for returning.** Unread queue, reminders, a home screen widget and a distraction-free reader.
 
 ---
 
-## ⚡ Core Features / Temel Özellikler
-
-<table align="center">
-  <tr>
-    <td width="50%" align="left">
-      <b>⚡ Instant Capture &amp; Share Overlay</b><br>
-      Save links in a single tap via Android's share menu using a lightweight native transparent overlay window without switching away from your current app. Also supports clipboard detection, manual entry, and QR scanning.
-    </td>
-    <td width="50%" align="left">
-      <b>🔁 Intelligent Deduplication</b><br>
-      Duplicate links are detected via canonical URL matching, SHA-256 hashing, and external content IDs (YouTube, Reddit, GitHub). Existing bookmarks are surfaced with an instant <code>Open</code> action instead of cluttering your library.
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="left">
-      <b>📂 Collections &amp; Colored Tags</b><br>
-      Organize links with flexible tags and custom color palettes. Group items into manual collections or dynamic smart collections based on source or tag criteria.
-    </td>
-    <td width="50%" align="left">
-      <b>🔍 Structured Search Operators</b><br>
-      Instant local search across titles, URLs, and notes. Power search with operators: <code>tag:flutter</code>, <code>domain:github.com</code>, <code>source:youtube</code>, <code>is:favorite</code>, <code>before:2026-01-01</code>.
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="left">
-      <b>🤖 Local Automation Rules</b><br>
-      Automate post-capture workflows: auto-assign tags, archive read articles, move to specific collections, or trigger reminders based on matching domains or source types.
-    </td>
-    <td width="50%" align="left">
-      <b>⏰ Reliable Notifications &amp; Reminders</b><br>
-      Schedule exact alarm reminders for specific bookmarks or enable general unread link nudges. Powered by local Android exact alarms with reboot survival support.
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="left">
-      <b>📊 Library Analytics &amp; Insights</b><br>
-      Visualize your reading habits, top domains, tag distribution, and weekly capture velocity entirely offline on your device.
-    </td>
-    <td width="50%" align="left">
-      <b>💾 Backup, Restore &amp; HTML Export</b><br>
-      Export your entire library into standardized JSON or browser-compatible Netscape HTML bookmarks. Restore backups with non-destructive duplicate merging.
-    </td>
-  </tr>
-</table>
-
----
-
-## 📱 Screenshots / Ekran Görüntüleri
+## 📱 Screenshots
 
 <div align="center">
 
-| Home Feed / Ana Ekran | Search & Operators / Arama | Library & Tags / Kütüphane |
-|:---------------------:|:--------------------------:|:--------------------------:|
-| <img src="screenshots/01_home.png" width="220" alt="Home Screen"> | <img src="screenshots/02_search.png" width="220" alt="Search Screen"> | <img src="screenshots/03_library.png" width="220" alt="Library Screen"> |
+| Home | Search | Library |
+|:---:|:---:|:---:|
+| <img src="screenshots/01_home.png" width="240" alt="Home feed"> | <img src="screenshots/02_search.png" width="240" alt="Search with operators"> | <img src="screenshots/03_library.png" width="240" alt="Tags and collections"> |
+| **Detail** | **Quick Add** | **Settings** |
+| <img src="screenshots/04_detail.png" width="240" alt="Bookmark detail"> | <img src="screenshots/05_quickadd.png" width="240" alt="Quick add sheet"> | <img src="screenshots/06_settings.png" width="240" alt="Settings"> |
 
-| Bookmark Detail / Detay | Quick Add / Hızlı Ekleme | Settings / Ayarlar |
-|:-----------------------:|:------------------------:|:------------------:|
-| <img src="screenshots/04_detail.png" width="220" alt="Detail Screen"> | <img src="screenshots/05_quickadd.png" width="220" alt="Quick Add Sheet"> | <img src="screenshots/06_settings.png" width="220" alt="Settings Screen"> |
+<sub>Previews are design renders of the Reading Room dark theme.</sub>
 
 </div>
 
 ---
 
-## 🛠️ Technology Stack
+## ✨ Features
 
-| Category | Technology & Libraries |
-| :--- | :--- |
-| **Framework & Language** | Flutter `>=3.22.0`, Dart `>=3.4.0 <4.0.0` |
-| **Architecture** | Feature-First Clean Architecture, Riverpod 2.6, GoRouter 14.8 |
-| **Database & Cache** | Embedded Isar Database v1 (local, offline-first), CachedNetworkImage |
-| **URL & Scraping** | Dio, HTML Parser, Specialized parsers (Reddit, GitHub, Twitter, YouTube), Favicon API fallback |
-| **Android Integration** | Android SDK 35/36, `FlutterFragmentActivity`, `ShareOverlayActivity`, AppWidget, Quick Shortcuts |
-| **Security** | `local_auth` (Biometrics & Device Credentials), Android `FLAG_SECURE` |
-| **Testing & CI** | `flutter_test`, `dart_test`, Maestro E2E UI Automation, PowerShell Quality Gates |
+| | |
+|:---|:---|
+| ⚡ **Instant capture** | Android share sheet overlay, clipboard detection, manual entry and QR scanning. |
+| 🔁 **Smart deduplication** | Canonical URLs, SHA-256 hashes and platform IDs (YouTube, Reddit, GitHub, X) — saving twice just offers *Open*. |
+| 🖼️ **Rich metadata** | Titles, descriptions, cover images and favicons fetched automatically. Change or remove any cover image yourself. |
+| 📖 **Reader mode** | Clean editorial typography for articles, Reddit threads and X posts. |
+| 📂 **Tags & collections** | Colored tags, manual collections and rule-based smart collections. |
+| 🔍 **Search operators** | `tag:flutter` `domain:github.com` `source:youtube` `is:favorite` `before:2026-01-01` — plus saved searches. |
+| 🤖 **Automations** | Auto-tag, archive or file new links based on domain or source type. |
+| ⏰ **Reminders** | Exact-alarm reminders per bookmark and a daily or weekly unread nudge. |
+| 🏠 **Home screen widget** | Latest unread links with Quick Add and Search shortcuts. |
+| 🎨 **Themes** | Warm dark, light and true-black OLED. English and Turkish. |
+| 💾 **Backup** | Full JSON backup and browser-compatible Netscape HTML import/export. |
+| 🔒 **Privacy** | Optional biometric lock and `FLAG_SECURE`. No analytics, no telemetry. |
 
 ---
 
-## 🚀 Getting Started / Başlangıç
+## 📥 Install
 
-### Prerequisites
-- Flutter SDK `>=3.22.0`
-- Dart SDK `>=3.4.0 <4.0.0`
-- Android SDK 35 / 36 with Java 17
-- Optional: [Maestro CLI](https://maestro.mobile.dev) for E2E automated UI testing
+1. Open the [**latest release**](https://github.com/Vyr0-the-dev/marky/releases/latest).
+2. Download `marky-vX.Y.Z.apk`.
+3. Open it on your phone and allow installs from unknown sources when prompted.
 
-### Setup & Run
+Every push to `main` builds a release APK and attaches it to the current version's release. Pushing a `v*` tag publishes a new release.
+
+---
+
+## 🛠️ Build from source
+
+**Requirements:** Flutter `>=3.22`, Dart `>=3.4`, Android SDK 35/36, Java 17.
+
 ```bash
-# 1. Clone the repository and fetch dependencies
+git clone https://github.com/Vyr0-the-dev/marky.git
+cd marky
 flutter pub get
-
-# 2. Run static analysis
-flutter analyze
-
-# 3. Run the full active test suite (516 tests)
-flutter test
-
-# 4. Launch the application in debug mode
-flutter run
+flutter run                     # debug on a connected device
+flutter build apk --release     # release APK
 ```
 
-### Pre-Release Quality Gates
-Marky includes automated PowerShell gate scripts to guarantee zero-regression builds:
+Run a single test file while developing (the full suite is heavy):
 
-```powershell
-# Fast release check (formatting, analyze, focused tests, debug APK build)
-.\scripts\pre_release_check.ps1
-
-# Full release check with entire test suite
-.\scripts\pre_release_check.ps1 -AllTests
-
-# Run Maestro human-like UI smoke suite on device/emulator
-.\scripts\run_maestro.ps1 -BuildApk -InstallApk
-
-# Full production gate and release bundle generation
-.\scripts\full_prod_gate.ps1 -BuildReleaseAppBundle
+```bash
+flutter test test/v2/features/home/presentation/home_screen_swipe_test.dart
 ```
 
-### Android Release Signing
-Release builds require a local `android/key.properties` configuration or `MARKY_*` environment variables (`MARKY_STORE_FILE`, `MARKY_STORE_PASSWORD`, `MARKY_KEY_ALIAS`, `MARKY_KEY_PASSWORD`). Keystores and private signing credentials are never committed to version control.
+### Release signing
+
+Release builds use your own keystore when `android/key.properties` or the `MARKY_STORE_FILE`, `MARKY_STORE_PASSWORD`, `MARKY_KEY_ALIAS`, `MARKY_KEY_PASSWORD` environment variables are present. Otherwise they fall back to the debug key so the APK still installs. Keystores are never committed.
 
 ---
 
-## 📂 Project Structure / Proje Yapısı
+## 🧱 Tech stack
+
+| Layer | Choice |
+|:---|:---|
+| UI | Flutter, Material 3, custom *Reading Room* design tokens |
+| State & routing | Riverpod 2, GoRouter |
+| Storage | Isar (embedded, offline-first) |
+| Networking | Dio, `html` parser, source-specific parsers (Reddit, X, GitHub, YouTube) |
+| Android | Kotlin share overlay activity, AppWidget, app shortcuts, exact alarms |
+
+<details>
+<summary><b>Project structure</b></summary>
 
 ```text
 marky/
-├── android/                 # Native Android layer (manifest, Kotlin activities, widgets, shortcuts)
-├── assets/                  # App logo, launcher graphics, and Lottie animations
-├── docs/                    # Centralized project documentation
-│   ├── ARCHITECTURE.md      # Detailed system architecture, data models, and pipelines
-│   ├── DESIGN.md            # Interface & system design specification
-│   ├── TESTING.md           # Testing guide, PowerShell gates, and Maestro automation
-│   └── ROADMAP.md           # Production release tracking and forward horizons
-├── lib/                     # Flutter application source code
-│   ├── app/                 # Application bootstrap, routing, settings, and themes
-│   ├── core/                # Database, scrapers, notifications, and URL intelligence
-│   ├── features/            # Feature modules (Domain, Data, Presentation)
-│   └── shared/              # Reusable UI components and error boundaries
-├── marketing/               # Marketing assets and Remotion promo video generator
-│   └── remotion/            # Code-generated launch video generator
-├── screenshots/             # README and store preview screenshots
-├── scripts/                 # PowerShell automated release gate scripts
-└── test/                    # Production test suite (Unit, Widget, Contract, Smoke)
-    ├── app/                 # Localization and app shell tests
-    └── v2/                  # Modular feature, repository, and service tests
+├── android/        Native layer: manifest, Kotlin activities, widget, shortcuts
+├── assets/         Logo and launcher graphics
+├── docs/           Architecture, design, testing and roadmap docs
+├── lib/
+│   ├── app/        Bootstrap, routing, settings, theme
+│   ├── core/       Database, scraping, notifications, URL intelligence
+│   ├── features/   Feature modules (domain / data / presentation)
+│   └── shared/     Reusable widgets and error handling
+├── screenshots/    README images
+└── test/           Unit, widget and contract tests
 ```
+
+</details>
 
 ---
 
-## 📄 License
+## 📚 Docs
 
-Distributed under the [MIT License](LICENSE).  
-Copyright © 2026 **Vyr0**.
+- [Design system](docs/DESIGN.md) · [Architecture](docs/ARCHITECTURE.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/ROADMAP.md)
+- [Privacy policy](PRIVACY.md) · [Changelog](CHANGELOG.md)
+
+---
+
+<div align="center">
+
+MIT License · © 2026 **Vyr0**
+
+</div>

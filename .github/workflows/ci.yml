@@ -1,13 +1,18 @@
-name: Marky CI
+name: Marky CI & Release
 
 on:
   pull_request:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  flutter:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -35,12 +40,58 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Build debug APK
-        run: flutter build apk --debug
+      - name: Build release APK
+        run: flutter build apk --release
 
-      - name: Upload Debug APK
+      - name: Resolve release tag
+        id: meta
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//' | tr -d '\r')
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$VERSION"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          cp build/app/outputs/flutter-apk/app-release.apk "marky-$TAG.apk"
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: marky-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: marky-${{ steps.meta.outputs.tag }}-apk
+          path: marky-${{ steps.meta.outputs.tag }}.apk
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          APK="marky-$TAG.apk"
+          cat > release_notes.md <<'EOF'
+          Offline-first personal link manager for Android.
+
+          ### Install
+          Download the `.apk` below and open it on your Android device (allow installs from unknown sources).
+
+          ### Highlights
+          - Reading Room UI with warm dark, light and OLED themes
+          - Home screen widget with Quick Add and Search
+          - Cover image controls: view, change URL, remove
+          - Reader mode with clean typography
+          - Search operators: `tag:`, `domain:`, `source:`, `is:favorite`
+          - 100% local Isar database, no cloud
+          - JSON backup and Netscape HTML import/export
+          EOF
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --clobber
+            gh release edit "$TAG" --notes-file release_notes.md --latest
+          else
+            gh release create "$TAG" "$APK" \
+              --target "$GITHUB_SHA" \
+              --title "Marky $TAG" \
+              --notes-file release_notes.md \
+              --latest
+          fi
