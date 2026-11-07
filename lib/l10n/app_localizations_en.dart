@@ -1107,4 +1107,143 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareOpenBookmark => 'Open';
+
+  @override
+  String get navigationQuickAdd => 'Quick Add';
+
+  @override
+  String get dashboardLibraryOverview => 'LIBRARY OVERVIEW';
+
+  @override
+  String get dashboardSavedLinks => 'saved links';
+
+  @override
+  String dashboardPercentRead(int percentage) {
+    return '$percentage% Read';
+  }
+
+  @override
+  String get dashboardRead => 'Read';
+
+  @override
+  String get dashboardUnread => 'Unread';
+
+  @override
+  String get dashboardFavorites => 'Favorites';
+
+  @override
+  String get dashboardArchived => 'Archived';
+
+  @override
+  String get dashboardTotal => 'Total';
+
+  @override
+  String get dashboardUnreadStats => 'Unread';
+
+  @override
+  String get dashboardThisWeek => 'This Week';
+
+  @override
+  String get dashboardReadRate => 'Read Rate';
+
+  @override
+  String get dashboardTopDomain => 'Top Source';
+
+  @override
+  String get dashboardLast7Days => 'Last 7 Days Activity';
+
+  @override
+  String dashboardSavedCount(int count) {
+    return '$count saved';
+  }
+
+  @override
+  String get dashboardTopDomainsTitle => 'Top Read Sources';
+
+  @override
+  String get dashboardSourceBreakdownTitle => 'Source Breakdown';
+
+  @override
+  String get dashboardTopTagsTitle => 'Popular Tags';
+
+  @override
+  String get readerRetry => 'Try Again';
+
+  @override
+  String get readerOpenOriginal => 'Open Original Page in Browser';
+
+  @override
+  String get readerThemePaper => 'Paper';
+
+  @override
+  String get readerThemeSepia => 'Sepia';
+
+  @override
+  String get readerThemeDark => 'Dark';
+
+  @override
+  String get readerFontSerif => 'Serif';
+
+  @override
+  String get readerFontSans => 'Sans';
+
+  @override
+  String get automationCreateRule => 'Create rule';
+
+  @override
+  String get automationMatchAll => 'ALL (AND)';
+
+  @override
+  String get automationMatchAny => 'ANY (OR)';
+
+  @override
+  String get automationAddCondition => 'Add Condition';
+
+  @override
+  String get automationAddActionBtn => 'Add Action';
+
+  @override
+  String get automationFillRequiredFields =>
+      'Please fill in all required fields.';
+
+  @override
+  String automationRuleSaveError(String error) {
+    return 'Failed to save rule: $error';
+  }
+
+  @override
+  String get automationTourBack => 'Back';
+
+  @override
+  String get automationTourSkip => 'Skip';
+
+  @override
+  String get automationTourNext => 'Next';
+
+  @override
+  String settingsUnreadReminderDaily(String time) {
+    return 'Every day at $time';
+  }
+
+  @override
+  String settingsUnreadReminderWeekly(String weekday, String time) {
+    return 'Every $weekday at $time';
+  }
+
+  @override
+  String get settingsUnreadReminderOffMsg => 'Unread reminders disabled';
+
+  @override
+  String get settingsUnreadReminderEmptyMsg =>
+      'Reminders will start when unread links are added';
+
+  @override
+  String settingsUnreadReminderDailySet(String time) {
+    return 'Set for every day at $time';
+  }
+
+  @override
+  String settingsUnreadReminderWeeklySet(String weekday, String time) {
+    return 'Set for every $weekday at $time';
+  }
 }

@@ -2114,6 +2114,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get shareOpenBookmark;
+
+  /// No description provided for @navigationQuickAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Add'**
+  String get navigationQuickAdd;
+
+  /// No description provided for @dashboardLibraryOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'LIBRARY OVERVIEW'**
+  String get dashboardLibraryOverview;
+
+  /// No description provided for @dashboardSavedLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'saved links'**
+  String get dashboardSavedLinks;
+
+  /// No description provided for @dashboardPercentRead.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}% Read'**
+  String dashboardPercentRead(int percentage);
+
+  /// No description provided for @dashboardRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get dashboardRead;
+
+  /// No description provided for @dashboardUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get dashboardUnread;
+
+  /// No description provided for @dashboardFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get dashboardFavorites;
+
+  /// No description provided for @dashboardArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get dashboardArchived;
+
+  /// No description provided for @dashboardTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get dashboardTotal;
+
+  /// No description provided for @dashboardUnreadStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get dashboardUnreadStats;
+
+  /// No description provided for @dashboardThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This Week'**
+  String get dashboardThisWeek;
+
+  /// No description provided for @dashboardReadRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Read Rate'**
+  String get dashboardReadRate;
+
+  /// No description provided for @dashboardTopDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Source'**
+  String get dashboardTopDomain;
+
+  /// No description provided for @dashboardLast7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 Days Activity'**
+  String get dashboardLast7Days;
+
+  /// No description provided for @dashboardSavedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} saved'**
+  String dashboardSavedCount(int count);
+
+  /// No description provided for @dashboardTopDomainsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Read Sources'**
+  String get dashboardTopDomainsTitle;
+
+  /// No description provided for @dashboardSourceBreakdownTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Source Breakdown'**
+  String get dashboardSourceBreakdownTitle;
+
+  /// No description provided for @dashboardTopTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular Tags'**
+  String get dashboardTopTagsTitle;
+
+  /// No description provided for @readerRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get readerRetry;
+
+  /// No description provided for @readerOpenOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Original Page in Browser'**
+  String get readerOpenOriginal;
+
+  /// No description provided for @readerThemePaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper'**
+  String get readerThemePaper;
+
+  /// No description provided for @readerThemeSepia.
+  ///
+  /// In en, this message translates to:
+  /// **'Sepia'**
+  String get readerThemeSepia;
+
+  /// No description provided for @readerThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get readerThemeDark;
+
+  /// No description provided for @readerFontSerif.
+  ///
+  /// In en, this message translates to:
+  /// **'Serif'**
+  String get readerFontSerif;
+
+  /// No description provided for @readerFontSans.
+  ///
+  /// In en, this message translates to:
+  /// **'Sans'**
+  String get readerFontSans;
+
+  /// No description provided for @automationCreateRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Create rule'**
+  String get automationCreateRule;
+
+  /// No description provided for @automationMatchAll.
+  ///
+  /// In en, this message translates to:
+  /// **'ALL (AND)'**
+  String get automationMatchAll;
+
+  /// No description provided for @automationMatchAny.
+  ///
+  /// In en, this message translates to:
+  /// **'ANY (OR)'**
+  String get automationMatchAny;
+
+  /// No description provided for @automationAddCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Condition'**
+  String get automationAddCondition;
+
+  /// No description provided for @automationAddActionBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Action'**
+  String get automationAddActionBtn;
+
+  /// No description provided for @automationFillRequiredFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill in all required fields.'**
+  String get automationFillRequiredFields;
+
+  /// No description provided for @automationRuleSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save rule: {error}'**
+  String automationRuleSaveError(String error);
+
+  /// No description provided for @automationTourBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get automationTourBack;
+
+  /// No description provided for @automationTourSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get automationTourSkip;
+
+  /// No description provided for @automationTourNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get automationTourNext;
+
+  /// No description provided for @settingsUnreadReminderDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day at {time}'**
+  String settingsUnreadReminderDaily(String time);
+
+  /// No description provided for @settingsUnreadReminderWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {weekday} at {time}'**
+  String settingsUnreadReminderWeekly(String weekday, String time);
+
+  /// No description provided for @settingsUnreadReminderOffMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread reminders disabled'**
+  String get settingsUnreadReminderOffMsg;
+
+  /// No description provided for @settingsUnreadReminderEmptyMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders will start when unread links are added'**
+  String get settingsUnreadReminderEmptyMsg;
+
+  /// No description provided for @settingsUnreadReminderDailySet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set for every day at {time}'**
+  String settingsUnreadReminderDailySet(String time);
+
+  /// No description provided for @settingsUnreadReminderWeeklySet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set for every {weekday} at {time}'**
+  String settingsUnreadReminderWeeklySet(String weekday, String time);
 }
 
 class _AppLocalizationsDelegate

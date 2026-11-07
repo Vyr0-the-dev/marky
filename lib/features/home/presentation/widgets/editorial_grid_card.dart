@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -130,24 +131,14 @@ class _EditorialGridCardState extends State<EditorialGridCard> {
                           child: hasHeroImage
                               ? AspectRatio(
                                   aspectRatio: 16 / 10,
-                                  child: Image.network(
-                                    heroUrl,
+                                  child: CachedNetworkImage(
+                                    imageUrl: heroUrl,
                                     fit: BoxFit.cover,
-                                    cacheWidth:
+                                    memCacheWidth:
                                         EditorialGridCard.heroCacheWidth,
-                                    gaplessPlayback: true,
-                                    filterQuality: FilterQuality.low,
-                                    loadingBuilder: (
-                                      BuildContext context,
-                                      Widget child,
-                                      ImageChunkEvent? loadingProgress,
-                                    ) {
-                                      if (loadingProgress == null) {
-                                        return child;
-                                      }
-                                      return const EditorialImagePlaceholder();
-                                    },
-                                    errorBuilder: (_, __, ___) =>
+                                    placeholder: (_, __) =>
+                                        const EditorialImagePlaceholder(),
+                                    errorWidget: (_, __, ___) =>
                                         TypographicEditorialCover(
                                       bookmark: bookmark,
                                     ),

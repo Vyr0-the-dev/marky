@@ -260,7 +260,7 @@ class ArticleExtractorService {
         }
       } else if (tag == 'p') {
         final String text = _cleanText(child.text);
-        if (text.length > 20) {
+        if (text.length > 3) {
           blocks
               .add(ArticleBlock(type: ArticleBlockType.paragraph, text: text));
         }
@@ -537,7 +537,7 @@ class ArticleExtractorService {
                   cAuthor != 'AutoModerator') {
                 blocks.add(ArticleBlock(
                   type: ArticleBlockType.blockquote,
-                  text: 'u/$cAuthor ($score oy):\n$cBody',
+                  text: 'u/$cAuthor ($score pts):\n$cBody',
                 ));
                 commentCount++;
               }

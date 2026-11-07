@@ -1,6 +1,7 @@
 name: Marky CI & Release
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
@@ -20,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -40,10 +41,25 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      - name: Check if release should build
+        id: release_check
+        run: |
+          IS_RELEASE="false"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            IS_RELEASE="true"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            IS_RELEASE="true"
+          elif [[ "${{ contains(github.event.head_commit.message, '[release]') || contains(github.event.head_commit.message, '[apk]') }}" == "true" ]]; then
+            IS_RELEASE="true"
+          fi
+          echo "is_release=$IS_RELEASE" >> "$GITHUB_OUTPUT"
+
       - name: Build release APK
+        if: steps.release_check.outputs.is_release == 'true'
         run: flutter build apk --release
 
       - name: Resolve release tag
+        if: steps.release_check.outputs.is_release == 'true'
         id: meta
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//' | tr -d '\r')
@@ -56,6 +72,7 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk "marky-$TAG.apk"
 
       - name: Upload APK artifact
+        if: steps.release_check.outputs.is_release == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: marky-${{ steps.meta.outputs.tag }}-apk
@@ -63,7 +80,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish GitHub Release
-        if: github.event_name == 'push'
+        if: steps.release_check.outputs.is_release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.meta.outputs.tag }}

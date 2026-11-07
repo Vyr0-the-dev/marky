@@ -453,7 +453,8 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
             MarkyNavItem(
               icon: Icons.add_rounded,
               selectedIcon: Icons.add_rounded,
-              label: _isTurkish ? 'Hızlı Ekle' : 'Quick Add',
+              label: l10n?.navigationQuickAdd ??
+                  (_isTurkish ? 'Hızlı Ekle' : 'Quick Add'),
               role: MarkyNavItemRole.quickAdd,
             ),
             MarkyNavItem(

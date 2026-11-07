@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/utils/l10n_extension.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// SharedPreferences key that tracks whether the automations tour has been seen.
@@ -269,13 +270,13 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
                     TextButton(
                       key: const Key('automations_tour_back_button'),
                       onPressed: _prevPage,
-                      child: const Text('Back'),
+                      child: Text(context.l10n.automationTourBack),
                     )
                   else
                     TextButton(
                       key: const Key('automations_tour_skip_button'),
                       onPressed: _finish,
-                      child: const Text('Skip'),
+                      child: Text(context.l10n.automationTourSkip),
                     ),
                   const Spacer(),
                   Row(
@@ -302,7 +303,7 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
                     FilledButton(
                       key: const Key('automations_tour_next_button'),
                       onPressed: _nextPage,
-                      child: const Text('Next'),
+                      child: Text(context.l10n.automationTourNext),
                     )
                   else
                     FilledButton(

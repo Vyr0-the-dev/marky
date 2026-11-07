@@ -462,12 +462,32 @@ class _HeroAppBar extends ConsumerWidget {
 
     unawaited(HapticFeedback.mediumImpact());
     try {
+      Uri effectiveUri = uri;
+      final String host = uri.host.toLowerCase();
+      if (host.contains('youtube.com') || host.contains('youtu.be')) {
+        String? videoId;
+        if (host.contains('youtu.be')) {
+          videoId = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
+        } else if (uri.path.contains('/shorts/')) {
+          final int idx = uri.pathSegments.indexOf('shorts');
+          if (idx != -1 && idx + 1 < uri.pathSegments.length) {
+            videoId = uri.pathSegments[idx + 1];
+          }
+        } else {
+          videoId = uri.queryParameters['v'];
+        }
+        if (videoId != null && videoId.isNotEmpty) {
+          effectiveUri =
+              Uri.parse('https://www.youtube.com/embed/$videoId?autoplay=1');
+        }
+      }
+
       final bool launched = await launchUrl(
-        uri,
-        mode: LaunchMode.inAppBrowserView,
+        effectiveUri,
+        mode: LaunchMode.inAppWebView,
       );
       if (!launched) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
       }
     } catch (_) {
       try {

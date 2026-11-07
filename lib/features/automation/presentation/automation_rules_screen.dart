@@ -246,7 +246,7 @@ class _AutomationGuideCard extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onCreate,
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Create rule'),
+                  label: Text(l10n?.automationCreateRule ?? 'Create rule'),
                 ),
                 const SizedBox(width: ReadingRoomSpacing.sm),
                 TextButton(

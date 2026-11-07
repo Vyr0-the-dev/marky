@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/utils/l10n_extension.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/reader/domain/article_content.dart';
 import 'package:marky/features/reader/presentation/reader_providers.dart';
@@ -229,7 +230,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    mode.name,
+                                    _themeName(context, mode),
                                     style: TextStyle(
                                       color: mode.text,
                                       fontWeight: isSelected
@@ -272,7 +273,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 setSheetState(() {});
                               },
                               child: Text(
-                                font.label,
+                                _fontLabel(context, font),
                                 style: TextStyle(
                                   color: _themeMode.text,
                                   fontWeight: isSelected
@@ -385,7 +386,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               size: 14, color: _themeMode.subtext),
                           const SizedBox(width: 4),
                           Text(
-                            '${article.readingTimeMinutes} dk okuma',
+                            context.l10n
+                                .readingTimeMinutes(article.readingTimeMinutes),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -506,7 +508,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     .refresh();
               },
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Tekrar Dene'),
+              label: Text(context.l10n.readerRetry),
             ),
           ],
         ),
@@ -651,7 +653,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 }
               },
               icon: const Icon(Icons.open_in_browser_rounded, size: 18),
-              label: const Text('Orijinal Sayfayı Tarayıcıda Aç'),
+              label: Text(context.l10n.readerOpenOriginal),
             ),
           ),
           const SizedBox(height: ReadingRoomSpacing.huge),
@@ -809,5 +811,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ),
         );
     }
+  }
+
+  String _themeName(BuildContext context, ReaderThemeMode mode) {
+    return switch (mode) {
+      ReaderThemeMode.light => context.l10n.readerThemePaper,
+      ReaderThemeMode.sepia => context.l10n.readerThemeSepia,
+      ReaderThemeMode.dark => context.l10n.readerThemeDark,
+    };
+  }
+
+  String _fontLabel(BuildContext context, ReaderFontFamily font) {
+    return switch (font) {
+      ReaderFontFamily.serif => context.l10n.readerFontSerif,
+      ReaderFontFamily.sans => context.l10n.readerFontSans,
+    };
   }
 }

@@ -480,6 +480,89 @@
   "newCollection": "Yeni Koleksiyon",
   "editCollection": "Koleksiyonu Düzenle",
 
-  "shareOpenBookmark": "Aç"
+  "shareOpenBookmark": "Aç",
+
+  "navigationQuickAdd": "Hızlı Ekle",
+
+  "dashboardLibraryOverview": "KÜTÜPHANE GENEL BAKIŞI",
+  "dashboardSavedLinks": "kayıtlı bağlantı",
+  "dashboardPercentRead": "%{percentage} Okundu",
+  "@dashboardPercentRead": {
+    "placeholders": {
+      "percentage": { "type": "int" }
+    }
+  },
+  "dashboardRead": "Okundu",
+  "dashboardUnread": "Okunmadı",
+  "dashboardFavorites": "Favoriler",
+  "dashboardArchived": "Arşivlenenler",
+  "dashboardTotal": "Toplam",
+  "dashboardUnreadStats": "Okunmamış",
+  "dashboardThisWeek": "Bu Hafta",
+  "dashboardReadRate": "Okunma Oranı",
+  "dashboardTopDomain": "En Çok Kaynak",
+  "dashboardLast7Days": "Son 7 Günlük Hareket",
+  "dashboardSavedCount": "{count} kayıt",
+  "@dashboardSavedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "dashboardTopDomainsTitle": "En Çok Okunan Kaynaklar",
+  "dashboardSourceBreakdownTitle": "Kaynak Dağılımı",
+  "dashboardTopTagsTitle": "Popüler Etiketler",
+
+  "readerRetry": "Tekrar Dene",
+  "readerOpenOriginal": "Orijinal Sayfayı Tarayıcıda Aç",
+  "readerThemePaper": "Kağıt",
+  "readerThemeSepia": "Sepya",
+  "readerThemeDark": "Koyu",
+  "readerFontSerif": "Serif (Tırnaklı)",
+  "readerFontSans": "Sans (Düz)",
+
+  "automationCreateRule": "Kural oluştur",
+  "automationMatchAll": "TÜMÜ (VE)",
+  "automationMatchAny": "HERHANGİ BİRİ (VEYA)",
+  "automationAddCondition": "Yeni Koşul Ekle",
+  "automationAddActionBtn": "Yeni Eylem Ekle",
+  "automationFillRequiredFields": "Lütfen tüm zorunlu alanları doldurun.",
+  "automationRuleSaveError": "Kural kaydedilemedi: {error}",
+  "@automationRuleSaveError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "automationTourBack": "Geri",
+  "automationTourSkip": "Geç",
+  "automationTourNext": "İleri",
+
+  "settingsUnreadReminderDaily": "Her gün saat {time}",
+  "@settingsUnreadReminderDaily": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "settingsUnreadReminderWeekly": "Her hafta {weekday} saat {time}",
+  "@settingsUnreadReminderWeekly": {
+    "placeholders": {
+      "weekday": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  },
+  "settingsUnreadReminderOffMsg": "Okunmamış hatırlatıcıları kapatıldı",
+  "settingsUnreadReminderEmptyMsg": "Okunmamış bağlantılar eklendiğinde hatırlatıcılar başlayacak",
+  "settingsUnreadReminderDailySet": "Her gün saat {time} için ayarlandı",
+  "@settingsUnreadReminderDailySet": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "settingsUnreadReminderWeeklySet": "Her {weekday} saat {time} için ayarlandı",
+  "@settingsUnreadReminderWeeklySet": {
+    "placeholders": {
+      "weekday": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  }
 }
 

@@ -159,12 +159,12 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
             if (id == null || _attemptedIncompleteIds.contains(id)) {
               return false;
             }
-            if (now.difference(b.createdAt).inMinutes > 30) {
-              return false;
-            }
             if (b.scrapingStatus == BookmarkScrapingStatus.pending ||
                 b.scrapingStatus == BookmarkScrapingStatus.processing) {
               return true;
+            }
+            if (now.difference(b.createdAt).inMinutes > 30) {
+              return false;
             }
             final bool neverEnriched =
                 (b.heroImageUrl == null || b.heroImageUrl!.isEmpty) &&

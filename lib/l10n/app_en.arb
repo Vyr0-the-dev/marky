@@ -480,6 +480,89 @@
   "newCollection": "New Collection",
   "editCollection": "Edit Collection",
 
-  "shareOpenBookmark": "Open"
+  "shareOpenBookmark": "Open",
+
+  "navigationQuickAdd": "Quick Add",
+
+  "dashboardLibraryOverview": "LIBRARY OVERVIEW",
+  "dashboardSavedLinks": "saved links",
+  "dashboardPercentRead": "{percentage}% Read",
+  "@dashboardPercentRead": {
+    "placeholders": {
+      "percentage": { "type": "int" }
+    }
+  },
+  "dashboardRead": "Read",
+  "dashboardUnread": "Unread",
+  "dashboardFavorites": "Favorites",
+  "dashboardArchived": "Archived",
+  "dashboardTotal": "Total",
+  "dashboardUnreadStats": "Unread",
+  "dashboardThisWeek": "This Week",
+  "dashboardReadRate": "Read Rate",
+  "dashboardTopDomain": "Top Source",
+  "dashboardLast7Days": "Last 7 Days Activity",
+  "dashboardSavedCount": "{count} saved",
+  "@dashboardSavedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "dashboardTopDomainsTitle": "Top Read Sources",
+  "dashboardSourceBreakdownTitle": "Source Breakdown",
+  "dashboardTopTagsTitle": "Popular Tags",
+
+  "readerRetry": "Try Again",
+  "readerOpenOriginal": "Open Original Page in Browser",
+  "readerThemePaper": "Paper",
+  "readerThemeSepia": "Sepia",
+  "readerThemeDark": "Dark",
+  "readerFontSerif": "Serif",
+  "readerFontSans": "Sans",
+
+  "automationCreateRule": "Create rule",
+  "automationMatchAll": "ALL (AND)",
+  "automationMatchAny": "ANY (OR)",
+  "automationAddCondition": "Add Condition",
+  "automationAddActionBtn": "Add Action",
+  "automationFillRequiredFields": "Please fill in all required fields.",
+  "automationRuleSaveError": "Failed to save rule: {error}",
+  "@automationRuleSaveError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "automationTourBack": "Back",
+  "automationTourSkip": "Skip",
+  "automationTourNext": "Next",
+
+  "settingsUnreadReminderDaily": "Every day at {time}",
+  "@settingsUnreadReminderDaily": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "settingsUnreadReminderWeekly": "Every {weekday} at {time}",
+  "@settingsUnreadReminderWeekly": {
+    "placeholders": {
+      "weekday": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  },
+  "settingsUnreadReminderOffMsg": "Unread reminders disabled",
+  "settingsUnreadReminderEmptyMsg": "Reminders will start when unread links are added",
+  "settingsUnreadReminderDailySet": "Set for every day at {time}",
+  "@settingsUnreadReminderDailySet": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "settingsUnreadReminderWeeklySet": "Set for every {weekday} at {time}",
+  "@settingsUnreadReminderWeeklySet": {
+    "placeholders": {
+      "weekday": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  }
 }
 

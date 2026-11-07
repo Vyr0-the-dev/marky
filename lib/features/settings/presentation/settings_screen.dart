@@ -5,10 +5,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/utils/l10n_extension.dart';
 import 'package:marky/features/import_export/data/import_export_providers.dart';
 import 'package:marky/features/import_export/domain/import_service.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
@@ -608,13 +610,21 @@ class SettingsScreen extends ConsumerWidget {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Bildirim izni verilmedi')),
+          SnackBar(
+            content: Text(
+              context.l10n.reminderPermissionRequired,
+            ),
+          ),
         );
     } on ReminderExactAlarmUnavailableException {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Kesin alarm izni mevcut değil')),
+          SnackBar(
+            content: Text(
+              context.l10n.reminderExactAlarmUnavailable,
+            ),
+          ),
         );
     }
   }
@@ -630,11 +640,14 @@ class SettingsScreen extends ConsumerWidget {
         _formatTime(context, hour: hour, minute: minute);
     switch (cadence) {
       case UnreadReminderCadence.off:
-        return 'Kapalı';
+        return context.l10n.settingsOffLabel;
       case UnreadReminderCadence.dailyEvening:
-        return 'Her gün saat $formattedTime';
+        return context.l10n.settingsUnreadReminderDaily(formattedTime);
       case UnreadReminderCadence.weekly:
-        return 'Her hafta ${_weekdayLabel(weekday)} saat $formattedTime';
+        return context.l10n.settingsUnreadReminderWeekly(
+          _weekdayLabel(context, weekday),
+          formattedTime,
+        );
     }
   }
 
@@ -650,17 +663,20 @@ class SettingsScreen extends ConsumerWidget {
         _formatTime(context, hour: hour, minute: minute);
     switch (cadence) {
       case UnreadReminderCadence.off:
-        return 'Okunmamış hatırlatıcıları kapatıldı';
+        return context.l10n.settingsUnreadReminderOffMsg;
       case UnreadReminderCadence.dailyEvening:
         if (unreadCount == 0) {
-          return 'Okunmamış bağlantılar eklendiğinde hatırlatıcılar başlayacak';
+          return context.l10n.settingsUnreadReminderEmptyMsg;
         }
-        return 'Her gün saat $formattedTime için ayarlandı';
+        return context.l10n.settingsUnreadReminderDailySet(formattedTime);
       case UnreadReminderCadence.weekly:
         if (unreadCount == 0) {
-          return 'Okunmamış bağlantılar eklendiğinde hatırlatıcılar başlayacak';
+          return context.l10n.settingsUnreadReminderEmptyMsg;
         }
-        return 'Her ${_weekdayLabel(weekday)} saat $formattedTime için ayarlandı';
+        return context.l10n.settingsUnreadReminderWeeklySet(
+          _weekdayLabel(context, weekday),
+          formattedTime,
+        );
     }
   }
 
@@ -674,7 +690,10 @@ class SettingsScreen extends ConsumerWidget {
       minute: settings.unreadReminderMinute,
     );
     if (settings.unreadReminderCadence == UnreadReminderCadence.weekly) {
-      return '${_weekdayLabel(settings.unreadReminderWeekday)} saat $formattedTime';
+      return context.l10n.settingsUnreadReminderWeekly(
+        _weekdayLabel(context, settings.unreadReminderWeekday),
+        formattedTime,
+      );
     }
     return formattedTime;
   }
@@ -686,7 +705,7 @@ class SettingsScreen extends ConsumerWidget {
     return showDialog<int>(
       context: context,
       builder: (BuildContext ctx) => SimpleDialog(
-        title: const Text('Hatırlatıcı Günü'),
+        title: Text(context.l10n.remindersTitle),
         children: <Widget>[
           RadioGroup<int>(
             groupValue: initialWeekday,
@@ -704,7 +723,7 @@ class SettingsScreen extends ConsumerWidget {
               ]
                   .map(
                     (int weekday) => RadioListTile<int>(
-                      title: Text(_weekdayLabel(weekday)),
+                      title: Text(_weekdayLabel(context, weekday)),
                       value: weekday,
                     ),
                   )
@@ -716,25 +735,10 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  static String _weekdayLabel(int weekday) {
-    switch (weekday) {
-      case DateTime.monday:
-        return 'Pazartesi';
-      case DateTime.tuesday:
-        return 'Salı';
-      case DateTime.wednesday:
-        return 'Çarşamba';
-      case DateTime.thursday:
-        return 'Perşembe';
-      case DateTime.friday:
-        return 'Cuma';
-      case DateTime.saturday:
-        return 'Cumartesi';
-      case DateTime.sunday:
-        return 'Pazar';
-      default:
-        return 'Cumartesi';
-    }
+  static String _weekdayLabel(BuildContext context, int weekday) {
+    final String locale = Localizations.localeOf(context).toString();
+    final DateTime sampleDate = DateTime(2026, 1, 4 + weekday);
+    return DateFormat.EEEE(locale).format(sampleDate);
   }
 
   String _formatTime(

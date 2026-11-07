@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/database/enums/automation_action_type.dart';
 import 'package:marky/core/database/enums/automation_trigger_type.dart';
+import 'package:marky/core/utils/l10n_extension.dart';
 import 'package:marky/features/automation/data/automation_rule_providers.dart';
 import 'package:marky/features/automation/domain/automation_rule.dart';
 
@@ -211,16 +212,16 @@ class _AutomationRuleEditorScreenState
                 SizedBox(
                   width: double.infinity,
                   child: SegmentedButton<AutomationTriggerLogic>(
-                    segments: const <ButtonSegment<AutomationTriggerLogic>>[
+                    segments: <ButtonSegment<AutomationTriggerLogic>>[
                       ButtonSegment<AutomationTriggerLogic>(
                         value: AutomationTriggerLogic.all,
-                        icon: Icon(Icons.check_circle_outline, size: 16),
-                        label: Text('TÜMÜ (VE)'),
+                        icon: const Icon(Icons.check_circle_outline, size: 16),
+                        label: Text(context.l10n.automationMatchAll),
                       ),
                       ButtonSegment<AutomationTriggerLogic>(
                         value: AutomationTriggerLogic.any,
-                        icon: Icon(Icons.rule_folder_outlined, size: 16),
-                        label: Text('HERHANGİ BİRİ (VEYA)'),
+                        icon: const Icon(Icons.rule_folder_outlined, size: 16),
+                        label: Text(context.l10n.automationMatchAny),
                       ),
                     ],
                     selected: <AutomationTriggerLogic>{_triggerLogic},
@@ -236,7 +237,7 @@ class _AutomationRuleEditorScreenState
                   child: OutlinedButton.icon(
                     onPressed: _addCondition,
                     icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Yeni Koşul Ekle'),
+                    label: Text(context.l10n.automationAddCondition),
                   ),
                 ),
               ],
@@ -248,7 +249,7 @@ class _AutomationRuleEditorScreenState
           _buildCard(
             context,
             icon: Icons.bolt_rounded,
-            title: 'Eylemler (İSE)',
+            title: context.l10n.automationThen,
             accentColor: colors.tertiary,
             trailing: _actions.length > 1
                 ? Container(
@@ -259,7 +260,7 @@ class _AutomationRuleEditorScreenState
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '${_actions.length} Eylem',
+                      '${_actions.length}',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: colors.tertiary,
                         fontWeight: FontWeight.w700,
@@ -276,7 +277,7 @@ class _AutomationRuleEditorScreenState
                   child: OutlinedButton.icon(
                     onPressed: _addAction,
                     icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Yeni Eylem Ekle'),
+                    label: Text(context.l10n.automationAddActionBtn),
                   ),
                 ),
               ],
@@ -656,8 +657,8 @@ class _AutomationRuleEditorScreenState
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
-            content: Text('Lütfen tüm zorunlu alanları doldurun.'),
+          SnackBar(
+            content: Text(context.l10n.automationFillRequiredFields),
           ),
         );
       return;
@@ -713,7 +714,7 @@ class _AutomationRuleEditorScreenState
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text('Kural kaydedilemedi: $e'),
+              content: Text(context.l10n.automationRuleSaveError(e.toString())),
             ),
           );
       }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -185,9 +186,12 @@ class _Thumbnail extends StatelessWidget {
     final int cacheSize =
         (_size * MediaQuery.devicePixelRatioOf(context)).round();
 
-    final bool isLoading =
-        bookmark.scrapingStatus == BookmarkScrapingStatus.pending ||
-            bookmark.scrapingStatus == BookmarkScrapingStatus.processing;
+    final bool isRecentlyCreated =
+        DateTime.now().difference(bookmark.createdAt).inSeconds < 45;
+    final bool isActivelyScraping =
+        (bookmark.scrapingStatus == BookmarkScrapingStatus.pending ||
+                bookmark.scrapingStatus == BookmarkScrapingStatus.processing) &&
+            isRecentlyCreated;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
@@ -195,17 +199,16 @@ class _Thumbnail extends StatelessWidget {
         width: _size,
         height: _size,
         child: imageUrl != null && imageUrl.isNotEmpty
-            ? Image.network(
-                imageUrl,
+            ? CachedNetworkImage(
+                imageUrl: imageUrl,
                 fit: BoxFit.cover,
-                gaplessPlayback: true,
-                cacheWidth: cacheSize,
-                cacheHeight: cacheSize,
-                filterQuality: FilterQuality.low,
-                errorBuilder: (_, __, ___) =>
-                    _Placeholder(bookmark: bookmark, isLoading: isLoading),
+                memCacheWidth: cacheSize,
+                memCacheHeight: cacheSize,
+                placeholder: (_, __) => _Placeholder(
+                    bookmark: bookmark, isLoading: isActivelyScraping),
+                errorWidget: (_, __, ___) => _Placeholder(bookmark: bookmark),
               )
-            : _Placeholder(bookmark: bookmark, isLoading: isLoading),
+            : _Placeholder(bookmark: bookmark, isLoading: isActivelyScraping),
       ),
     );
   }

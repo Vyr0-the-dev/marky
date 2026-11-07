@@ -41,10 +41,10 @@ Browsers bury bookmarks, read-later services want an account, and "send to self"
 | Home | Search | Library |
 |:---:|:---:|:---:|
 | <img src="screenshots/01_home.png" width="240" alt="Home feed"> | <img src="screenshots/02_search.png" width="240" alt="Search with operators"> | <img src="screenshots/03_library.png" width="240" alt="Tags and collections"> |
-| **Detail** | **Quick Add** | **Settings** |
-| <img src="screenshots/04_detail.png" width="240" alt="Bookmark detail"> | <img src="screenshots/05_quickadd.png" width="240" alt="Quick add sheet"> | <img src="screenshots/06_settings.png" width="240" alt="Settings"> |
+| **Reader** | **Analytics** | **Settings** |
+| <img src="screenshots/04_detail.png" width="240" alt="Reader mode"> | <img src="screenshots/05_analytics.png" width="240" alt="Reading analytics"> | <img src="screenshots/06_settings.png" width="240" alt="Settings"> |
 
-<sub>Previews are design renders of the Reading Room dark theme.</sub>
+<sub>Screenshots captured directly from the Marky release build on Android.</sub>
 
 </div>
 

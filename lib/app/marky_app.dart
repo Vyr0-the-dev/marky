@@ -163,6 +163,17 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
       darkTheme: ReadingRoomTheme.build(darkVariant),
       themeMode: _toFlutterThemeMode(themeMode),
       locale: localeChoice.toLocale(),
+      localeResolutionCallback:
+          (Locale? locale, Iterable<Locale> supportedLocales) {
+        if (locale != null) {
+          for (final Locale supported in supportedLocales) {
+            if (supported.languageCode == locale.languageCode) {
+              return supported;
+            }
+          }
+        }
+        return const Locale('en');
+      },
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,

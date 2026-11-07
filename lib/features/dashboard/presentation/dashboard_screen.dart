@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/database/enums/bookmark_source_type.dart';
+import 'package:marky/core/utils/l10n_extension.dart';
 import 'package:marky/features/dashboard/data/dashboard_providers.dart';
 import 'package:marky/features/dashboard/domain/dashboard_stats.dart';
 import 'package:marky/l10n/app_localizations.dart';
@@ -76,7 +77,7 @@ class _DashboardBody extends StatelessWidget {
         if (stats.topHosts.isNotEmpty) ...<Widget>[
           const SizedBox(height: ReadingRoomSpacing.lg),
           _SectionCard(
-            title: 'En Çok Okunan Kaynaklar',
+            title: context.l10n.dashboardTopDomainsTitle,
             icon: Icons.public_rounded,
             accentColor: colors.primary,
             children: <Widget>[
@@ -96,7 +97,7 @@ class _DashboardBody extends StatelessWidget {
         if (stats.sourceBreakdown.isNotEmpty) ...<Widget>[
           const SizedBox(height: ReadingRoomSpacing.lg),
           _SectionCard(
-            title: 'Kaynak Dağılımı',
+            title: context.l10n.dashboardSourceBreakdownTitle,
             icon: Icons.layers_outlined,
             accentColor: colors.secondary,
             children: <Widget>[
@@ -118,7 +119,7 @@ class _DashboardBody extends StatelessWidget {
         if (stats.topTags.isNotEmpty) ...<Widget>[
           const SizedBox(height: ReadingRoomSpacing.lg),
           _SectionCard(
-            title: 'Popüler Etiketler',
+            title: context.l10n.dashboardTopTagsTitle,
             icon: Icons.sell_outlined,
             accentColor: colors.tertiary,
             children: <Widget>[
@@ -197,7 +198,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        'KÜTÜPHANE GENEL BAKIŞI',
+                        context.l10n.dashboardLibraryOverview,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.w800,
@@ -219,7 +220,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                           ),
                           const SizedBox(width: ReadingRoomSpacing.sm),
                           Text(
-                            'kayıtlı bağlantı',
+                            context.l10n.dashboardSavedLinks,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: colors.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
@@ -252,7 +253,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                       ),
                       const SizedBox(width: ReadingRoomSpacing.xs),
                       Text(
-                        '%$percentage Okundu',
+                        context.l10n.dashboardPercentRead(percentage),
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.w800,
@@ -279,7 +280,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                 Expanded(
                   child: _HeroMiniStat(
                     icon: Icons.check_circle_outline_rounded,
-                    label: 'Okundu',
+                    label: context.l10n.dashboardRead,
                     value: readCount.toString(),
                     color: colors.primary,
                   ),
@@ -288,7 +289,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                 Expanded(
                   child: _HeroMiniStat(
                     icon: Icons.schedule_rounded,
-                    label: 'Okunmadı',
+                    label: context.l10n.dashboardUnread,
                     value: stats.unreadCount.toString(),
                     color: colors.error,
                   ),
@@ -297,7 +298,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                 Expanded(
                   child: _HeroMiniStat(
                     icon: Icons.favorite_border_rounded,
-                    label: 'Favoriler',
+                    label: context.l10n.dashboardFavorites,
                     value: stats.favoritesCount.toString(),
                     color: colors.tertiary,
                   ),
@@ -306,7 +307,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                 Expanded(
                   child: _HeroMiniStat(
                     icon: Icons.archive_outlined,
-                    label: 'Arşivlenenler',
+                    label: context.l10n.dashboardArchived,
                     value: stats.archivedCount.toString(),
                     color: colors.secondary,
                   ),
@@ -395,37 +396,37 @@ class _SummaryCards extends StatelessWidget {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final List<_StatCard> cards = <_StatCard>[
       _StatCard(
-        label: 'Toplam',
+        label: context.l10n.dashboardTotal,
         value: stats.totalBookmarks.toString(),
         icon: Icons.bookmark_outline_rounded,
         color: colors.primary,
       ),
       _StatCard(
-        label: 'Okunmamış',
+        label: context.l10n.dashboardUnreadStats,
         value: stats.unreadCount.toString(),
         icon: Icons.visibility_off_outlined,
         color: colors.error,
       ),
       _StatCard(
-        label: 'Bu Hafta',
+        label: context.l10n.dashboardThisWeek,
         value: stats.addedThisWeek.toString(),
         icon: Icons.calendar_today_rounded,
         color: colors.tertiary,
       ),
       _StatCard(
-        label: 'Okunma Oranı',
+        label: context.l10n.dashboardReadRate,
         value: '%${(stats.readRatio * 100).toStringAsFixed(0)}',
         icon: Icons.pie_chart_outline_rounded,
         color: colors.primary,
       ),
       _StatCard(
-        label: 'Favoriler',
+        label: context.l10n.dashboardFavorites,
         value: stats.favoritesCount.toString(),
         icon: Icons.favorite_outline_rounded,
         color: colors.tertiary,
       ),
       _StatCard(
-        label: 'En Çok Kaynak',
+        label: context.l10n.dashboardTopDomain,
         value: topSource,
         icon: Icons.public_rounded,
         color: colors.secondary,
@@ -578,7 +579,7 @@ class _TimelinePanel extends StatelessWidget {
                 const SizedBox(width: ReadingRoomSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Son 7 Günlük Hareket',
+                    context.l10n.dashboardLast7Days,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -594,7 +595,7 @@ class _TimelinePanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '$totalWeek kayıt',
+                    context.l10n.dashboardSavedCount(totalWeek),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: colors.onSurfaceVariant,
                       fontWeight: FontWeight.w700,

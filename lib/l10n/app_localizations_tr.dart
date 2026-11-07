@@ -1113,4 +1113,144 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shareOpenBookmark => 'Aç';
+
+  @override
+  String get navigationQuickAdd => 'Hızlı Ekle';
+
+  @override
+  String get dashboardLibraryOverview => 'KÜTÜPHANE GENEL BAKIŞI';
+
+  @override
+  String get dashboardSavedLinks => 'kayıtlı bağlantı';
+
+  @override
+  String dashboardPercentRead(int percentage) {
+    return '%$percentage Okundu';
+  }
+
+  @override
+  String get dashboardRead => 'Okundu';
+
+  @override
+  String get dashboardUnread => 'Okunmadı';
+
+  @override
+  String get dashboardFavorites => 'Favoriler';
+
+  @override
+  String get dashboardArchived => 'Arşivlenenler';
+
+  @override
+  String get dashboardTotal => 'Toplam';
+
+  @override
+  String get dashboardUnreadStats => 'Okunmamış';
+
+  @override
+  String get dashboardThisWeek => 'Bu Hafta';
+
+  @override
+  String get dashboardReadRate => 'Okunma Oranı';
+
+  @override
+  String get dashboardTopDomain => 'En Çok Kaynak';
+
+  @override
+  String get dashboardLast7Days => 'Son 7 Günlük Hareket';
+
+  @override
+  String dashboardSavedCount(int count) {
+    return '$count kayıt';
+  }
+
+  @override
+  String get dashboardTopDomainsTitle => 'En Çok Okunan Kaynaklar';
+
+  @override
+  String get dashboardSourceBreakdownTitle => 'Kaynak Dağılımı';
+
+  @override
+  String get dashboardTopTagsTitle => 'Popüler Etiketler';
+
+  @override
+  String get readerRetry => 'Tekrar Dene';
+
+  @override
+  String get readerOpenOriginal => 'Orijinal Sayfayı Tarayıcıda Aç';
+
+  @override
+  String get readerThemePaper => 'Kağıt';
+
+  @override
+  String get readerThemeSepia => 'Sepya';
+
+  @override
+  String get readerThemeDark => 'Koyu';
+
+  @override
+  String get readerFontSerif => 'Serif (Tırnaklı)';
+
+  @override
+  String get readerFontSans => 'Sans (Düz)';
+
+  @override
+  String get automationCreateRule => 'Kural oluştur';
+
+  @override
+  String get automationMatchAll => 'TÜMÜ (VE)';
+
+  @override
+  String get automationMatchAny => 'HERHANGİ BİRİ (VEYA)';
+
+  @override
+  String get automationAddCondition => 'Yeni Koşul Ekle';
+
+  @override
+  String get automationAddActionBtn => 'Yeni Eylem Ekle';
+
+  @override
+  String get automationFillRequiredFields =>
+      'Lütfen tüm zorunlu alanları doldurun.';
+
+  @override
+  String automationRuleSaveError(String error) {
+    return 'Kural kaydedilemedi: $error';
+  }
+
+  @override
+  String get automationTourBack => 'Geri';
+
+  @override
+  String get automationTourSkip => 'Geç';
+
+  @override
+  String get automationTourNext => 'İleri';
+
+  @override
+  String settingsUnreadReminderDaily(String time) {
+    return 'Her gün saat $time';
+  }
+
+  @override
+  String settingsUnreadReminderWeekly(String weekday, String time) {
+    return 'Her hafta $weekday saat $time';
+  }
+
+  @override
+  String get settingsUnreadReminderOffMsg =>
+      'Okunmamış hatırlatıcıları kapatıldı';
+
+  @override
+  String get settingsUnreadReminderEmptyMsg =>
+      'Okunmamış bağlantılar eklendiğinde hatırlatıcılar başlayacak';
+
+  @override
+  String settingsUnreadReminderDailySet(String time) {
+    return 'Her gün saat $time için ayarlandı';
+  }
+
+  @override
+  String settingsUnreadReminderWeeklySet(String weekday, String time) {
+    return 'Her $weekday saat $time için ayarlandı';
+  }
 }
