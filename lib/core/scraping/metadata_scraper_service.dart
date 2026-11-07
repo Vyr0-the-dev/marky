@@ -104,10 +104,10 @@ class MetadataScraperService implements MetadataScraper {
           headers: GenericHtmlParser.browserNavigationHeaders(url: url),
         ),
       );
-      final String effectiveUrl = response.realUri.toString().isNotEmpty &&
-              response.realUri.hasScheme
-          ? response.realUri.toString()
-          : url;
+      final String effectiveUrl =
+          response.realUri.toString().isNotEmpty && response.realUri.hasScheme
+              ? response.realUri.toString()
+              : url;
       final List<int>? bytes = response.data;
       if (bytes == null || bytes.isEmpty) {
         return (html: null, effectiveUrl: effectiveUrl);

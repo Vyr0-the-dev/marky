@@ -52,7 +52,9 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
 
     try {
       Bookmark? bookmark = await _bookmarkRepo.getById(bookmarkId);
-      if (bookmark == null || token.isCancelled) return; // deleted while we were preparing
+      if (bookmark == null || token.isCancelled) {
+        return; // deleted while we were preparing
+      }
 
       // Step 1: mark processing.
       try {
@@ -84,7 +86,9 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
       // started scraping.
       try {
         final Bookmark? fresh = await _bookmarkRepo.getById(bookmarkId);
-        if (fresh == null || token.isCancelled) return; // deleted or cancelled while scraping
+        if (fresh == null || token.isCancelled) {
+          return; // deleted or cancelled while scraping
+        }
 
         // Mark final status based on primary scraper result before applying
         // URL-slug fallback metadata so retry semantics remain intact.
@@ -149,24 +153,27 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
         ),
       );
       final DateTime now = DateTime.now();
-      final List<Bookmark> incomplete = recent.where((Bookmark b) {
-        final int? id = b.id;
-        if (id == null || _attemptedIncompleteIds.contains(id)) {
-          return false;
-        }
-        if (now.difference(b.createdAt).inMinutes > 30) {
-          return false;
-        }
-        if (b.scrapingStatus == BookmarkScrapingStatus.pending ||
-            b.scrapingStatus == BookmarkScrapingStatus.processing) {
-          return true;
-        }
-        final bool neverEnriched =
-            (b.heroImageUrl == null || b.heroImageUrl!.isEmpty) &&
-                (b.faviconUrl == null || b.faviconUrl!.isEmpty);
-        return b.scrapingStatus == BookmarkScrapingStatus.failed &&
-            neverEnriched;
-      }).take(limit).toList();
+      final List<Bookmark> incomplete = recent
+          .where((Bookmark b) {
+            final int? id = b.id;
+            if (id == null || _attemptedIncompleteIds.contains(id)) {
+              return false;
+            }
+            if (now.difference(b.createdAt).inMinutes > 30) {
+              return false;
+            }
+            if (b.scrapingStatus == BookmarkScrapingStatus.pending ||
+                b.scrapingStatus == BookmarkScrapingStatus.processing) {
+              return true;
+            }
+            final bool neverEnriched =
+                (b.heroImageUrl == null || b.heroImageUrl!.isEmpty) &&
+                    (b.faviconUrl == null || b.faviconUrl!.isEmpty);
+            return b.scrapingStatus == BookmarkScrapingStatus.failed &&
+                neverEnriched;
+          })
+          .take(limit)
+          .toList();
 
       for (final Bookmark b in incomplete) {
         final int? id = b.id;

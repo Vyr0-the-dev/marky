@@ -10,12 +10,14 @@ class DailyQueueState {
   const DailyQueueState({
     required this.items,
     required this.dateString,
-    this.isDismissed = false,
+    this.isDismissed = true,
+    this.isHidden = false,
   });
 
   final List<Bookmark> items;
   final String dateString;
   final bool isDismissed;
+  final bool isHidden;
 
   int get completedCount => items.where((Bookmark b) => b.isRead).length;
   int get totalCount => items.length;
@@ -25,11 +27,13 @@ class DailyQueueState {
     List<Bookmark>? items,
     String? dateString,
     bool? isDismissed,
+    bool? isHidden,
   }) {
     return DailyQueueState(
       items: items ?? this.items,
       dateString: dateString ?? this.dateString,
       isDismissed: isDismissed ?? this.isDismissed,
+      isHidden: isHidden ?? this.isHidden,
     );
   }
 }
@@ -53,7 +57,10 @@ class DailyQueueNotifier extends Notifier<DailyQueueState> {
 
     final List<Bookmark> unread = unreadAsync.valueOrNull ?? <Bookmark>[];
     if (unread.isEmpty) {
-      return DailyQueueState(items: const <Bookmark>[], dateString: today);
+      return DailyQueueState(
+        items: const <Bookmark>[],
+        dateString: today,
+      );
     }
 
     // Deterministic selection based on date seed
@@ -73,6 +80,14 @@ class DailyQueueNotifier extends Notifier<DailyQueueState> {
 
   void toggleDismissed() {
     state = state.copyWith(isDismissed: !state.isDismissed);
+  }
+
+  void hide() {
+    state = state.copyWith(isHidden: true);
+  }
+
+  void show() {
+    state = state.copyWith(isHidden: false);
   }
 }
 

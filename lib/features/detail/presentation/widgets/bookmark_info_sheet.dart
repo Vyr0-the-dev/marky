@@ -59,7 +59,8 @@ class BookmarkInfoSheet extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: ReadingRoomSpacing.md),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -78,7 +79,8 @@ class BookmarkInfoSheet extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.close_rounded, size: 20),
                     onPressed: () => Navigator.of(context).pop(),
-                    tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                    tooltip:
+                        MaterialLocalizations.of(context).closeButtonTooltip,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -116,7 +118,8 @@ class BookmarkInfoSheet extends StatelessWidget {
                 padding: const EdgeInsets.all(ReadingRoomSpacing.md),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+                  borderRadius:
+                      BorderRadius.circular(ReadingRoomRadii.standard),
                   border: Border.all(color: outlineColor),
                 ),
                 child: Column(
@@ -127,13 +130,15 @@ class BookmarkInfoSheet extends StatelessWidget {
                         label: l10n?.detailMetaAuthor ?? 'Author',
                         value: bookmark.author!,
                       ),
-                    if (bookmark.siteName != null && bookmark.siteName!.isNotEmpty)
+                    if (bookmark.siteName != null &&
+                        bookmark.siteName!.isNotEmpty)
                       _buildInfoRow(
                         context,
                         label: l10n?.detailMetaSite ?? 'Site',
                         value: bookmark.siteName!,
                       ),
-                    if (bookmark.publisher != null && bookmark.publisher!.isNotEmpty)
+                    if (bookmark.publisher != null &&
+                        bookmark.publisher!.isNotEmpty)
                       _buildInfoRow(
                         context,
                         label: l10n?.detailMetaPublisher ?? 'Publisher',

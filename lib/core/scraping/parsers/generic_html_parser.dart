@@ -54,11 +54,10 @@ class GenericHtmlParser implements SourceParser {
   }) {
     final int index = (seed ?? (_uaCursor++)) % kBrowserUserAgents.length;
     final Uri? parsedUri = url != null ? Uri.tryParse(url) : null;
-    final String? referer = parsedUri != null &&
-            parsedUri.hasScheme &&
-            parsedUri.host.isNotEmpty
-        ? '${parsedUri.scheme}://${parsedUri.host}/'
-        : null;
+    final String? referer =
+        parsedUri != null && parsedUri.hasScheme && parsedUri.host.isNotEmpty
+            ? '${parsedUri.scheme}://${parsedUri.host}/'
+            : null;
     return <String, String>{
       'User-Agent': kBrowserUserAgents[index],
       'Accept':
@@ -155,7 +154,9 @@ class GenericHtmlParser implements SourceParser {
     List<int> bytes, {
     String? contentTypeHeader,
   }) {
-    if (bytes.isEmpty) return Future<MetadataResult>.value(const MetadataResult());
+    if (bytes.isEmpty) {
+      return Future<MetadataResult>.value(const MetadataResult());
+    }
     return _extractBytesInBackground(url, bytes, contentTypeHeader);
   }
 
@@ -378,8 +379,7 @@ class GenericHtmlParser implements SourceParser {
       );
     } on DioException catch (e) {
       final int? statusCode = e.response?.statusCode;
-      final String effectiveUrl =
-          _resolveRedirectUrl(url, e.response?.realUri);
+      final String effectiveUrl = _resolveRedirectUrl(url, e.response?.realUri);
       return _FetchResponse(
         effectiveUrl: effectiveUrl,
         statusCode: statusCode,
@@ -550,8 +550,9 @@ class GenericHtmlParser implements SourceParser {
   }
 
   static String _humanizeHost(String host) {
-    final String cleaned =
-        host.toLowerCase().replaceFirst(RegExp(r'^(www|m|mobile|news|blog|press|docs)\.'), '');
+    final String cleaned = host
+        .toLowerCase()
+        .replaceFirst(RegExp(r'^(www|m|mobile|news|blog|press|docs)\.'), '');
     final List<String> parts = cleaned.split('.');
     if (parts.isEmpty) return host;
     if (cleaned.endsWith('substack.com')) return 'Substack';
@@ -597,7 +598,9 @@ class GenericHtmlParser implements SourceParser {
           type == 'WebPage';
       if (headline != null) {
         title = _cleanMetadataText(headline);
-      } else if (title == null && isArticle && _asString(node['name']) != null) {
+      } else if (title == null &&
+          isArticle &&
+          _asString(node['name']) != null) {
         title = _cleanMetadataText(_asString(node['name']));
       }
       description ??= _cleanMetadataText(_asString(node['description']));
@@ -775,13 +778,12 @@ class GenericHtmlParser implements SourceParser {
       final Element? parent = p.parent;
       if (parent == null) continue;
 
-      final int punctuationCount =
-          RegExp('[,.;:!?]').allMatches(text).length;
+      final int punctuationCount = RegExp('[,.;:!?]').allMatches(text).length;
       final double paragraphScore =
           10.0 + (text.length / 40.0).clamp(0.0, 20.0) + punctuationCount * 1.5;
 
-      scores[parent] = (scores[parent] ?? _containerBonus(parent)) +
-          paragraphScore;
+      scores[parent] =
+          (scores[parent] ?? _containerBonus(parent)) + paragraphScore;
 
       final Element? grandParent = parent.parent;
       if (grandParent != null && grandParent != bodyClone) {
@@ -818,23 +820,26 @@ class GenericHtmlParser implements SourceParser {
     }
     if (snippet == null && jsonLdBody != null && jsonLdBody.length > 40) {
       final String cleanBody = _collapseWhitespace(jsonLdBody);
-      snippet =
-          cleanBody.length > 300 ? '${cleanBody.substring(0, 300)}…' : cleanBody;
+      snippet = cleanBody.length > 300
+          ? '${cleanBody.substring(0, 300)}…'
+          : cleanBody;
     }
 
     // 5. Compute word count and readingTimeMinutes
     final String articleText = _collapseWhitespace(rootForExtraction.text);
     final int domWords = articleText.isEmpty
         ? 0
-        : articleText.split(RegExp(r'\s+')).where((String w) => w.isNotEmpty).length;
+        : articleText
+            .split(RegExp(r'\s+'))
+            .where((String w) => w.isNotEmpty)
+            .length;
     final int jsonWords = jsonLdWordCount ??
         (jsonLdBody != null && jsonLdBody.isNotEmpty
             ? jsonLdBody.split(RegExp(r'\s+')).length
             : 0);
     final int totalWords = domWords >= jsonWords ? domWords : jsonWords;
-    final int? readingTimeMinutes = totalWords >= 60
-        ? (totalWords / 200.0).ceil().clamp(1, 120)
-        : null;
+    final int? readingTimeMinutes =
+        totalWords >= 60 ? (totalWords / 200.0).ceil().clamp(1, 120) : null;
 
     // 6. Extract first valid content image from cleaned root
     final String? contentImage =

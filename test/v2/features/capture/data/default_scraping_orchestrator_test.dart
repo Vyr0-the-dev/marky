@@ -454,8 +454,7 @@ void main() {
         () async {
       final Bookmark seeded = await repo.save(
         Bookmark(
-          originalUrl:
-              'https://substack.com/p/deep-dive-into-flutter-isolates',
+          originalUrl: 'https://substack.com/p/deep-dive-into-flutter-isolates',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         ),

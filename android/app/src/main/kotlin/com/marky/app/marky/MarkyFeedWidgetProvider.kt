@@ -50,17 +50,84 @@ class MarkyFeedWidgetProvider : AppWidgetProvider() {
                 val views = RemoteViews(context.packageName, R.layout.marky_feed_widget)
                 views.setTextViewText(R.id.widget_title, title)
                 views.setTextViewText(R.id.widget_subtitle, subtitle)
-                applyItem(views, R.id.widget_item_1, item1)
-                applyItem(views, R.id.widget_item_2, item2)
-                applyItem(views, R.id.widget_item_3, item3)
-                views.setOnClickPendingIntent(R.id.widget_root, openRoutePendingIntent(context, "/home"))
+
+                // Header action buttons
+                views.setOnClickPendingIntent(
+                    R.id.widget_action_add,
+                    openRoutePendingIntent(context, "/add")
+                )
+                views.setOnClickPendingIntent(
+                    R.id.widget_action_search,
+                    openRoutePendingIntent(context, "/search")
+                )
+                views.setOnClickPendingIntent(
+                    R.id.widget_root,
+                    openRoutePendingIntent(context, "/home")
+                )
+
+                // Item cards
+                applyItem(
+                    views = views,
+                    containerId = R.id.widget_item_1_container,
+                    titleId = R.id.widget_item_1,
+                    subtitleId = R.id.widget_item_1_subtitle,
+                    value = item1,
+                    context = context
+                )
+                applyItem(
+                    views = views,
+                    containerId = R.id.widget_item_2_container,
+                    titleId = R.id.widget_item_2,
+                    subtitleId = R.id.widget_item_2_subtitle,
+                    value = item2,
+                    context = context
+                )
+                applyItem(
+                    views = views,
+                    containerId = R.id.widget_item_3_container,
+                    titleId = R.id.widget_item_3,
+                    subtitleId = R.id.widget_item_3_subtitle,
+                    value = item3,
+                    context = context
+                )
+
+                // Empty state visibility
+                val hasAnyItem = item1.isNotBlank() || item2.isNotBlank() || item3.isNotBlank()
+                views.setViewVisibility(
+                    R.id.widget_empty_text,
+                    if (hasAnyItem) View.GONE else View.VISIBLE
+                )
+
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
         }
 
-        private fun applyItem(views: RemoteViews, viewId: Int, value: String) {
-            views.setTextViewText(viewId, value)
-            views.setViewVisibility(viewId, if (value.isBlank()) View.GONE else View.VISIBLE)
+        private fun applyItem(
+            views: RemoteViews,
+            containerId: Int,
+            titleId: Int,
+            subtitleId: Int,
+            value: String,
+            context: Context
+        ) {
+            if (value.isBlank()) {
+                views.setViewVisibility(containerId, View.GONE)
+                return
+            }
+            views.setViewVisibility(containerId, View.VISIBLE)
+            if (value.contains(" — ")) {
+                val parts = value.split(" — ", limit = 2)
+                views.setTextViewText(titleId, parts[0].trim())
+                views.setTextViewText(subtitleId, parts[1].trim())
+                views.setViewVisibility(subtitleId, View.VISIBLE)
+            } else {
+                views.setTextViewText(titleId, value.trim())
+                views.setViewVisibility(subtitleId, View.GONE)
+            }
+            views.setOnClickPendingIntent(
+                containerId,
+                openRoutePendingIntent(context, "/home")
+            )
         }
 
         private fun openRoutePendingIntent(context: Context, route: String): PendingIntent {

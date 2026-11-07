@@ -64,8 +64,8 @@ class NetscapeBookmarkParser {
           final String folderName = h3.text.trim();
           final String effectiveFolder =
               folderName.isNotEmpty ? folderName : (currentFolder ?? '');
-          final dom.Element? dl = node.querySelector('dl') ??
-              _findNextSiblingElement(node, 'dl');
+          final dom.Element? dl =
+              node.querySelector('dl') ?? _findNextSiblingElement(node, 'dl');
           if (dl != null) {
             _traverse(
               dl,

@@ -172,7 +172,12 @@ void main() {
     test('manages tags and updates tag usage counts', () async {
       final DateTime now = DateTime.utc(2026, 3);
       tagRepo.tags.addAll(<Tag>[
-        Tag(id: 1, name: 'Flutter', slug: 'flutter', createdAt: now, updatedAt: now),
+        Tag(
+            id: 1,
+            name: 'Flutter',
+            slug: 'flutter',
+            createdAt: now,
+            updatedAt: now),
         Tag(id: 2, name: 'Dart', slug: 'dart', createdAt: now, updatedAt: now),
       ]);
 

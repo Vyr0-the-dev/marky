@@ -254,19 +254,14 @@ class RedditParser implements SourceParser {
               ?.attributes['content'] ??
           doc.querySelector('h1')?.text.trim();
       final String? author = shreddit?.attributes['author'];
-      final String? subreddit =
-          shreddit?.attributes['subreddit-prefixed-name'];
-      final String? text = doc
-              .querySelector('div[slot="text-body"]')
-              ?.text
-              .trim() ??
-          doc
-              .querySelector('meta[property="og:description"]')
-              ?.attributes['content'];
+      final String? subreddit = shreddit?.attributes['subreddit-prefixed-name'];
+      final String? text =
+          doc.querySelector('div[slot="text-body"]')?.text.trim() ??
+              doc
+                  .querySelector('meta[property="og:description"]')
+                  ?.attributes['content'];
       final String? image = shreddit?.attributes['content-href'] ??
-          doc
-              .querySelector('meta[property="og:image"]')
-              ?.attributes['content'];
+          doc.querySelector('meta[property="og:image"]')?.attributes['content'];
 
       if (title == null || title.isEmpty) return const MetadataResult();
 
@@ -277,8 +272,7 @@ class RedditParser implements SourceParser {
         author: author,
         siteName: subreddit ?? 'Reddit',
         publisher: 'Reddit',
-        heroImageUrl:
-            image != null && image.startsWith('http') ? image : null,
+        heroImageUrl: image != null && image.startsWith('http') ? image : null,
         faviconUrl: _faviconUrl,
       );
     } catch (_) {

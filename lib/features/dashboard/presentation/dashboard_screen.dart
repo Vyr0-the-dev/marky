@@ -105,8 +105,7 @@ class _DashboardBody extends StatelessWidget {
                   i++) ...<Widget>[
                 if (i > 0) const SizedBox(height: ReadingRoomSpacing.md),
                 _RankedBarRow(
-                  leadingIcon:
-                      _sourceIcon(stats.sourceBreakdown[i].sourceType),
+                  leadingIcon: _sourceIcon(stats.sourceBreakdown[i].sourceType),
                   label: stats.sourceBreakdown[i].label,
                   count: stats.sourceBreakdown[i].count,
                   maxCount: stats.sourceBreakdown.first.count,
@@ -167,8 +166,8 @@ class _ReadingProgressHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
-    final int readCount =
-        (stats.totalBookmarks - stats.unreadCount).clamp(0, stats.totalBookmarks);
+    final int readCount = (stats.totalBookmarks - stats.unreadCount)
+        .clamp(0, stats.totalBookmarks);
     final double ratio = stats.readRatio.clamp(0.0, 1.0);
     final int percentage = (ratio * 100).round();
 

@@ -188,8 +188,8 @@ class ImportService {
       if (entry.folder != null && entry.folder!.trim().isNotEmpty) {
         final String folder = entry.folder!.trim();
         if (!folderToCollectionId.containsKey(folder)) {
-          final BookmarkCollection? existing = await _collections
-              .findBySlug(BookmarkCollection.slugify(folder));
+          final BookmarkCollection? existing =
+              await _collections.findBySlug(BookmarkCollection.slugify(folder));
           if (existing != null && existing.id != null) {
             folderToCollectionId[folder] = existing.id!;
           } else {

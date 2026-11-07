@@ -189,8 +189,7 @@ class _HeroAppBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String imageUrl =
-        bookmark.heroImageUrl ?? bookmark.faviconUrl ?? '';
+    final String imageUrl = bookmark.heroImageUrl ?? bookmark.faviconUrl ?? '';
     final bool hasImage = imageUrl.isNotEmpty;
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
@@ -455,10 +454,9 @@ class _HeroAppBar extends ConsumerWidget {
     BuildContext context,
     Bookmark bookmark,
   ) async {
-    final String targetUrl =
-        (bookmark.canonicalUrl?.trim().isNotEmpty ?? false)
-            ? bookmark.canonicalUrl!
-            : bookmark.originalUrl;
+    final String targetUrl = (bookmark.canonicalUrl?.trim().isNotEmpty ?? false)
+        ? bookmark.canonicalUrl!
+        : bookmark.originalUrl;
     final Uri? uri = Uri.tryParse(targetUrl);
     if (uri == null) return;
 
@@ -528,7 +526,8 @@ class _HeroAppBar extends ConsumerWidget {
         style: buttonStyle,
         icon: Icon(
           bookmark.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-          color: bookmark.isPinned ? ReadingRoomColors.darkAccent : defaultColor,
+          color:
+              bookmark.isPinned ? ReadingRoomColors.darkAccent : defaultColor,
           shadows: iconShadows,
         ),
         tooltip: bookmark.isPinned
@@ -810,7 +809,8 @@ class _DetailMoreActionsSheet extends StatelessWidget {
                         onTap: () => _select(context, 'edit'),
                       ),
                       if ((bookmark.heroImageUrl?.isNotEmpty ?? false) ||
-                          (bookmark.faviconUrl?.isNotEmpty ?? false)) ...<Widget>[
+                          (bookmark.faviconUrl?.isNotEmpty ??
+                              false)) ...<Widget>[
                         Divider(height: 1, thickness: 1, color: dividerColor),
                         _ActionSheetTile(
                           icon: Icons.image_outlined,
@@ -941,7 +941,6 @@ class _ActionSheetTile extends StatelessWidget {
     );
   }
 }
-
 
 // ─── Sticky bottom action bar ───────────────────────────────────
 
@@ -1341,7 +1340,8 @@ class _TagChipsEditable extends ConsumerWidget {
               ),
               backgroundColor: tagStyle.backgroundColor,
               side: BorderSide(color: tagStyle.borderColor, width: 0.5),
-              deleteIcon: Icon(Icons.close, size: 14, color: tagStyle.textColor),
+              deleteIcon:
+                  Icon(Icons.close, size: 14, color: tagStyle.textColor),
               onDeleted: () => _removeTag(ref, id),
             );
           },

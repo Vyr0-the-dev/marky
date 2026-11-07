@@ -48,9 +48,8 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
         ref.read(brokenLinkCheckerServiceProvider);
 
     // Fetch all active (non-archived) bookmarks
-    final List<Bookmark> bookmarks = await repo
-        .watchFeed(const BookmarkFeedQuery())
-        .first;
+    final List<Bookmark> bookmarks =
+        await repo.watchFeed(const BookmarkFeedQuery()).first;
 
     if (!mounted) return;
     setState(() {
@@ -158,7 +157,9 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
           ],
 
           // ── Action bar if broken links exist ───────────────
-          if (_hasScanned && !_isScanning && _brokenLinks.isNotEmpty) ...<Widget>[
+          if (_hasScanned &&
+              !_isScanning &&
+              _brokenLinks.isNotEmpty) ...<Widget>[
             Row(
               children: <Widget>[
                 Text(
@@ -184,7 +185,8 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
           if (_hasScanned && !_isScanning && _brokenLinks.isEmpty) ...<Widget>[
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: ReadingRoomSpacing.xxl),
+                padding: const EdgeInsets.symmetric(
+                    vertical: ReadingRoomSpacing.xxl),
                 child: Column(
                   children: <Widget>[
                     const Icon(
@@ -270,8 +272,8 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
           const SizedBox(height: ReadingRoomSpacing.sm),
           Text(
             _isTurkish
-              ? 'Web siteleri zamanla silinebilir veya adresleri değişebilir. Bu araç kütüphanenizdeki bağlantıları hafif sorgularla kontrol ederek artık açılmayan (404, 410, DNS) linkleri listeler.'
-              : 'Web links can rot or disappear over time. This tool checks your bookmarks with lightweight requests to uncover dead links (404, 410, DNS errors).',
+                ? 'Web siteleri zamanla silinebilir veya adresleri değişebilir. Bu araç kütüphanenizdeki bağlantıları hafif sorgularla kontrol ederek artık açılmayan (404, 410, DNS) linkleri listeler.'
+                : 'Web links can rot or disappear over time. This tool checks your bookmarks with lightweight requests to uncover dead links (404, 410, DNS errors).',
             style: theme.textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
               height: 1.4,

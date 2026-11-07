@@ -93,7 +93,8 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
                   child: Container(
                     width: 36,
                     height: 4,
-                    margin: const EdgeInsets.only(bottom: ReadingRoomSpacing.md),
+                    margin:
+                        const EdgeInsets.only(bottom: ReadingRoomSpacing.md),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.onSurfaceVariant
                           .withValues(alpha: 0.35),
@@ -115,7 +116,8 @@ class _EditBookmarkSheetState extends State<EditBookmarkSheet> {
                     IconButton(
                       icon: const Icon(Icons.close_rounded, size: 20),
                       onPressed: () => Navigator.of(context).pop(),
-                      tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                      tooltip:
+                          MaterialLocalizations.of(context).closeButtonTooltip,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),

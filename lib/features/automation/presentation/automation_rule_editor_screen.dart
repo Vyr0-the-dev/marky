@@ -183,7 +183,8 @@ class _AutomationRuleEditorScreenState
             accentColor: colors.secondary,
             trailing: _conditions.length > 1
                 ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: colors.secondary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
@@ -223,8 +224,7 @@ class _AutomationRuleEditorScreenState
                       ),
                     ],
                     selected: <AutomationTriggerLogic>{_triggerLogic},
-                    onSelectionChanged:
-                        (Set<AutomationTriggerLogic> selected) {
+                    onSelectionChanged: (Set<AutomationTriggerLogic> selected) {
                       setState(() => _triggerLogic = selected.first);
                     },
                   ),
@@ -252,7 +252,8 @@ class _AutomationRuleEditorScreenState
             accentColor: colors.tertiary,
             trailing: _actions.length > 1
                 ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: colors.tertiary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
@@ -300,8 +301,11 @@ class _AutomationRuleEditorScreenState
                     )
                   : const Icon(Icons.check_rounded, size: 22),
               label: Text(
-                _isEdit ? 'Değişiklikleri Güncelle' : 'Otomasyon Kuralını Kaydet',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                _isEdit
+                    ? 'Değişiklikleri Güncelle'
+                    : 'Otomasyon Kuralını Kaydet',
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ),
           ),

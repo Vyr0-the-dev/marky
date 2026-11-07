@@ -332,8 +332,7 @@ void main() {
       expect(fired, isEmpty);
     });
 
-    test(
-        'readingTimeGreaterThan does NOT match when value is invalid integer',
+    test('readingTimeGreaterThan does NOT match when value is invalid integer',
         () async {
       ruleRepo.rules = <AutomationRule>[
         _rule(
@@ -395,7 +394,8 @@ void main() {
       expect(fired, isEmpty);
     });
 
-    test('titleContains returns false when condition value is empty or whitespace',
+    test(
+        'titleContains returns false when condition value is empty or whitespace',
         () async {
       ruleRepo.rules = <AutomationRule>[
         _rule(
@@ -459,7 +459,8 @@ void main() {
       expect(fired, isEmpty);
     });
 
-    test('titleMatchesRegex safely handles invalid regex syntax without throwing',
+    test(
+        'titleMatchesRegex safely handles invalid regex syntax without throwing',
         () async {
       ruleRepo.rules = <AutomationRule>[
         _rule(

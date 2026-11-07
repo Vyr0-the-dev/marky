@@ -26,7 +26,8 @@ void main() {
 
         await Future<void>.delayed(Duration.zero);
 
-        expect(gateway.capturedPayloads, <String?>['https://example.com/shared']);
+        expect(
+            gateway.capturedPayloads, <String?>['https://example.com/shared']);
         expect(controller.state.status, ShareOverlayStatus.success);
         expect(controller.state.result?.status, CaptureStatus.saved);
       },

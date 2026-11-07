@@ -108,7 +108,8 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
     _TourStepData(
       icon: Icons.science_rounded,
       title: 'Priority & Testing',
-      body: 'Rules execute in top-to-bottom order whenever bookmarks are added. '
+      body:
+          'Rules execute in top-to-bottom order whenever bookmarks are added. '
           'Test with a single link and inspect Debug Logs anytime.',
       chips: <String>['Top-to-bottom', 'Single link test', 'Debug logs'],
     ),
@@ -244,8 +245,7 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
                               alignment: WrapAlignment.center,
                               children: step.chips
                                   .map(
-                                    (String label) =>
-                                        _TourChip(label: label),
+                                    (String label) => _TourChip(label: label),
                                   )
                                   .toList(),
                             ),

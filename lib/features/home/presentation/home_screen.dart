@@ -586,10 +586,9 @@ class _SwipeableCard extends ConsumerWidget {
       resizeDuration: ReadingRoomMotion.quick,
       direction: direction,
       confirmDismiss: (DismissDirection swipeDirection) async {
-        final SwipeAction action =
-            swipeDirection == DismissDirection.startToEnd
-                ? rightAction
-                : leftAction;
+        final SwipeAction action = swipeDirection == DismissDirection.startToEnd
+            ? rightAction
+            : leftAction;
         return _handleAction(
           context: context,
           ref: ref,
@@ -644,8 +643,7 @@ class _SwipeableCard extends ConsumerWidget {
               content: Text(message),
               action: SnackBarAction(
                 label: l10n?.actionUndo ?? 'Undo',
-                onPressed: () =>
-                    repo.save(bookmark.copyWith(isRead: !newRead)),
+                onPressed: () => repo.save(bookmark.copyWith(isRead: !newRead)),
               ),
             ),
           );

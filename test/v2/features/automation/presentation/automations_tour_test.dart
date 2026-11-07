@@ -95,7 +95,8 @@ void main() {
       expect(find.byType(AutomationsTourSheet), findsOneWidget);
     });
 
-    testWidgets('navigates through all 4 steps and finishes with Got it button', (
+    testWidgets('navigates through all 4 steps and finishes with Got it button',
+        (
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues(<String, Object>{});

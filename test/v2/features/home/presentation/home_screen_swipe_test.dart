@@ -289,7 +289,8 @@ class _SwipeMockBookmarkRepository implements BookmarkRepository {
   }
 
   @override
-  Future<List<Bookmark>> feed(BookmarkFeedQuery query) async => _filtered(query);
+  Future<List<Bookmark>> feed(BookmarkFeedQuery query) async =>
+      _filtered(query);
 
   @override
   Stream<List<Bookmark>> watchFeed(BookmarkFeedQuery query) {

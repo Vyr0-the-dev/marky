@@ -34,7 +34,8 @@ void main() {
       expect(first.title, 'Flutter - Build apps');
       expect(first.folder, 'Development');
       expect(first.tags, <String>['flutter', 'dart']);
-      expect(first.createdAt, DateTime.fromMillisecondsSinceEpoch(1609459200 * 1000));
+      expect(first.createdAt,
+          DateTime.fromMillisecondsSinceEpoch(1609459200 * 1000));
 
       final NetscapeBookmarkEntry second = entries[1];
       expect(second.url, 'https://dart.dev');
@@ -47,7 +48,9 @@ void main() {
       expect(third.tags, <String>['tech', 'news']);
     });
 
-    test('fallbacks to flat query selector if hierarchical dl/dt structure is absent', () {
+    test(
+        'fallbacks to flat query selector if hierarchical dl/dt structure is absent',
+        () {
       const String html = '''
 <html>
   <body>

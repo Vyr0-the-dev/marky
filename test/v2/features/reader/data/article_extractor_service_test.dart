@@ -63,7 +63,9 @@ void main() {
   });
 
   group('ArticleExtractorService extraction', () {
-    test('extracts rich Reddit post with markdown blocks, gallery, and comments', () async {
+    test(
+        'extracts rich Reddit post with markdown blocks, gallery, and comments',
+        () async {
       final Dio mockDio = _mockDioWithResponse(<dynamic>[
         <String, dynamic>{
           'kind': 'Listing',
@@ -75,16 +77,19 @@ void main() {
                   'title': 'State Management in Flutter 2026',
                   'author': 'riverpod_expert',
                   'subreddit': 'flutterdev',
-                  'selftext': '# Overview\n\nRiverpod 3 is officially released with code generation by default.\n\n> Always prefer immutable state.\n\n- Type safe providers\n- Auto-dispose lifecycle\n- AsyncNotifier integration',
+                  'selftext':
+                      '# Overview\n\nRiverpod 3 is officially released with code generation by default.\n\n> Always prefer immutable state.\n\n- Type safe providers\n- Auto-dispose lifecycle\n- AsyncNotifier integration',
                   'media_metadata': <String, dynamic>{
                     'img1': <String, dynamic>{
                       's': <String, dynamic>{
-                        'u': 'https://preview.redd.it/architecture.png?width=1080&amp;crop=smart',
+                        'u':
+                            'https://preview.redd.it/architecture.png?width=1080&amp;crop=smart',
                       },
                     },
                     'img2': <String, dynamic>{
                       's': <String, dynamic>{
-                        'u': 'https://preview.redd.it/benchmark.png?width=1080&amp;crop=smart',
+                        'u':
+                            'https://preview.redd.it/benchmark.png?width=1080&amp;crop=smart',
                       },
                     },
                   },
@@ -101,7 +106,8 @@ void main() {
                 'kind': 't1',
                 'data': <String, dynamic>{
                   'author': 'flutter_fanatic',
-                  'body': 'Great summary! The new AsyncNotifier syntax simplified our architecture immensely.',
+                  'body':
+                      'Great summary! The new AsyncNotifier syntax simplified our architecture immensely.',
                   'score': 42,
                 },
               },
@@ -110,25 +116,40 @@ void main() {
         },
       ]);
 
-      final ArticleExtractorService service = ArticleExtractorService(dio: mockDio);
+      final ArticleExtractorService service =
+          ArticleExtractorService(dio: mockDio);
       final Bookmark bookmark = Bookmark(
         id: 1,
-        originalUrl: 'https://www.reddit.com/r/flutterdev/comments/123/state_management/',
+        originalUrl:
+            'https://www.reddit.com/r/flutterdev/comments/123/state_management/',
         title: 'Initial Title',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
-      final ArticleContent article = await service.fetchArticle(bookmark, forceRefresh: true);
+      final ArticleContent article =
+          await service.fetchArticle(bookmark, forceRefresh: true);
 
       expect(article.title, equals('State Management in Flutter 2026'));
       expect(article.author, equals('u/riverpod_expert'));
       expect(article.siteName, equals('r/flutterdev'));
       expect(article.heroImageUrl, contains('architecture.png'));
-      expect(article.blocks.any((ArticleBlock b) => b.type == ArticleBlockType.heading), isTrue);
-      expect(article.blocks.any((ArticleBlock b) => b.type == ArticleBlockType.list), isTrue);
-      expect(article.blocks.any((ArticleBlock b) => b.type == ArticleBlockType.blockquote), isTrue);
-      expect(article.blocks.any((ArticleBlock b) => b.text.contains('flutter_fanatic')), isTrue);
+      expect(
+          article.blocks
+              .any((ArticleBlock b) => b.type == ArticleBlockType.heading),
+          isTrue);
+      expect(
+          article.blocks
+              .any((ArticleBlock b) => b.type == ArticleBlockType.list),
+          isTrue);
+      expect(
+          article.blocks
+              .any((ArticleBlock b) => b.type == ArticleBlockType.blockquote),
+          isTrue);
+      expect(
+          article.blocks
+              .any((ArticleBlock b) => b.text.contains('flutter_fanatic')),
+          isTrue);
     });
 
     test('extracts Twitter/X Article with rich blocks', () async {
@@ -144,12 +165,14 @@ void main() {
           'article': <String, dynamic>{
             'title': 'Autonomous Agent Architecture in Production',
             'cover_image': 'https://pbs.twimg.com/article_hero.jpg',
-            'content': '# Section 1: Memory Loops\n\nAgents must persist context cleanly across sessions.\n\n- Working memory\n- Long term storage\n- Eviction rules',
+            'content':
+                '# Section 1: Memory Loops\n\nAgents must persist context cleanly across sessions.\n\n- Working memory\n- Long term storage\n- Eviction rules',
           },
         },
       });
 
-      final ArticleExtractorService service = ArticleExtractorService(dio: mockDio);
+      final ArticleExtractorService service =
+          ArticleExtractorService(dio: mockDio);
       final Bookmark bookmark = Bookmark(
         id: 2,
         originalUrl: 'https://x.com/agentbuilder/article/185999111',
@@ -158,16 +181,27 @@ void main() {
         updatedAt: DateTime.now(),
       );
 
-      final ArticleContent article = await service.fetchArticle(bookmark, forceRefresh: true);
+      final ArticleContent article =
+          await service.fetchArticle(bookmark, forceRefresh: true);
 
-      expect(article.title, equals('Autonomous Agent Architecture in Production'));
+      expect(
+          article.title, equals('Autonomous Agent Architecture in Production'));
       expect(article.author, equals('Agent Builder (@agentbuilder)'));
-      expect(article.heroImageUrl, equals('https://pbs.twimg.com/article_hero.jpg'));
-      expect(article.blocks.any((ArticleBlock b) => b.type == ArticleBlockType.heading), isTrue);
-      expect(article.blocks.any((ArticleBlock b) => b.type == ArticleBlockType.list), isTrue);
+      expect(article.heroImageUrl,
+          equals('https://pbs.twimg.com/article_hero.jpg'));
+      expect(
+          article.blocks
+              .any((ArticleBlock b) => b.type == ArticleBlockType.heading),
+          isTrue);
+      expect(
+          article.blocks
+              .any((ArticleBlock b) => b.type == ArticleBlockType.list),
+          isTrue);
     });
 
-    test('produces fallback article content when network is unavailable or page has no DOM', () {
+    test(
+        'produces fallback article content when network is unavailable or page has no DOM',
+        () {
       final Bookmark bookmark = Bookmark(
         id: 101,
         originalUrl: 'https://example.com/test-article',

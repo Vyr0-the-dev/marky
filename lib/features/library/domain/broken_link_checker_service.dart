@@ -60,8 +60,7 @@ class BrokenLinkCheckerService {
                 },
                 followRedirects: true,
                 maxRedirects: 5,
-                validateStatus: (int? status) =>
-                    status != null && status < 400,
+                validateStatus: (int? status) => status != null && status < 400,
               ),
             );
 

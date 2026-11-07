@@ -61,7 +61,7 @@ class DetailActionState {
 }
 
 final AutoDisposeStateNotifierProvider<DetailActionController,
-    DetailActionState> detailActionControllerProvider =
+        DetailActionState> detailActionControllerProvider =
     StateNotifierProvider.autoDispose<DetailActionController,
         DetailActionState>((Ref ref) {
   return DetailActionController(
@@ -188,7 +188,8 @@ class DetailActionController extends StateNotifier<DetailActionState> {
 
   Future<void> toggleFavorite(Bookmark bookmark) {
     return _runGuarded(() async {
-      await _bookmarks.save(bookmark.copyWith(isFavorite: !bookmark.isFavorite));
+      await _bookmarks
+          .save(bookmark.copyWith(isFavorite: !bookmark.isFavorite));
     });
   }
 
@@ -200,7 +201,8 @@ class DetailActionController extends StateNotifier<DetailActionState> {
 
   Future<void> toggleArchive(Bookmark bookmark) {
     return _runGuarded(() async {
-      await _bookmarks.save(bookmark.copyWith(isArchived: !bookmark.isArchived));
+      await _bookmarks
+          .save(bookmark.copyWith(isArchived: !bookmark.isArchived));
     });
   }
 
@@ -317,9 +319,8 @@ class DetailActionController extends StateNotifier<DetailActionState> {
 
   Future<void> removeCollection(Bookmark bookmark, int collectionId) {
     return _runGuarded(() async {
-      final List<int> updated = bookmark.collectionIds
-          .where((int id) => id != collectionId)
-          .toList();
+      final List<int> updated =
+          bookmark.collectionIds.where((int id) => id != collectionId).toList();
       await _bookmarks.save(bookmark.copyWith(collectionIds: updated));
       await _collections.decrementItemCount(collectionId);
     });

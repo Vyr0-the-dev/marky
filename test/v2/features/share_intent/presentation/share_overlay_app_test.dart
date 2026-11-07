@@ -213,7 +213,8 @@ void main() {
     expect(finishCalls, 1);
   });
 
-  testWidgets('shows duplicate icon and already saved title for duplicate status',
+  testWidgets(
+      'shows duplicate icon and already saved title for duplicate status',
       (WidgetTester tester) async {
     final DateTime now = DateTime.now();
     final Bookmark bookmark = Bookmark(

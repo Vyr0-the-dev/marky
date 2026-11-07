@@ -123,10 +123,14 @@ class ArticleContent {
     int count = 0;
     for (final ArticleBlock block in blocks) {
       if (block.text.isNotEmpty) {
-        count += block.text.split(RegExp(r'\s+')).where((String w) => w.isNotEmpty).length;
+        count += block.text
+            .split(RegExp(r'\s+'))
+            .where((String w) => w.isNotEmpty)
+            .length;
       }
       for (final String item in block.listItems) {
-        count += item.split(RegExp(r'\s+')).where((String w) => w.isNotEmpty).length;
+        count +=
+            item.split(RegExp(r'\s+')).where((String w) => w.isNotEmpty).length;
       }
     }
     return count;

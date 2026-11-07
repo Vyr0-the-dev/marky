@@ -4,60 +4,192 @@
     android:layout_height="match_parent"
     android:background="@drawable/marky_widget_background"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="12dp">
 
-    <TextView
-        android:id="@+id/widget_title"
+    <!-- Top Header Bar -->
+    <LinearLayout
+        android:id="@+id/widget_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="Marky"
-        android:textColor="#F7F2E8"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/widget_subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="Your links, ready"
-        android:textColor="#AFA79B"
-        android:textSize="12sp" />
+        <ImageView
+            android:id="@+id/widget_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ic_stat_marky" />
 
-    <TextView
-        android:id="@+id/widget_item_1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="Add links to see snippets here"
-        android:textColor="#F7F2E8"
-        android:textSize="13sp" />
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Marky"
+            android:textColor="#F7F2E8"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/widget_item_2"
+        <TextView
+            android:id="@+id/widget_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/marky_widget_pill_bg"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingStart="8dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="2dp"
+            android:text="Your links"
+            android:textColor="#D8A868"
+            android:textSize="11sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/widget_action_search"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/marky_widget_button_bg"
+            android:contentDescription="@string/shortcut_search_short"
+            android:padding="5dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_widget_search" />
+
+        <ImageButton
+            android:id="@+id/widget_action_add"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/marky_widget_button_bg"
+            android:contentDescription="@string/shortcut_add_short"
+            android:padding="4dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_widget_add" />
+    </LinearLayout>
+
+    <!-- Items List Container -->
+    <LinearLayout
+        android:id="@+id/widget_items_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text=""
-        android:textColor="#D8D0C3"
-        android:textSize="13sp" />
+        android:orientation="vertical">
 
+        <!-- Item 1 Card -->
+        <LinearLayout
+            android:id="@+id/widget_item_1_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/marky_widget_item_bg"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/widget_item_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Add links to see snippets here"
+                android:textColor="#F7F2E8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_item_1_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#8E887E"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Item 2 Card -->
+        <LinearLayout
+            android:id="@+id/widget_item_2_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/marky_widget_item_bg"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/widget_item_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#F7F2E8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_item_2_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#8E887E"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Item 3 Card -->
+        <LinearLayout
+            android:id="@+id/widget_item_3_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/marky_widget_item_bg"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/widget_item_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#F7F2E8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_item_3_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#8E887E"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Empty State -->
     <TextView
-        android:id="@+id/widget_item_3"
+        android:id="@+id/widget_empty_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text=""
-        android:textColor="#D8D0C3"
-        android:textSize="13sp" />
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:text="All caught up ✨\nTap + to save a link"
+        android:textColor="#8E887E"
+        android:textSize="12sp"
+        android:visibility="gone" />
 </LinearLayout>

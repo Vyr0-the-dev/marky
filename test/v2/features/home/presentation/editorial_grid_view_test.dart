@@ -161,9 +161,8 @@ void main() {
         MasonryGridView grid = tester.widget<MasonryGridView>(
           find.byType(MasonryGridView),
         );
-        SliverSimpleGridDelegateWithFixedCrossAxisCount delegate =
-            grid.gridDelegate
-                as SliverSimpleGridDelegateWithFixedCrossAxisCount;
+        SliverSimpleGridDelegateWithFixedCrossAxisCount delegate = grid
+            .gridDelegate as SliverSimpleGridDelegateWithFixedCrossAxisCount;
         expect(delegate.crossAxisCount, 2);
 
         // 2) Tablet width (720px -> 3 columns)

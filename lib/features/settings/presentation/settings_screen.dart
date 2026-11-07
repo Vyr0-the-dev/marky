@@ -120,7 +120,8 @@ class SettingsScreen extends ConsumerWidget {
             leading: const Icon(Icons.auto_fix_high),
             title: Text(l10n?.settingsAutomationLabel ?? 'Otomasyon'),
             subtitle: Text(
-              l10n?.settingsAutomationSubtitle ?? 'Otomatik etiketleme, arşivleme ve kurallar',
+              l10n?.settingsAutomationSubtitle ??
+                  'Otomatik etiketleme, arşivleme ve kurallar',
             ),
             onTap: () => context.push(Routes.automationRules),
           ),

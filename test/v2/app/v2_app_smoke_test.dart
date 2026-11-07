@@ -10,6 +10,7 @@ import 'package:marky/app/routing/app_router.dart';
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
+import 'package:marky/app/startup/app_startup_coordinator.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/core/database/enums/bookmark_source_type.dart';
 import 'package:marky/core/notifications/notification_service.dart';
@@ -53,6 +54,7 @@ void main() {
       'marky_onboarding_shown': true,
     });
   });
+
   /// Builds a [MarkyApp] inside a [ProviderScope] pre-seeded with
   /// the given [initial] settings. Tests that don't care about a
   /// specific setting pass `null` and get the factory defaults.
@@ -92,10 +94,19 @@ void main() {
           (ref) =>
               Stream<List<BookmarkCollection>>.value(<BookmarkCollection>[]),
         ),
-        notificationServiceProvider.overrideWithValue(FakeNotificationService()),
+        notificationServiceProvider
+            .overrideWithValue(FakeNotificationService()),
+        appStartupCoordinatorProvider
+            .overrideWithValue(_FakeAppStartupCoordinator()),
       ],
       child: const MarkyApp(),
     );
+  }
+
+  Future<void> pumpMarky(WidgetTester tester, Widget widget) async {
+    await tester.pumpWidget(widget);
+    await tester.pump();
+    await tester.pumpAndSettle();
   }
 
   Widget wrapEndToEnd({
@@ -105,7 +116,10 @@ void main() {
     return ProviderScope(
       overrides: <Override>[
         ...testAppSettingsOverrides(),
-        notificationServiceProvider.overrideWithValue(FakeNotificationService()),
+        notificationServiceProvider
+            .overrideWithValue(FakeNotificationService()),
+        appStartupCoordinatorProvider
+            .overrideWithValue(_FakeAppStartupCoordinator()),
         markyRouterProvider.overrideWith(
           (ref) => MarkyAppRouter.build(initialLocation: initialLocation),
         ),
@@ -150,8 +164,7 @@ void main() {
 
   group('MarkyApp', () {
     testWidgets('renders Home tab on cold start', (WidgetTester tester) async {
-      await tester.pumpWidget(wrap());
-      await tester.pumpAndSettle();
+      await pumpMarky(tester, wrap());
 
       expect(find.text('Marky'), findsOneWidget);
       expect(find.text('Your library is quiet'), findsOneWidget);
@@ -195,8 +208,7 @@ void main() {
 
     testWidgets('shows bottom nav items including quick add and settings',
         (WidgetTester tester) async {
-      await tester.pumpWidget(wrap());
-      await tester.pumpAndSettle();
+      await pumpMarky(tester, wrap());
 
       expect(find.byType(MarkyBottomNav), findsOneWidget);
       // One label per tab.
@@ -217,8 +229,7 @@ void main() {
         (WidgetTester tester) async {
       final SemanticsHandle semantics = tester.ensureSemantics();
       try {
-        await tester.pumpWidget(wrap());
-        await tester.pumpAndSettle();
+        await pumpMarky(tester, wrap());
 
         expect(
           find.descendant(
@@ -264,8 +275,7 @@ void main() {
         (WidgetTester tester) async {
       final SemanticsHandle semantics = tester.ensureSemantics();
       try {
-        await tester.pumpWidget(wrap());
-        await tester.pumpAndSettle();
+        await pumpMarky(tester, wrap());
 
         await tester.tap(
           find.descendant(
@@ -303,13 +313,13 @@ void main() {
           ),
         );
 
-        await tester.pumpWidget(
+        await pumpMarky(
+          tester,
           wrapEndToEnd(
             repository: repository,
             initialLocation: Routes.bookmarkDetailPath(saved.id!),
           ),
         );
-        await tester.pumpAndSettle();
 
         expect(
           find.bySemanticsLabel('Filter by domain a11y.example.com'),
@@ -338,8 +348,7 @@ void main() {
 
     testWidgets('tapping Search nav item switches branch',
         (WidgetTester tester) async {
-      await tester.pumpWidget(wrap());
-      await tester.pumpAndSettle();
+      await pumpMarky(tester, wrap());
 
       await tester.tap(find.text('Search'));
       await tester.pumpAndSettle();
@@ -349,8 +358,7 @@ void main() {
 
     testWidgets('tapping Library switches to Library branch',
         (WidgetTester tester) async {
-      await tester.pumpWidget(wrap());
-      await tester.pumpAndSettle();
+      await pumpMarky(tester, wrap());
 
       await tester.tap(find.text('Library'));
       await tester.pumpAndSettle();
@@ -360,22 +368,21 @@ void main() {
 
     testWidgets('opens unread feed from cold-start route',
         (WidgetTester tester) async {
-      await tester.pumpWidget(wrap(initialLocation: Routes.homeUnread));
-      await tester.pumpAndSettle();
+      await pumpMarky(tester, wrap(initialLocation: Routes.homeUnread));
 
       expect(find.text('All caught up'), findsOneWidget);
     });
 
     testWidgets('AppThemeMode.light applies warm off-white scaffold',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
+      await pumpMarky(
+        tester,
         wrap(
           initial: const AppSettings.defaults().copyWith(
             themeMode: AppThemeMode.light,
           ),
         ),
       );
-      await tester.pumpAndSettle();
 
       final BuildContext ctx = tester.element(find.text('Marky'));
       final ThemeData theme = Theme.of(ctx);
@@ -385,14 +392,14 @@ void main() {
 
     testWidgets('AppThemeMode.oled applies pure black scaffold',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
+      await pumpMarky(
+        tester,
         wrap(
           initial: const AppSettings.defaults().copyWith(
             themeMode: AppThemeMode.oled,
           ),
         ),
       );
-      await tester.pumpAndSettle();
 
       final BuildContext ctx = tester.element(find.text('Marky'));
       final ThemeData theme = Theme.of(ctx);
@@ -402,7 +409,8 @@ void main() {
 
     testWidgets('clamps large text scaling and respects reduced motion',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
+      await pumpMarky(
+        tester,
         MediaQuery(
           data: const MediaQueryData(textScaler: TextScaler.linear(3)),
           child: wrap(
@@ -410,7 +418,6 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
 
       final BuildContext context = tester.element(find.text('Marky'));
       final MediaQueryData mediaQuery = MediaQuery.of(context);
@@ -421,7 +428,8 @@ void main() {
 
     testWidgets('preserves platform reduced motion when animations are enabled',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
+      await pumpMarky(
+        tester,
         MediaQuery(
           data: const MediaQueryData(disableAnimations: true),
           child: wrap(
@@ -429,7 +437,6 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
 
       final BuildContext context = tester.element(find.text('Marky'));
       expect(MediaQuery.of(context).disableAnimations, isTrue);
@@ -472,13 +479,13 @@ void main() {
 
     testWidgets('large text scaling does not break primary tabs',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
+      await pumpMarky(
+        tester,
         MediaQuery(
           data: const MediaQueryData(textScaler: TextScaler.linear(3.5)),
           child: wrap(),
         ),
       );
-      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
       await tester.tap(find.text('Search'));
@@ -527,13 +534,13 @@ void main() {
             ),
           );
 
-          await tester.pumpWidget(
+          await pumpMarky(
+            tester,
             MediaQuery(
               data: MediaQueryData(textScaler: TextScaler.linear(scale)),
               child: wrapEndToEnd(repository: repository),
             ),
           );
-          await tester.pumpAndSettle();
           expect(find.text('D2 Scale Link'), findsWidgets);
           expect(tester.takeException(), isNull);
 
@@ -622,8 +629,7 @@ void main() {
         );
       });
 
-      await tester.pumpWidget(wrap());
-      await tester.pumpAndSettle();
+      await pumpMarky(tester, wrap());
 
       await tester.tap(
         find.descendant(
@@ -652,8 +658,7 @@ void main() {
           _StatefulBookmarkRepository();
       addTearDown(repository.dispose);
 
-      await tester.pumpWidget(wrapEndToEnd(repository: repository));
-      await tester.pumpAndSettle();
+      await pumpMarky(tester, wrapEndToEnd(repository: repository));
       expect(find.text('Your library is quiet'), findsOneWidget);
 
       await tester.tap(
@@ -726,14 +731,14 @@ void main() {
 
     testWidgets('Turkish locale renders TR exit warning on Home back press',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
+      await pumpMarky(
+        tester,
         wrap(
           initial: const AppSettings.defaults().copyWith(
             locale: AppLocaleChoice.tr,
           ),
         ),
       );
-      await tester.pumpAndSettle();
 
       // Simulate a hardware-back press on Home. PopScope intercepts
       // and fires the snackbar — we should see the TR translation.
@@ -748,14 +753,14 @@ void main() {
 
     testWidgets('uses explicit Turkish locale when selected',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
+      await pumpMarky(
+        tester,
         wrap(
           initial: const AppSettings.defaults().copyWith(
             locale: AppLocaleChoice.tr,
           ),
         ),
       );
-      await tester.pumpAndSettle();
 
       final BuildContext context = tester.element(find.text('Marky'));
       expect(Localizations.localeOf(context).languageCode, 'tr');
@@ -763,14 +768,14 @@ void main() {
 
     testWidgets('Turkish locale renders core release surfaces',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
+      await pumpMarky(
+        tester,
         wrap(
           initial: const AppSettings.defaults().copyWith(
             locale: AppLocaleChoice.tr,
           ),
         ),
       );
-      await tester.pumpAndSettle();
 
       expect(find.text('Kitaplığınız sessiz'), findsOneWidget);
 
@@ -856,6 +861,22 @@ void main() {
       expect(identical(a, b), isTrue);
     });
   });
+}
+
+class _FakeAppStartupCoordinator implements AppStartupCoordinator {
+  @override
+  Future<void> runPostLaunchStartup(AppSettings settings) async {}
+
+  @override
+  void registerNotificationPayloadHandler(
+    void Function(String payload)? handler,
+  ) {}
+
+  @override
+  Future<String?> consumeInitialNotificationPayload() async => null;
+
+  @override
+  Future<void> enrichPendingBookmarks() async {}
 }
 
 /// Minimal no-op repository so smoke tests don't need Isar.
@@ -1199,7 +1220,8 @@ class _NoOpTagRepository implements TagRepository {
   Stream<Tag?> watchById(int id) => Stream<Tag?>.value(null);
 }
 
-class _NoOpBookmarkCollectionRepository implements BookmarkCollectionRepository {
+class _NoOpBookmarkCollectionRepository
+    implements BookmarkCollectionRepository {
   @override
   Future<BookmarkCollection?> findBySlug(String slug) async => null;
   @override
@@ -1221,7 +1243,8 @@ class _NoOpBookmarkCollectionRepository implements BookmarkCollectionRepository 
   @override
   Future<BookmarkCollection?> getById(int id) async => null;
   @override
-  Future<List<BookmarkCollection>> getAll({bool includeArchived = false}) async =>
+  Future<List<BookmarkCollection>> getAll(
+          {bool includeArchived = false}) async =>
       <BookmarkCollection>[];
   @override
   Future<List<BookmarkCollection>> getByIds(List<int> ids) async =>

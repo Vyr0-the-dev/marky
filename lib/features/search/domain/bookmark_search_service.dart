@@ -40,8 +40,8 @@ class BookmarkSearchService {
         limit: limit * 4,
       );
       return candidates
-          .where((Bookmark bookmark) =>
-              parsed.matches(bookmark, tagId: tagId, collectionId: collectionId))
+          .where((Bookmark bookmark) => parsed.matches(bookmark,
+              tagId: tagId, collectionId: collectionId))
           .take(limit)
           .toList(growable: false);
     }

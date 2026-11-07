@@ -258,7 +258,11 @@ class SearchOperatorParser {
       'article' || 'post' || 'reading' => BookmarkContentType.article,
       'video' || 'movie' || 'clip' => BookmarkContentType.video,
       'image' || 'photo' || 'picture' => BookmarkContentType.image,
-      'discussion' || 'tweet' || 'twitter' || 'reddit' || 'thread' =>
+      'discussion' ||
+      'tweet' ||
+      'twitter' ||
+      'reddit' ||
+      'thread' =>
         BookmarkContentType.discussion,
       'audio' || 'podcast' || 'music' => BookmarkContentType.audio,
       'code' || 'repo' || 'repository' || 'github' => BookmarkContentType.code,

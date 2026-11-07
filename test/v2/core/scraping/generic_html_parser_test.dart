@@ -269,7 +269,8 @@ void main() {
         'https://example.com/blog',
         html: html,
       );
-      expect(result.heroImageUrl, 'https://example.com/uploads/article-cover.jpg');
+      expect(
+          result.heroImageUrl, 'https://example.com/uploads/article-cover.jpg');
     });
 
     test(
@@ -517,7 +518,8 @@ void main() {
   // ─── Turkish Charset & Byte Decoding ───────────────────────────
 
   group('Charset & Turkish character decoding', () {
-    const String turkishTitle = 'Çağdaş Türkçe İletişim: Şeker, Gül, Öykü ve Işık';
+    const String turkishTitle =
+        'Çağdaş Türkçe İletişim: Şeker, Gül, Öykü ve Işık';
 
     test('decodes UTF-8 bytes with Turkish characters cleanly', () async {
       const String html = '''
@@ -576,11 +578,13 @@ void main() {
   // ─── Tier 4: 403/503 Graceful Fallback & Slug Synthesis ────────
 
   group('Tier 4: HTTP 403/503 graceful fallback & slug humanization', () {
-    test('synthesizes clean title and siteName from Medium/news URL on HTTP 403',
+    test(
+        'synthesizes clean title and siteName from Medium/news URL on HTTP 403',
         () async {
       final Dio blockedDio = Dio();
       blockedDio.httpClientAdapter = _Blocking403Adapter();
-      final GenericHtmlParser blockedParser = GenericHtmlParser(dio: blockedDio);
+      final GenericHtmlParser blockedParser =
+          GenericHtmlParser(dio: blockedDio);
 
       final MetadataResult mediumResult = await blockedParser.parse(
         'https://medium.com/@author/building-resilient-scrapers-a1b2c3d4e5f6',

@@ -79,8 +79,7 @@ class YouTubeParser implements SourceParser {
         title: data['title'] as String?,
         author: data['author_name'] as String?,
         siteName: 'YouTube',
-        heroImageUrl:
-            (data['thumbnail_url'] as String?) ?? fallbackThumbnail,
+        heroImageUrl: (data['thumbnail_url'] as String?) ?? fallbackThumbnail,
         faviconUrl: 'https://www.youtube.com/favicon.ico',
       );
     } catch (_) {

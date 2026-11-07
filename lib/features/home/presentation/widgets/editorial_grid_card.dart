@@ -68,19 +68,15 @@ class _EditorialGridCardState extends State<EditorialGridCard> {
     final bool reduceMotion = MediaQuery.of(context).disableAnimations;
     final Bookmark bookmark = widget.bookmark;
 
-    final Color surfaceColor = isDark
-        ? EditorialGridCard.darkSurface
-        : ReadingRoomColors.lightSurface;
-    final Color defaultBorderColor = isDark
-        ? EditorialGridCard.darkBorder
-        : ReadingRoomColors.lightOutline;
-    final Color borderColor =
-        widget.selectionMode && widget.isSelected
-            ? theme.colorScheme.primary
-            : defaultBorderColor;
-    final Color titleColor = isDark
-        ? const Color(0xFFEDEDEC)
-        : ReadingRoomColors.lightInk;
+    final Color surfaceColor =
+        isDark ? EditorialGridCard.darkSurface : ReadingRoomColors.lightSurface;
+    final Color defaultBorderColor =
+        isDark ? EditorialGridCard.darkBorder : ReadingRoomColors.lightOutline;
+    final Color borderColor = widget.selectionMode && widget.isSelected
+        ? theme.colorScheme.primary
+        : defaultBorderColor;
+    final Color titleColor =
+        isDark ? const Color(0xFFEDEDEC) : ReadingRoomColors.lightInk;
 
     final String? rawSnippet = (bookmark.snippet?.trim().isNotEmpty ?? false)
         ? bookmark.snippet!.trim()
@@ -352,9 +348,8 @@ class TypographicEditorialCover extends StatelessWidget {
         : ReadingRoomColors.lightSurfaceRaised.withValues(alpha: 0.85);
     final Color badgeBorder =
         isDark ? const Color(0xFF2E2E2B) : ReadingRoomColors.lightOutline;
-    final Color badgeText = isDark
-        ? const Color(0xFFA0A09E)
-        : ReadingRoomColors.lightMuted;
+    final Color badgeText =
+        isDark ? const Color(0xFFA0A09E) : ReadingRoomColors.lightMuted;
 
     final String monogram = monogramFor(bookmark);
 
@@ -531,13 +526,13 @@ class _EditorialGridTagPills extends ConsumerWidget {
         ];
         if (resolved.isEmpty) return const SizedBox.shrink();
 
-        final List<Tag> visible = resolved.take(_maxTags).toList(growable: false);
+        final List<Tag> visible =
+            resolved.take(_maxTags).toList(growable: false);
         return Wrap(
           spacing: 4,
           runSpacing: 4,
           children: <Widget>[
-            for (final Tag tag in visible)
-              _buildPill(context, tag),
+            for (final Tag tag in visible) _buildPill(context, tag),
           ],
         );
       },

@@ -59,7 +59,8 @@ void main() {
             <BookmarkCollection>[],
           ),
         ),
-        notificationServiceProvider.overrideWithValue(FakeNotificationService()),
+        notificationServiceProvider
+            .overrideWithValue(FakeNotificationService()),
       ],
       child: const MarkyApp(),
     );

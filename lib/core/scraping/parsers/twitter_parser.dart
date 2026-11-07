@@ -120,8 +120,8 @@ class TwitterParser implements SourceParser {
         final Map<String, dynamic>? article =
             tweet['article'] as Map<String, dynamic>?;
         final String? articleTitle = article?['title'] as String?;
-        final String? articleContent = (article?['content'] ??
-            article?['preview_text']) as String?;
+        final String? articleContent =
+            (article?['content'] ?? article?['preview_text']) as String?;
         final String? articleCover = article?['cover_image'] as String?;
 
         // 2. Media
@@ -163,9 +163,8 @@ class TwitterParser implements SourceParser {
         String displayTitle = articleTitle ?? '';
         if (displayTitle.isEmpty) {
           if (rawText != null && rawText.isNotEmpty) {
-            displayTitle = rawText.length > 80
-                ? '${rawText.substring(0, 80)}…'
-                : rawText;
+            displayTitle =
+                rawText.length > 80 ? '${rawText.substring(0, 80)}…' : rawText;
           } else {
             displayTitle = 'Post by $authorDisplay';
           }

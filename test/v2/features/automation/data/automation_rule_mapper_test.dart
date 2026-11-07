@@ -62,7 +62,8 @@ void main() {
       expect(entity.triggerValue, '15');
 
       final AutomationRule restored = AutomationRuleMapper.toDomain(entity);
-      expect(restored.triggerType, AutomationTriggerType.readingTimeGreaterThan);
+      expect(
+          restored.triggerType, AutomationTriggerType.readingTimeGreaterThan);
       expect(restored.triggerValue, '15');
       expect(restored.actions, rule.actions);
     });

@@ -116,10 +116,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         RegExp(r'(^|\s)' + RegExp.escape(op) + r'($|\s)', caseSensitive: false);
     String updated;
     if (regex.hasMatch(current)) {
-      updated = current
-          .replaceAll(regex, ' ')
-          .trim()
-          .replaceAll(RegExp(r'\s+'), ' ');
+      updated =
+          current.replaceAll(regex, ' ').trim().replaceAll(RegExp(r'\s+'), ' ');
     } else {
       final String trimmed = current.trim();
       updated = trimmed.isEmpty ? op : '$trimmed $op';

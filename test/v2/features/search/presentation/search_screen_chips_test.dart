@@ -21,11 +21,13 @@ import 'package:marky/features/tags/domain/tag_repository.dart';
 import 'package:marky/l10n/app_localizations.dart';
 
 void main() {
-  testWidgets('SearchScreen operator chips toggle search operators into query field',
+  testWidgets(
+      'SearchScreen operator chips toggle search operators into query field',
       (WidgetTester tester) async {
     final _MockBookmarkRepository bookmarkRepo = _MockBookmarkRepository();
     final _MockTagRepository tagRepo = _MockTagRepository();
-    final _MockCollectionRepository collectionRepo = _MockCollectionRepository();
+    final _MockCollectionRepository collectionRepo =
+        _MockCollectionRepository();
     final _MockSearchQueryRepository queryRepo = _MockSearchQueryRepository();
 
     await tester.pumpWidget(
@@ -33,7 +35,8 @@ void main() {
         overrides: <Override>[
           bookmarkRepositoryProvider.overrideWithValue(bookmarkRepo),
           tagRepositoryProvider.overrideWithValue(tagRepo),
-          bookmarkCollectionRepositoryProvider.overrideWithValue(collectionRepo),
+          bookmarkCollectionRepositoryProvider
+              .overrideWithValue(collectionRepo),
           searchQueryRepositoryProvider.overrideWithValue(queryRepo),
           recentSearchQueriesProvider.overrideWith(
             (ref) => Stream<List<SearchQuery>>.value(<SearchQuery>[]),

@@ -50,10 +50,9 @@ class ArticleExtractorService {
     Bookmark bookmark, {
     bool forceRefresh = false,
   }) async {
-    final String targetUrl =
-        (bookmark.canonicalUrl?.trim().isNotEmpty ?? false)
-            ? bookmark.canonicalUrl!
-            : bookmark.originalUrl;
+    final String targetUrl = (bookmark.canonicalUrl?.trim().isNotEmpty ?? false)
+        ? bookmark.canonicalUrl!
+        : bookmark.originalUrl;
 
     final String cacheKey = md5.convert(utf8.encode(targetUrl)).toString();
 
@@ -205,7 +204,8 @@ class ArticleExtractorService {
       for (final String p in paragraphs) {
         final String clean = _cleanText(p);
         if (clean.length > 25) {
-          blocks.add(ArticleBlock(type: ArticleBlockType.paragraph, text: clean));
+          blocks
+              .add(ArticleBlock(type: ArticleBlockType.paragraph, text: clean));
         }
       }
     }
@@ -261,12 +261,14 @@ class ArticleExtractorService {
       } else if (tag == 'p') {
         final String text = _cleanText(child.text);
         if (text.length > 20) {
-          blocks.add(ArticleBlock(type: ArticleBlockType.paragraph, text: text));
+          blocks
+              .add(ArticleBlock(type: ArticleBlockType.paragraph, text: text));
         }
       } else if (tag == 'blockquote') {
         final String text = _cleanText(child.text);
         if (text.isNotEmpty) {
-          blocks.add(ArticleBlock(type: ArticleBlockType.blockquote, text: text));
+          blocks
+              .add(ArticleBlock(type: ArticleBlockType.blockquote, text: text));
         }
       } else if (tag == 'pre') {
         final String code = child.text.trim();
@@ -391,8 +393,7 @@ class ArticleExtractorService {
           options: Options(
             responseType: ResponseType.json,
             headers: <String, String>{
-              'User-Agent':
-                  'android:com.marky.app:v1.0.0 (by /u/marky_reader)',
+              'User-Agent': 'android:com.marky.app:v1.0.0 (by /u/marky_reader)',
               'Accept': 'application/json',
             },
           ),
@@ -601,8 +602,7 @@ class ArticleExtractorService {
               ?.attributes['content'] ??
           bookmark.displayTitle;
       final String? author = shreddit?.attributes['author'];
-      final String? subreddit =
-          shreddit?.attributes['subreddit-prefixed-name'];
+      final String? subreddit = shreddit?.attributes['subreddit-prefixed-name'];
       final String? heroImage = shreddit?.attributes['content-href'] ??
           doc
               .querySelector('meta[property="og:image"]')
@@ -695,10 +695,8 @@ class ArticleExtractorService {
       }
 
       final dynamic tweetAuthor = tweetData['author'];
-      final String author = (tweetAuthor is Map
-              ? tweetAuthor['name'] as String?
-              : null) ??
-          user;
+      final String author =
+          (tweetAuthor is Map ? tweetAuthor['name'] as String? : null) ?? user;
       final String handle =
           '@${(tweetAuthor is Map ? tweetAuthor['screen_name'] as String? : null) ?? user}';
 
@@ -721,7 +719,8 @@ class ArticleExtractorService {
       if (blocks.isEmpty) {
         final String text = (tweetData['text'] as String?) ?? '';
         if (text.isNotEmpty) {
-          blocks.add(ArticleBlock(type: ArticleBlockType.paragraph, text: text));
+          blocks
+              .add(ArticleBlock(type: ArticleBlockType.paragraph, text: text));
         }
       }
 
@@ -773,9 +772,8 @@ class ArticleExtractorService {
         }
       }
 
-      final String finalTitle = articleTitle.isNotEmpty
-          ? articleTitle
-          : '$author ($handle)';
+      final String finalTitle =
+          articleTitle.isNotEmpty ? articleTitle : '$author ($handle)';
 
       final int wordCount = blocks.fold<int>(
         0,

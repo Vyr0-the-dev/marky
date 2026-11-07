@@ -10,8 +10,10 @@ void main() {
     test('accepts twitter.com, x.com, mobile.twitter.com', () {
       expect(parser.canHandle('https://twitter.com/user/status/123'), isTrue);
       expect(parser.canHandle('https://x.com/user/status/123'), isTrue);
-      expect(parser.canHandle('https://mobile.twitter.com/user/status/123'), isTrue);
-      expect(parser.canHandle('https://x.com/user/article/1850000000000'), isTrue);
+      expect(parser.canHandle('https://mobile.twitter.com/user/status/123'),
+          isTrue);
+      expect(
+          parser.canHandle('https://x.com/user/article/1850000000000'), isTrue);
     });
 
     test('rejects other hosts', () {
@@ -44,7 +46,8 @@ void main() {
         ),
       );
 
-      final MetadataResult result = await parser.parse('https://x.com/flutterdev/status/123456789');
+      final MetadataResult result =
+          await parser.parse('https://x.com/flutterdev/status/123456789');
 
       expect(result.title, 'Flutter 3.29 is out with exciting features!');
       expect(result.author, 'Flutter Dev (@flutterdev)');
@@ -67,7 +70,8 @@ void main() {
               },
               'article': <String, dynamic>{
                 'title': 'The Architecture of Autonomous Agents in 2026',
-                'preview_text': 'A detailed analysis of multi-agent loops and sandboxing...',
+                'preview_text':
+                    'A detailed analysis of multi-agent loops and sandboxing...',
                 'cover_image': 'https://pbs.twimg.com/article_cover.jpg',
               },
             },
@@ -75,12 +79,14 @@ void main() {
         ),
       );
 
-      final MetadataResult result = await parser.parse('https://x.com/techresearcher/article/18599999999');
+      final MetadataResult result = await parser
+          .parse('https://x.com/techresearcher/article/18599999999');
 
       expect(result.title, 'The Architecture of Autonomous Agents in 2026');
       expect(result.author, 'Tech Researcher (@techresearcher)');
       expect(result.heroImageUrl, 'https://pbs.twimg.com/article_cover.jpg');
-      expect(result.snippet, contains('A detailed analysis of multi-agent loops'));
+      expect(
+          result.snippet, contains('A detailed analysis of multi-agent loops'));
     });
 
     test('includes quote tweet text if present', () async {
@@ -104,10 +110,12 @@ void main() {
         ),
       );
 
-      final MetadataResult result = await parser.parse('https://x.com/devlead/status/987654');
+      final MetadataResult result =
+          await parser.parse('https://x.com/devlead/status/987654');
 
       expect(result.snippet, contains('Totally agree with this take!'));
-      expect(result.snippet, contains('[Architect: Clean code is easier to maintain.]'));
+      expect(result.snippet,
+          contains('[Architect: Clean code is easier to maintain.]'));
     });
   });
 }
