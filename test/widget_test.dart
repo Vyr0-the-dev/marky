@@ -6,6 +6,7 @@ import 'package:marky/app/marky_app.dart';
 import 'package:marky/app/routing/app_router.dart';
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
+import 'package:marky/core/notifications/notification_service.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
@@ -20,8 +21,16 @@ import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
 import 'package:marky/features/tags/domain/tag_repository.dart';
 import 'package:marky/shared/widgets/marky_bottom_nav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'fakes/fake_notification_service.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'marky_onboarding_shown': true,
+    });
+  });
   Widget wrap({String? initialLocation}) {
     return ProviderScope(
       overrides: <Override>[
@@ -50,6 +59,7 @@ void main() {
             <BookmarkCollection>[],
           ),
         ),
+        notificationServiceProvider.overrideWithValue(FakeNotificationService()),
       ],
       child: const MarkyApp(),
     );
@@ -57,6 +67,7 @@ void main() {
 
   testWidgets('renders the home shell', (WidgetTester tester) async {
     await tester.pumpWidget(wrap());
+    await tester.pump();
     await tester.pumpAndSettle();
 
     expect(find.text('Marky'), findsOneWidget);

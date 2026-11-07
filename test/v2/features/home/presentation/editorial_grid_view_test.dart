@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -205,7 +206,7 @@ void main() {
       final TestGesture gesture = await tester.startGesture(
         tester.getCenter(firstCard),
       );
-      await tester.pump();
+      await tester.pump(kPressTimeout);
       expect(tester.widget<AnimatedScale>(scaleFinder).scale, 0.97);
 
       await gesture.cancel();

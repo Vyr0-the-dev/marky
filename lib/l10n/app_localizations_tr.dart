@@ -666,7 +666,48 @@ class AppLocalizationsTr extends AppLocalizations {
   String get swipeActionDelete => 'Sil';
 
   @override
+  String get swipeActionOpenReader => 'Okuma Modunda Aç';
+
+  @override
+  String get swipeActionTogglePin => 'Sabitle / Kaldır';
+
+  @override
   String get swipeActionNone => 'Yok';
+
+  @override
+  String get snackbarBookmarkPinned => 'Yer işareti başa sabitlendi';
+
+  @override
+  String get snackbarBookmarkUnpinned => 'Yer işareti sabitlemesi kaldırıldı';
+
+  @override
+  String readingTimeMinutes(int count) {
+    return '$count dk okuma';
+  }
+
+  @override
+  String get contentTypeVideo => 'Video';
+
+  @override
+  String get contentTypeCode => 'Kod';
+
+  @override
+  String get contentTypeDiscussion => 'Tartışma';
+
+  @override
+  String get contentTypeDocument => 'Belge';
+
+  @override
+  String get contentTypeAudio => 'Ses';
+
+  @override
+  String get contentTypeProduct => 'Ürün';
+
+  @override
+  String get contentTypeImage => 'Görsel';
+
+  @override
+  String get contentTypeArticle => 'Yazı';
 
   @override
   String get snackbarMarkedAsFavorite => 'Favorilere eklendi';

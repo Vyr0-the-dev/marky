@@ -260,7 +260,27 @@
   "swipeActionToggleArchive": "Arşivle / Arşivden çıkar",
   "swipeActionToggleFavorite": "Favorilere ekle / çıkar",
   "swipeActionDelete": "Sil",
+  "swipeActionOpenReader": "Okuma Modunda Aç",
+  "swipeActionTogglePin": "Sabitle / Kaldır",
   "swipeActionNone": "Yok",
+  "snackbarBookmarkPinned": "Yer işareti başa sabitlendi",
+  "snackbarBookmarkUnpinned": "Yer işareti sabitlemesi kaldırıldı",
+  "readingTimeMinutes": "{count} dk okuma",
+  "@readingTimeMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contentTypeVideo": "Video",
+  "contentTypeCode": "Kod",
+  "contentTypeDiscussion": "Tartışma",
+  "contentTypeDocument": "Belge",
+  "contentTypeAudio": "Ses",
+  "contentTypeProduct": "Ürün",
+  "contentTypeImage": "Görsel",
+  "contentTypeArticle": "Yazı",
   "snackbarMarkedAsFavorite": "Favorilere eklendi",
   "snackbarMarkedAsUnfavorite": "Favorilerden çıkarıldı",
   "actionUnarchive": "Arşivden çıkar",

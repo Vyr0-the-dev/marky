@@ -51,25 +51,25 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('LIBRARY OVERVIEW'), findsOneWidget);
-      expect(find.text('75% Read'), findsOneWidget);
+      expect(find.text('KÜTÜPHANE GENEL BAKIŞI'), findsOneWidget);
+      expect(find.text('%75 Okundu'), findsOneWidget);
       expect(find.text('18'), findsOneWidget); // Read count (24 - 6)
       expect(find.text('24'), findsWidgets);
-      expect(find.text('This week'), findsOneWidget);
-      expect(find.text('7-day Timeline'), findsOneWidget);
-      expect(find.text('8 saved'), findsOneWidget);
+      expect(find.text('Bu Hafta'), findsOneWidget);
+      expect(find.text('Son 7 Günlük Hareket'), findsOneWidget);
+      expect(find.text('8 kayıt'), findsOneWidget);
 
       await tester.scrollUntilVisible(
-        find.text('Top Tags'),
+        find.text('Popüler Etiketler'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Top Sources'), findsOneWidget);
+      expect(find.text('En Çok Okunan Kaynaklar'), findsOneWidget);
       expect(find.text('github.com'), findsWidgets);
-      expect(find.text('Source Breakdown'), findsOneWidget);
-      expect(find.text('Top Tags'), findsOneWidget);
+      expect(find.text('Kaynak Dağılımı'), findsOneWidget);
+      expect(find.text('Popüler Etiketler'), findsOneWidget);
       expect(find.text('architecture'), findsOneWidget);
     },
   );

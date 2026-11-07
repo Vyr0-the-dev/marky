@@ -21,6 +21,13 @@ import 'package:share_plus/share_plus.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
+  bool _isTurkish(BuildContext context) {
+    return Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('tr');
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppLocalizations? l10n = AppLocalizations.of(context);
@@ -144,11 +151,14 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 leading: const Icon(Icons.download),
                 title: Text(
-                  l10n?.settingsRestoreBackupTitle ?? 'Restore backup (JSON)',
+                  _isTurkish(context)
+                      ? 'Yedek veya Yer İmlerini İçe Aktar (JSON, HTML)'
+                      : 'Restore Backup / Import (JSON, HTML)',
                 ),
                 subtitle: Text(
-                  l10n?.settingsRestoreBackupSubtitle ??
-                      'Duplicates are merged safely',
+                  _isTurkish(context)
+                      ? 'Marky yedeği veya tarayıcı yer imleri (Chrome, Firefox, Pocket)'
+                      : 'Marky backup or browser bookmarks (Chrome, Firefox, Pocket)',
                 ),
                 onTap: () => _import(context, ref),
               ),
@@ -162,6 +172,23 @@ class SettingsScreen extends ConsumerWidget {
                   l10n?.settingsDashboardSubtitle ?? 'Stats & analytics',
                 ),
                 onTap: () => context.push(Routes.stats),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: ReadingRoomSpacing.lg,
+                ),
+                leading: const Icon(Icons.health_and_safety_outlined),
+                title: Text(
+                  _isTurkish(context)
+                      ? 'Bağlantı Sağlık Kontrolü'
+                      : 'Broken Link Checker',
+                ),
+                subtitle: Text(
+                  _isTurkish(context)
+                      ? '404 ve ulaşılamayan bağlantıları tara'
+                      : 'Audit and clean up 404/dead links',
+                ),
+                onTap: () => context.push(Routes.brokenLinks),
               ),
               const ListTile(
                 contentPadding: EdgeInsets.symmetric(
@@ -303,6 +330,10 @@ class SettingsScreen extends ConsumerWidget {
         return l10n?.swipeActionToggleFavorite ?? 'Favorite / Unfavorite';
       case SwipeAction.delete:
         return l10n?.swipeActionDelete ?? 'Delete';
+      case SwipeAction.openReader:
+        return l10n?.swipeActionOpenReader ?? 'Open in Reader';
+      case SwipeAction.togglePin:
+        return l10n?.swipeActionTogglePin ?? 'Pin / Unpin';
       case SwipeAction.none:
         return l10n?.swipeActionNone ?? 'None';
     }
@@ -732,16 +763,25 @@ class SettingsScreen extends ConsumerWidget {
     try {
       final FilePickerResult? picked = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: <String>['json'],
+        allowedExtensions: <String>['json', 'html', 'htm'],
       );
       if (picked == null || picked.files.isEmpty) return;
 
       final String? path = picked.files.single.path;
       if (path == null) return;
 
-      final String jsonString = await File(path).readAsString();
-      final ImportResult result =
-          await ref.read(importServiceProvider).importAll(jsonString);
+      final String content = await File(path).readAsString();
+      final String trimmed = content.trim().toLowerCase();
+      final bool isHtml = path.toLowerCase().endsWith('.html') ||
+          path.toLowerCase().endsWith('.htm') ||
+          trimmed.startsWith('<!doctype') ||
+          trimmed.startsWith('<dl') ||
+          trimmed.startsWith('<html') ||
+          trimmed.startsWith('<title>bookmarks');
+
+      final ImportResult result = isHtml
+          ? await ref.read(importServiceProvider).importHtmlBookmarks(content)
+          : await ref.read(importServiceProvider).importAll(content);
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context)

@@ -20,9 +20,11 @@ import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/home/presentation/feed_state.dart';
 import 'package:marky/features/home/presentation/widgets/batch_action_bar.dart';
 import 'package:marky/features/home/presentation/widgets/bookmark_card.dart';
+import 'package:marky/features/home/presentation/widgets/daily_queue_card.dart';
 import 'package:marky/features/home/presentation/widgets/editorial_grid_card.dart';
 import 'package:marky/features/home/presentation/widgets/feed_filter_bar.dart';
 import 'package:marky/features/home/presentation/widgets/feed_skeleton.dart';
+import 'package:marky/features/reader/presentation/reader_screen.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
 import 'package:marky/features/reminders/domain/reminder_scheduler.dart';
 import 'package:marky/features/tags/data/tag_providers.dart';
@@ -98,6 +100,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _NarrowingChip(query: query),
 
           const _UnreadReminderNudge(),
+
+          if (feedState.viewMode == FeedViewMode.list &&
+              (query.filter == BookmarkFeedFilter.all ||
+                  query.filter == BookmarkFeedFilter.unread))
+            const DailyQueueCard(),
 
           // ── Feed body ──────────────────────────────────────
           Expanded(
@@ -735,6 +742,35 @@ class _SwipeableCard extends ConsumerWidget {
         }
         return true;
 
+      case SwipeAction.openReader:
+        unawaited(HapticFeedback.lightImpact());
+        unawaited(Navigator.of(context).push(ReaderScreen.route(bookmark)));
+        return false;
+
+      case SwipeAction.togglePin:
+        unawaited(HapticFeedback.lightImpact());
+        final bool newPinned = !bookmark.isPinned;
+        await repo.save(bookmark.copyWith(isPinned: newPinned));
+        if (context.mounted) {
+          final ScaffoldMessengerState messenger =
+              ScaffoldMessenger.of(context);
+          messenger.hideCurrentSnackBar();
+          final String message = newPinned
+              ? (l10n?.snackbarBookmarkPinned ?? 'Bookmark pinned')
+              : (l10n?.snackbarBookmarkUnpinned ?? 'Bookmark unpinned');
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(message),
+              action: SnackBarAction(
+                label: l10n?.actionUndo ?? 'Undo',
+                onPressed: () =>
+                    repo.save(bookmark.copyWith(isPinned: !newPinned)),
+              ),
+            ),
+          );
+        }
+        return false;
+
       case SwipeAction.none:
         return false;
     }
@@ -792,6 +828,22 @@ class _SwipeableCard extends ConsumerWidget {
         actionColor = theme.colorScheme.error;
         icon = Icons.delete_outline;
         label = l10n?.actionDelete ?? 'Delete';
+        break;
+
+      case SwipeAction.openReader:
+        actionColor = theme.colorScheme.primary;
+        icon = Icons.chrome_reader_mode_outlined;
+        label = l10n?.swipeActionOpenReader ?? 'Reader';
+        break;
+
+      case SwipeAction.togglePin:
+        actionColor = theme.colorScheme.tertiary;
+        icon = bookmark.isPinned
+            ? Icons.push_pin_outlined
+            : Icons.push_pin_rounded;
+        label = bookmark.isPinned
+            ? (l10n?.detailActionUnpin ?? 'Unpin')
+            : (l10n?.detailActionPin ?? 'Pin');
         break;
 
       case SwipeAction.none:

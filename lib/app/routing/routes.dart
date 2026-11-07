@@ -39,6 +39,9 @@ abstract final class Routes {
   /// Automation rules list — reached from Settings.
   static const String automationRules = '/settings/automation';
 
+  /// Broken link checker — reached from Settings.
+  static const String brokenLinks = '/settings/broken-links';
+
   /// Automation rule editor (create).
   static const String automationRuleNew = '/settings/automation/new';
 

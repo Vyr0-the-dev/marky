@@ -102,6 +102,12 @@ enum SwipeAction {
   /// Permanently removes the bookmark.
   delete,
 
+  /// Opens the bookmark directly in Reader mode.
+  openReader,
+
+  /// Toggles pinned status for the bookmark.
+  togglePin,
+
   /// Disables swipe in that direction.
   none;
 

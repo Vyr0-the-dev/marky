@@ -13,6 +13,7 @@ import 'package:marky/features/capture/domain/duplicate_detector.dart';
 import 'package:marky/features/capture/domain/upsert_merge_service.dart';
 import 'package:marky/features/collections/domain/bookmark_collection.dart';
 import 'package:marky/features/collections/domain/bookmark_collection_repository.dart';
+import 'package:marky/features/import_export/domain/netscape_bookmark_parser.dart';
 import 'package:marky/features/tags/domain/tag.dart';
 import 'package:marky/features/tags/domain/tag_repository.dart';
 
@@ -135,6 +136,116 @@ class ImportService {
         urlHash: incoming.urlHash!,
         canonicalUrl: incoming.canonicalUrl!,
         externalContentId: incoming.externalContentId,
+      );
+
+      if (duplicate.isNew) {
+        await _bookmarks.save(incoming);
+        bookmarksImported++;
+      } else {
+        final Bookmark existing = duplicate.existingBookmark!;
+        final Bookmark merged = _mergeService.merge(existing, incoming);
+        await _bookmarks.save(merged);
+        bookmarksMerged++;
+      }
+    }
+
+    return ImportResult(
+      bookmarksImported: bookmarksImported,
+      bookmarksMerged: bookmarksMerged,
+      bookmarksSkipped: bookmarksSkipped,
+      tagsImported: tagsImported,
+      collectionsImported: collectionsImported,
+    );
+  }
+
+  /// Parses HTML bookmarks (Netscape Bookmark format) and inserts missing entities.
+  Future<ImportResult> importHtmlBookmarks(String htmlString) async {
+    const NetscapeBookmarkParser parser = NetscapeBookmarkParser();
+    final List<NetscapeBookmarkEntry> entries = parser.parse(htmlString);
+
+    int bookmarksImported = 0;
+    int bookmarksMerged = 0;
+    int bookmarksSkipped = 0;
+    int tagsImported = 0;
+    int collectionsImported = 0;
+
+    final Map<String, int> folderToCollectionId = <String, int>{};
+    final Map<String, int> tagNameToId = <String, int>{};
+
+    for (final NetscapeBookmarkEntry entry in entries) {
+      final String? canonicalUrl = _normalizer.normalize(entry.url);
+      if (canonicalUrl == null) {
+        bookmarksSkipped++;
+        continue;
+      }
+
+      final String urlHash = _hasher.hash(canonicalUrl);
+      final String? externalContentId =
+          _contentIdExtractor.extract(canonicalUrl);
+
+      // Resolve collection from folder
+      final List<int> collectionIds = <int>[];
+      if (entry.folder != null && entry.folder!.trim().isNotEmpty) {
+        final String folder = entry.folder!.trim();
+        if (!folderToCollectionId.containsKey(folder)) {
+          final BookmarkCollection? existing = await _collections
+              .findBySlug(BookmarkCollection.slugify(folder));
+          if (existing != null && existing.id != null) {
+            folderToCollectionId[folder] = existing.id!;
+          } else {
+            final BookmarkCollection created =
+                await _collections.createFromTitle(folder);
+            if (created.id != null) {
+              folderToCollectionId[folder] = created.id!;
+              collectionsImported++;
+            }
+          }
+        }
+        final int? collId = folderToCollectionId[folder];
+        if (collId != null) collectionIds.add(collId);
+      }
+
+      // Resolve tags
+      final List<int> tagIds = <int>[];
+      for (final String tagName in entry.tags) {
+        final String trimmed = tagName.trim();
+        if (trimmed.isEmpty) continue;
+        if (!tagNameToId.containsKey(trimmed)) {
+          final Tag? existing = await _tags.findBySlug(Tag.slugify(trimmed));
+          if (existing != null && existing.id != null) {
+            tagNameToId[trimmed] = existing.id!;
+          } else {
+            final Tag created = await _tags.createFromName(trimmed);
+            if (created.id != null) {
+              tagNameToId[trimmed] = created.id!;
+              tagsImported++;
+            }
+          }
+        }
+        final int? tId = tagNameToId[trimmed];
+        if (tId != null && !tagIds.contains(tId)) tagIds.add(tId);
+      }
+
+      final DateTime now = DateTime.now();
+      final Bookmark incoming = Bookmark(
+        originalUrl: entry.url,
+        canonicalUrl: canonicalUrl,
+        urlHash: urlHash,
+        externalContentId: externalContentId,
+        title: entry.title,
+        normalizedHost: _normalizer.extractNormalizedHost(canonicalUrl),
+        contentType: _contentTypeDetector.detect(canonicalUrl),
+        faviconUrl: entry.iconUrl,
+        collectionIds: collectionIds,
+        tagIds: tagIds,
+        createdAt: entry.createdAt ?? now,
+        updatedAt: now,
+      );
+
+      final DuplicateCheckResult duplicate = await _duplicateDetector.check(
+        urlHash: urlHash,
+        canonicalUrl: canonicalUrl,
+        externalContentId: externalContentId,
       );
 
       if (duplicate.isNew) {

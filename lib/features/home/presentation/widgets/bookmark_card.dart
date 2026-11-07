@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/database/enums/bookmark_content_type.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
@@ -269,6 +270,16 @@ class _StatusRow extends StatelessWidget {
 
     final List<Widget> badges = <Widget>[];
 
+    final Widget? typeBadge = _buildContentTypeBadge(context, theme, muted);
+    if (typeBadge != null) {
+      badges.add(typeBadge);
+    }
+
+    final Widget? readingBadge = _buildReadingTimeBadge(context, theme, muted);
+    if (readingBadge != null) {
+      badges.add(readingBadge);
+    }
+
     if (bookmark.isFavorite) {
       badges.add(Icon(Icons.favorite, size: iconSize, color: muted));
     }
@@ -287,7 +298,121 @@ class _StatusRow extends StatelessWidget {
 
     return Wrap(
       spacing: ReadingRoomSpacing.sm,
+      runSpacing: ReadingRoomSpacing.xs,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: badges,
+    );
+  }
+
+  Widget? _buildContentTypeBadge(
+    BuildContext context,
+    ThemeData theme,
+    Color muted,
+  ) {
+    final IconData icon;
+    final String label;
+
+    switch (bookmark.contentType) {
+      case BookmarkContentType.video:
+        icon = Icons.play_circle_outline_rounded;
+        label = 'Video';
+        break;
+      case BookmarkContentType.code:
+        icon = Icons.code_rounded;
+        label = 'Code';
+        break;
+      case BookmarkContentType.discussion:
+        icon = Icons.forum_outlined;
+        label = 'Forum';
+        break;
+      case BookmarkContentType.document:
+        icon = Icons.description_outlined;
+        label = 'Doc';
+        break;
+      case BookmarkContentType.audio:
+        icon = Icons.headphones_outlined;
+        label = 'Audio';
+        break;
+      case BookmarkContentType.product:
+        icon = Icons.shopping_bag_outlined;
+        label = 'Product';
+        break;
+      case BookmarkContentType.image:
+        icon = Icons.image_outlined;
+        label = 'Image';
+        break;
+      case BookmarkContentType.article:
+      case BookmarkContentType.unknown:
+        return null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.5),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 11, color: muted),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: ReadingRoomTextStyles.metadata(context).copyWith(
+              fontSize: 10,
+              color: muted,
+              height: 1.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildReadingTimeBadge(
+    BuildContext context,
+    ThemeData theme,
+    Color muted,
+  ) {
+    final int? minutes = bookmark.readingTimeMinutes;
+    if (minutes == null || minutes <= 0) return null;
+
+    final bool isTurkish = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('tr');
+    final String label = isTurkish ? '$minutes dk' : '${minutes}m';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.5),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(Icons.auto_stories_outlined, size: 11, color: muted),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: ReadingRoomTextStyles.metadata(context).copyWith(
+              fontSize: 10,
+              color: muted,
+              height: 1.1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

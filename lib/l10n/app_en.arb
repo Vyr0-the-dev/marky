@@ -260,7 +260,27 @@
   "swipeActionToggleArchive": "Archive / Unarchive",
   "swipeActionToggleFavorite": "Favorite / Unfavorite",
   "swipeActionDelete": "Delete",
+  "swipeActionOpenReader": "Open in Reader",
+  "swipeActionTogglePin": "Pin / Unpin",
   "swipeActionNone": "None",
+  "snackbarBookmarkPinned": "Bookmark pinned",
+  "snackbarBookmarkUnpinned": "Bookmark unpinned",
+  "readingTimeMinutes": "{count} min read",
+  "@readingTimeMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contentTypeVideo": "Video",
+  "contentTypeCode": "Code",
+  "contentTypeDiscussion": "Discussion",
+  "contentTypeDocument": "Document",
+  "contentTypeAudio": "Audio",
+  "contentTypeProduct": "Product",
+  "contentTypeImage": "Image",
+  "contentTypeArticle": "Article",
   "snackbarMarkedAsFavorite": "Added to favorites",
   "snackbarMarkedAsUnfavorite": "Removed from favorites",
   "actionUnarchive": "Unarchive",

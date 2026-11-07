@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/database/enums/bookmark_content_type.dart';
 import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/tags/data/tag_providers.dart';
@@ -444,6 +445,15 @@ class _EditorialMetaFooter extends StatelessWidget {
           ),
           const SizedBox(width: 6),
         ],
+        if (bookmark.contentType != BookmarkContentType.unknown &&
+            bookmark.contentType != BookmarkContentType.article) ...<Widget>[
+          Icon(
+            _contentTypeIcon(bookmark.contentType),
+            size: 11,
+            color: EditorialGridCard.metaColor,
+          ),
+          const SizedBox(width: 4),
+        ],
         Expanded(
           child: Text(
             metaText,
@@ -474,6 +484,27 @@ class _EditorialMetaFooter extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  static IconData _contentTypeIcon(BookmarkContentType type) {
+    switch (type) {
+      case BookmarkContentType.video:
+        return Icons.play_circle_outline_rounded;
+      case BookmarkContentType.code:
+        return Icons.code_rounded;
+      case BookmarkContentType.discussion:
+        return Icons.forum_outlined;
+      case BookmarkContentType.document:
+        return Icons.description_outlined;
+      case BookmarkContentType.audio:
+        return Icons.headphones_outlined;
+      case BookmarkContentType.product:
+        return Icons.shopping_bag_outlined;
+      case BookmarkContentType.image:
+        return Icons.image_outlined;
+      default:
+        return Icons.article_outlined;
+    }
   }
 }
 

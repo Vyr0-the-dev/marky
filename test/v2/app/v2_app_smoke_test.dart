@@ -12,6 +12,7 @@ import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/core/database/enums/bookmark_source_type.dart';
+import 'package:marky/core/notifications/notification_service.dart';
 import 'package:marky/features/add/presentation/add_screen.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
@@ -36,6 +37,9 @@ import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
 import 'package:marky/features/tags/domain/tag_repository.dart';
 import 'package:marky/shared/widgets/marky_bottom_nav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../fakes/fake_notification_service.dart';
 
 /// Faz 1 smoke tests for the Reading Room shell.
 ///
@@ -44,6 +48,11 @@ import 'package:marky/shared/widgets/marky_bottom_nav.dart';
 /// primary tabs swap correctly without the old shell's regressions
 /// (blank screens, missing nav, stuck branches).
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'marky_onboarding_shown': true,
+    });
+  });
   /// Builds a [MarkyApp] inside a [ProviderScope] pre-seeded with
   /// the given [initial] settings. Tests that don't care about a
   /// specific setting pass `null` and get the factory defaults.
@@ -83,6 +92,7 @@ void main() {
           (ref) =>
               Stream<List<BookmarkCollection>>.value(<BookmarkCollection>[]),
         ),
+        notificationServiceProvider.overrideWithValue(FakeNotificationService()),
       ],
       child: const MarkyApp(),
     );
@@ -95,6 +105,7 @@ void main() {
     return ProviderScope(
       overrides: <Override>[
         ...testAppSettingsOverrides(),
+        notificationServiceProvider.overrideWithValue(FakeNotificationService()),
         markyRouterProvider.overrideWith(
           (ref) => MarkyAppRouter.build(initialLocation: initialLocation),
         ),
@@ -161,6 +172,7 @@ void main() {
                 normalizedHost: 'example.com',
                 title: 'Semantic Article',
                 isFavorite: true,
+                scrapingStatus: BookmarkScrapingStatus.done,
                 createdAt: now,
                 updatedAt: now,
               ),
@@ -522,12 +534,12 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          expect(find.text('D2 Scale Link'), findsOneWidget);
+          expect(find.text('D2 Scale Link'), findsWidgets);
           expect(tester.takeException(), isNull);
 
-          await tester.tap(find.text('D2 Scale Link'));
+          await tester.tap(find.text('D2 Scale Link').first);
           await tester.pumpAndSettle();
-          expect(find.text('Metadata'), findsOneWidget);
+          expect(find.byIcon(Icons.info_outline_rounded), findsOneWidget);
           expect(tester.takeException(), isNull);
 
           await tester.binding.handlePopRoute();
@@ -667,7 +679,7 @@ void main() {
 
       await tester.tap(find.byTooltip('View detail'));
       await tester.pumpAndSettle();
-      expect(find.text('Metadata'), findsOneWidget);
+      expect(find.byIcon(Icons.info_outline_rounded), findsOneWidget);
       expect(find.text('B4 Smoke Link'), findsWidgets);
 
       await tester.binding.handlePopRoute();
@@ -681,7 +693,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('B4 Smoke Link'), findsOneWidget);
+      expect(find.text('B4 Smoke Link'), findsWidgets);
 
       await tester.tap(
         find.descendant(
@@ -693,11 +705,11 @@ void main() {
       await tester.enterText(find.byType(TextField), 'b4 smoke');
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
-      expect(find.text('B4 Smoke Link'), findsOneWidget);
+      expect(find.text('B4 Smoke Link'), findsWidgets);
 
       await tester.tap(find.text('B4 Smoke Link'));
       await tester.pumpAndSettle();
-      expect(find.text('Metadata'), findsOneWidget);
+      expect(find.byIcon(Icons.info_outline_rounded), findsOneWidget);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -821,13 +833,13 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Görünüm'), findsOneWidget);
-      expect(find.text('Unread reminders'), findsOneWidget);
+      expect(find.text('Okunmamış Bağlantı Hatırlatıcısı'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Advanced'),
+        find.text('Gelişmiş'),
         150,
       );
-      expect(find.text('Advanced'), findsOneWidget);
-      await tester.tap(find.text('Advanced'));
+      expect(find.text('Gelişmiş'), findsOneWidget);
+      await tester.tap(find.text('Gelişmiş'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.text('Yedeği dışa aktar (JSON)'),

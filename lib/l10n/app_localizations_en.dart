@@ -662,7 +662,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get swipeActionDelete => 'Delete';
 
   @override
+  String get swipeActionOpenReader => 'Open in Reader';
+
+  @override
+  String get swipeActionTogglePin => 'Pin / Unpin';
+
+  @override
   String get swipeActionNone => 'None';
+
+  @override
+  String get snackbarBookmarkPinned => 'Bookmark pinned';
+
+  @override
+  String get snackbarBookmarkUnpinned => 'Bookmark unpinned';
+
+  @override
+  String readingTimeMinutes(int count) {
+    return '$count min read';
+  }
+
+  @override
+  String get contentTypeVideo => 'Video';
+
+  @override
+  String get contentTypeCode => 'Code';
+
+  @override
+  String get contentTypeDiscussion => 'Discussion';
+
+  @override
+  String get contentTypeDocument => 'Document';
+
+  @override
+  String get contentTypeAudio => 'Audio';
+
+  @override
+  String get contentTypeProduct => 'Product';
+
+  @override
+  String get contentTypeImage => 'Image';
+
+  @override
+  String get contentTypeArticle => 'Article';
 
   @override
   String get snackbarMarkedAsFavorite => 'Added to favorites';

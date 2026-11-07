@@ -170,7 +170,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
     final int readCount =
         (stats.totalBookmarks - stats.unreadCount).clamp(0, stats.totalBookmarks);
     final double ratio = stats.readRatio.clamp(0.0, 1.0);
-    final String percentageText = '${(ratio * 100).round()}%';
+    final int percentage = (ratio * 100).round();
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -253,7 +253,7 @@ class _ReadingProgressHeroCard extends StatelessWidget {
                       ),
                       const SizedBox(width: ReadingRoomSpacing.xs),
                       Text(
-                        '%$percentageText Okundu',
+                        '%$percentage Okundu',
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.w800,

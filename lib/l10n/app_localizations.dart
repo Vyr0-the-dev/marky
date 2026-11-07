@@ -1305,11 +1305,89 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get swipeActionDelete;
 
+  /// No description provided for @swipeActionOpenReader.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Reader'**
+  String get swipeActionOpenReader;
+
+  /// No description provided for @swipeActionTogglePin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin / Unpin'**
+  String get swipeActionTogglePin;
+
   /// No description provided for @swipeActionNone.
   ///
   /// In en, this message translates to:
   /// **'None'**
   String get swipeActionNone;
+
+  /// No description provided for @snackbarBookmarkPinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark pinned'**
+  String get snackbarBookmarkPinned;
+
+  /// No description provided for @snackbarBookmarkUnpinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark unpinned'**
+  String get snackbarBookmarkUnpinned;
+
+  /// No description provided for @readingTimeMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min read'**
+  String readingTimeMinutes(int count);
+
+  /// No description provided for @contentTypeVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get contentTypeVideo;
+
+  /// No description provided for @contentTypeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get contentTypeCode;
+
+  /// No description provided for @contentTypeDiscussion.
+  ///
+  /// In en, this message translates to:
+  /// **'Discussion'**
+  String get contentTypeDiscussion;
+
+  /// No description provided for @contentTypeDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get contentTypeDocument;
+
+  /// No description provided for @contentTypeAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get contentTypeAudio;
+
+  /// No description provided for @contentTypeProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get contentTypeProduct;
+
+  /// No description provided for @contentTypeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get contentTypeImage;
+
+  /// No description provided for @contentTypeArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Article'**
+  String get contentTypeArticle;
 
   /// No description provided for @snackbarMarkedAsFavorite.
   ///

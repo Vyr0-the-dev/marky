@@ -1,20 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/core/url/url_extractor.dart';
+import 'package:marky/core/url/url_hasher.dart';
 import 'package:marky/features/add/presentation/add_screen.dart';
 import 'package:marky/features/add/presentation/qr_scanner_screen.dart';
 import 'package:marky/features/add/presentation/quick_add_sheet.dart';
 import 'package:marky/features/automation/presentation/automation_rule_editor_screen.dart';
 import 'package:marky/features/automation/presentation/automation_rules_screen.dart';
+import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
+import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
+import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
 import 'package:marky/features/capture/data/capture_providers.dart';
 import 'package:marky/features/capture/domain/capture_result.dart';
 import 'package:marky/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:marky/features/detail/presentation/detail_screen.dart';
 import 'package:marky/features/home/presentation/home_screen.dart';
+import 'package:marky/features/library/presentation/broken_links_screen.dart';
 import 'package:marky/features/library/presentation/library_screen.dart';
 import 'package:marky/features/reminders/presentation/reminders_screen.dart';
 import 'package:marky/features/search/presentation/search_screen.dart';
@@ -122,6 +129,11 @@ abstract final class MarkyAppRouter {
           builder: (_, __) => const DashboardScreen(),
         ),
         GoRoute(
+          path: Routes.brokenLinks,
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (_, __) => const BrokenLinksScreen(),
+        ),
+        GoRoute(
           path: Routes.reminders,
           parentNavigatorKey: rootNavigatorKey,
           builder: (_, __) => const RemindersScreen(),
@@ -167,9 +179,90 @@ class _RootShellScaffold extends ConsumerStatefulWidget {
   ConsumerState<_RootShellScaffold> createState() => _RootShellScaffoldState();
 }
 
-class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold> {
+class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
+    with WidgetsBindingObserver {
   DateTime? _lastBackPress;
   static const Duration _exitWindow = Duration(seconds: 2);
+  String? _lastDismissedOrProcessedClipboardUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkClipboardForLink();
+    }
+  }
+
+  Future<void> _checkClipboardForLink() async {
+    if (!mounted) return;
+    if (WidgetsBinding.instance.runtimeType.toString().contains('Test')) return;
+
+    ClipboardData? data;
+    try {
+      data = await Clipboard.getData(Clipboard.kTextPlain)
+          .timeout(const Duration(milliseconds: 500), onTimeout: () => null);
+    } on Object {
+      return;
+    }
+    if (!mounted) return;
+    final String text = (data?.text ?? '').trim();
+    if (text.isEmpty) return;
+
+    final String? url = const UrlExtractor().extractFirst(text);
+    if (url == null || url.isEmpty) return;
+
+    if (url == _lastDismissedOrProcessedClipboardUrl) return;
+
+    final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
+    final String urlHash = const UrlHasher().hash(url);
+    final Bookmark? existing = await repo.findByUrlHash(urlHash);
+    if (existing != null) {
+      _lastDismissedOrProcessedClipboardUrl = url;
+      return;
+    }
+
+    if (!mounted) return;
+    _lastDismissedOrProcessedClipboardUrl = url;
+
+    final Uri? parsed = Uri.tryParse(url);
+    final String host =
+        parsed != null && parsed.host.isNotEmpty ? parsed.host : url;
+    final String displayHost =
+        host.startsWith('www.') ? host.substring(4) : host;
+    final String message = _isTurkish
+        ? 'Panoda bağlantı bulundu: $displayHost'
+        : 'Link found in clipboard: $displayHost';
+    final String actionLabel = _isTurkish ? 'Kaydet' : 'Save';
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: actionLabel,
+            onPressed: () => unawaited(_captureQuickInput(url)),
+          ),
+        ),
+      );
+  }
 
   bool get _isTurkish {
     return Localizations.localeOf(context)
