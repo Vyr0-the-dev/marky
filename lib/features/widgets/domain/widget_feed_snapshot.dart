@@ -3,10 +3,12 @@ import 'package:flutter/foundation.dart';
 @immutable
 class WidgetFeedSnippet {
   const WidgetFeedSnippet({
+    this.bookmarkId,
     required this.title,
     required this.subtitle,
   });
 
+  final int? bookmarkId;
   final String title;
   final String subtitle;
 }

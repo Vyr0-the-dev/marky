@@ -54,6 +54,9 @@ class SharedPreferencesAppSettingsRepository implements AppSettingsRepository {
   static const String keyLeftSwipeAction = 'v2.settings.leftSwipeAction';
   @visibleForTesting
   static const String keyRightSwipeAction = 'v2.settings.rightSwipeAction';
+  @visibleForTesting
+  static const String keyClipboardDetection =
+      'v2.settings.clipboardDetectionEnabled';
 
   final SharedPreferences _prefs;
   AppSettings _current = const AppSettings.defaults();
@@ -83,6 +86,8 @@ class SharedPreferencesAppSettingsRepository implements AppSettingsRepository {
         _prefs.getString(keyRightSwipeAction),
         fallback: SwipeAction.toggleRead,
       ),
+      clipboardDetectionEnabled:
+          _prefs.getBool(keyClipboardDetection) ?? true,
     );
     return _current;
   }
@@ -109,6 +114,10 @@ class SharedPreferencesAppSettingsRepository implements AppSettingsRepository {
       _prefs.setInt(keyUnreadReminderMinute, settings.unreadReminderMinute),
       _prefs.setString(keyLeftSwipeAction, settings.leftSwipeAction.name),
       _prefs.setString(keyRightSwipeAction, settings.rightSwipeAction.name),
+      _prefs.setBool(
+        keyClipboardDetection,
+        settings.clipboardDetectionEnabled,
+      ),
     ]);
   }
 

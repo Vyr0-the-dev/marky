@@ -284,7 +284,6 @@
   "snackbarMarkedAsFavorite": "Added to favorites",
   "snackbarMarkedAsUnfavorite": "Removed from favorites",
   "actionUnarchive": "Unarchive",
-  "snackbarBookmarkUnarchived": "Bookmark unarchived",
   "shareLinkSaved": "Shared link saved",
   "shareLinkAlreadySaved": "Link already saved",
   "shareNoLinkFound": "No link found to save",
@@ -402,7 +401,6 @@
   "statusOffline": "Offline",
   "statusOnline": "Online",
   "feedMainContentLabel": "Bookmarks feed content",
-
   "reminderSheetTitle": "Remind me",
   "reminderTonight": "Tonight (20:00)",
   "reminderTomorrow": "Tomorrow (09:00)",
@@ -412,23 +410,19 @@
   "reminderPermissionRequired": "Notification permission is required",
   "reminderExactAlarmUnavailable": "Exact alarms are not available",
   "reminderSet": "Reminder set",
-
   "detailActionRefetch": "Refetch",
   "detailRefetchingMetadata": "Refetching metadata…",
   "detailMetadataRefreshed": "Metadata refreshed",
-
   "colorPickerCustomColor": "Custom color",
   "colorPickerHexLabel": "Hex color",
   "colorPickerHexError": "Use #RRGGBB or #AARRGGBB",
   "colorPickerUseColor": "Use color",
-
   "tagNameHint": "Tag name",
   "collectionNameHint": "Collection name",
   "collectionDescriptionHint": "Description (optional)",
   "pinToTop": "Pin to top",
   "actionCreate": "Create",
   "actionUpdate": "Update",
-
   "automationWhen": "When…",
   "automationThen": "Then…",
   "automationAllFieldsRequired": "All fields are required.",
@@ -455,7 +449,6 @@
   "automationTriggerType": "Trigger type",
   "automationActionType": "Action type",
   "automationAddAction": "Add action",
-
   "batchDeleteTitle": "Delete bookmarks?",
   "batchDeleteMessage": "{count, plural, one {This will permanently delete 1 bookmark.} other {This will permanently delete {count} bookmarks.}}",
   "@batchDeleteMessage": {
@@ -465,31 +458,27 @@
       }
     }
   },
-
   "homeFilteredLabel": "Filtered: {label}",
   "@homeFilteredLabel": {
     "placeholders": {
       "label": {}
     }
   },
-
   "remindersAppBarTitle": "Reminders",
-
   "newTag": "New Tag",
   "editTag": "Edit Tag",
   "newCollection": "New Collection",
   "editCollection": "Edit Collection",
-
   "shareOpenBookmark": "Open",
-
   "navigationQuickAdd": "Quick Add",
-
   "dashboardLibraryOverview": "LIBRARY OVERVIEW",
   "dashboardSavedLinks": "saved links",
   "dashboardPercentRead": "{percentage}% Read",
   "@dashboardPercentRead": {
     "placeholders": {
-      "percentage": { "type": "int" }
+      "percentage": {
+        "type": "int"
+      }
     }
   },
   "dashboardRead": "Read",
@@ -505,13 +494,14 @@
   "dashboardSavedCount": "{count} saved",
   "@dashboardSavedCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "dashboardTopDomainsTitle": "Top Read Sources",
   "dashboardSourceBreakdownTitle": "Source Breakdown",
   "dashboardTopTagsTitle": "Popular Tags",
-
   "readerRetry": "Try Again",
   "readerOpenOriginal": "Open Original Page in Browser",
   "readerThemePaper": "Paper",
@@ -519,7 +509,6 @@
   "readerThemeDark": "Dark",
   "readerFontSerif": "Serif",
   "readerFontSans": "Sans",
-
   "automationCreateRule": "Create rule",
   "automationMatchAll": "ALL (AND)",
   "automationMatchAny": "ANY (OR)",
@@ -529,24 +518,31 @@
   "automationRuleSaveError": "Failed to save rule: {error}",
   "@automationRuleSaveError": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "automationTourBack": "Back",
   "automationTourSkip": "Skip",
   "automationTourNext": "Next",
-
   "settingsUnreadReminderDaily": "Every day at {time}",
   "@settingsUnreadReminderDaily": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "settingsUnreadReminderWeekly": "Every {weekday} at {time}",
   "@settingsUnreadReminderWeekly": {
     "placeholders": {
-      "weekday": { "type": "String" },
-      "time": { "type": "String" }
+      "weekday": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
     }
   },
   "settingsUnreadReminderOffMsg": "Unread reminders disabled",
@@ -554,15 +550,270 @@
   "settingsUnreadReminderDailySet": "Set for every day at {time}",
   "@settingsUnreadReminderDailySet": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "settingsUnreadReminderWeeklySet": "Set for every {weekday} at {time}",
   "@settingsUnreadReminderWeeklySet": {
     "placeholders": {
-      "weekday": { "type": "String" },
-      "time": { "type": "String" }
+      "weekday": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "brokenLinksShortTitle": "Link Check",
+  "reminderStatusSnoozed": "Snoozed",
+  "reminderSnooze1h": "+1 hour",
+  "batchActionArchive": "Archive",
+  "batchActionFavorite": "Favorite",
+  "batchActionRead": "Read",
+  "batchActionTag": "Tags",
+  "batchActionCollection": "Collections",
+  "batchActionDelete": "Delete",
+  "batchTagSheetTitle": "Apply tags to {count} bookmarks",
+  "@batchTagSheetTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchCollectionSheetTitle": "Add {count} bookmarks to collections",
+  "@batchCollectionSheetTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchUpdatedCount": "Updated {count} bookmarks",
+  "@batchUpdatedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipboardLinkFound": "Link found in clipboard: {host}",
+  "@clipboardLinkFound": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "clipboardEmpty": "Clipboard is empty",
+  "clipboardNoValidLink": "No valid link in clipboard",
+  "quickAddTitle": "Quick add",
+  "quickAddSubtitle": "Choose a way to add a new link.",
+  "quickAddQrTitle": "Scan QR",
+  "quickAddQrSubtitle": "Use camera to read a QR code and capture the link.",
+  "quickAddManualTitle": "Manual input",
+  "quickAddManualSubtitle": "Type or paste a link manually.",
+  "quickAddClipboardTitle": "Paste clipboard",
+  "quickAddClipboardSubtitle": "Capture the first link found in clipboard text.",
+  "quickAddSaved": "Link saved",
+  "quickAddDuplicate": "Already saved in your library",
+  "quickAddInvalidUrl": "No valid link found",
+  "quickAddSaveFailed": "Save failed",
+  "qrScannerTitle": "Scan QR",
+  "qrScannerHint": "Point the camera at a QR code containing a URL",
+  "searchRecentCleared": "Recent searches cleared",
+  "homeUnreadNudgeTitle": "Unread reminders",
+  "homeUnreadNudgeSubtitle": "Bring saved links back automatically.",
+  "homeUnreadNudgeEvening": "Evening",
+  "homeUnreadNudgeWeekly": "Weekly",
+  "badgeVideo": "Video",
+  "badgeCode": "Code",
+  "badgePost": "Post",
+  "badgeForum": "Forum",
+  "badgeDoc": "Doc",
+  "badgeAudio": "Audio",
+  "badgeProduct": "Product",
+  "badgeImage": "Image",
+  "timeJustNow": "now",
+  "timeMinutesAgo": "{count}m",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeHoursAgo": "{count}h",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeDaysAgo": "{count}d",
+  "@timeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeWeeksAgo": "{count}w",
+  "@timeWeeksAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeMonthsAgo": "{count}mo",
+  "@timeMonthsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeYearsAgo": "{count}y",
+  "@timeYearsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readingTimeShort": "{minutes}m",
+  "@readingTimeShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "detailReaderMode": "Reader",
+  "detailPlayInApp": "Play Video in App",
+  "detailCoverViewFull": "View Full Screen",
+  "detailCoverChangeUrl": "Change Image URL",
+  "detailCoverRemove": "Remove Cover Image",
+  "detailCoverRemoved": "Cover image removed.",
+  "detailCoverUrlTitle": "Cover Image URL",
+  "detailUrlCopied": "URL copied to clipboard",
+  "readerFallbackNotice": "Full text could not be extracted; showing summary preview.",
+  "readerFallbackEmptyBody": "Parsed article text is unavailable for this page. Open the original page in your browser to view the full content.",
+  "readerTopComments": "Top Comments",
+  "readerEndTitle": "Finished reading?",
+  "readerMarkRead": "Mark as read",
+  "readerMarkReadArchive": "Read & archive",
+  "readerMarkedAsRead": "Marked as read",
+  "readerSaveHighlightAsNote": "Save as note",
+  "readerHighlightSaved": "Quote saved to notes",
+  "readerLineSpacing": "Line spacing",
+  "settingsSectionCapture": "Capture",
+  "settingsSectionReminders": "Reminders",
+  "settingsSectionTools": "Data & Tools",
+  "settingsAnimationsSubtitle": "Smooth screen and card transitions",
+  "settingsClipboardLabel": "Auto-detect clipboard links",
+  "settingsClipboardSubtitle": "Offer to save copied links when returning to Marky",
+  "settingsUnreadRemindersTitle": "Unread reminders",
+  "settingsReminderScheduleTitle": "Reminder schedule",
+  "settingsManageRemindersTitle": "Manage active reminders",
+  "settingsExportFormatTitle": "Export format",
+  "settingsExportJsonOption": "Full Marky Backup (JSON)",
+  "settingsExportHtmlOption": "Browser Bookmarks (Netscape HTML)",
+  "settingsImportTitle": "Restore / Import (JSON, HTML)",
+  "settingsImportSubtitle": "Marky backup or browser bookmarks (Chrome, Firefox, Pocket)",
+  "settingsCacheTitle": "Cache & storage",
+  "settingsCacheSubtitle": "Offline articles & cached thumbnails: {size}",
+  "@settingsCacheSubtitle": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCacheClearAction": "Clear cache",
+  "settingsCacheCleared": "Cache cleared",
+  "brokenLinksTitle": "Broken Link Checker",
+  "brokenLinksSubtitle": "Audit and clean up 404/dead links",
+  "brokenLinksStartScan": "Start scan",
+  "brokenLinksStopScan": "Stop",
+  "brokenLinksScanning": "Scanning {scanned} / {total}...",
+  "@brokenLinksScanning": {
+    "placeholders": {
+      "scanned": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "brokenLinksAllHealthy": "All links look healthy!",
+  "brokenLinksArchiveAll": "Archive all ({count})",
+  "@brokenLinksArchiveAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "brokenLinksArchivedCount": "Archived {count} broken links.",
+  "@brokenLinksArchivedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "brokenLinksOpenWayback": "Open on Wayback Machine",
+  "brokenReasonNotFound": "Not Found (404)",
+  "brokenReasonGone": "Gone (410)",
+  "brokenReasonServerError": "Server Error (5xx)",
+  "brokenReasonDns": "DNS / Network Error",
+  "brokenReasonTimeout": "Request Timeout",
+  "brokenReasonOther": "Access Error",
+  "automationRunOnExisting": "Run on existing bookmarks",
+  "automationRunConfirmTitle": "Apply rule to library?",
+  "automationRunConfirmBody": "This evaluates \"{name}\" against all active bookmarks.",
+  "@automationRunConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "automationRunResult": "Rule matched {count} bookmarks",
+  "@automationRunResult": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "automationLogsTooltip": "Execution logs",
+  "automationCreateTooltip": "Create rule",
+  "onboardingSkip": "Skip",
+  "onboardingDone": "Get started",
+  "onboardingNext": "Next",
+  "onboardingPage1Title": "Save from anywhere",
+  "onboardingPage1Body": "Share links directly to Marky from any app. Paste a URL, scan a QR code, or type it in — your library grows effortlessly.",
+  "onboardingPage2Title": "Organize with tags",
+  "onboardingPage2Body": "Tag bookmarks by topic, group them in collections, and favorite the best ones. Everything stays tidy and easy to find.",
+  "onboardingPage3Title": "Automate the busywork",
+  "onboardingPage3Body": "Create rules to auto-tag, auto-archive, or auto-collect links as they arrive. Set it once and let Marky handle the rest.",
+  "onboardingPage4Title": "Read distraction-free",
+  "onboardingPage4Body": "Set reminders for unread links, search with operators, and enjoy a calm offline-first Reader mode.",
+  "colorPaletteTitle": "Color palette",
+  "actionOk": "OK",
+  "dashboardReadRatePercent": "{percentage}%",
+  "@dashboardReadRatePercent": {
+    "placeholders": {
+      "percentage": {
+        "type": "String"
+      }
     }
   }
 }
-

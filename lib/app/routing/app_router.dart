@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:marky/app/routing/routes.dart';
+import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/core/url/url_extractor.dart';
 import 'package:marky/core/url/url_hasher.dart';
+import 'package:marky/core/url/url_normalizer.dart';
 import 'package:marky/features/add/presentation/add_screen.dart';
 import 'package:marky/features/add/presentation/qr_scanner_screen.dart';
 import 'package:marky/features/add/presentation/quick_add_sheet.dart';
@@ -109,7 +111,10 @@ abstract final class MarkyAppRouter {
           path: Routes.bookmarkDetail,
           parentNavigatorKey: rootNavigatorKey,
           builder: (BuildContext context, GoRouterState state) {
-            final int id = int.parse(state.pathParameters['id']!);
+            final int? id = int.tryParse(state.pathParameters['id'] ?? '');
+            if (id == null) {
+              return const _InvalidRouteScreen();
+            }
             return DetailScreen(id: id);
           },
         ),
@@ -152,7 +157,10 @@ abstract final class MarkyAppRouter {
           path: Routes.automationRuleEdit,
           parentNavigatorKey: rootNavigatorKey,
           builder: (BuildContext context, GoRouterState state) {
-            final int id = int.parse(state.pathParameters['id']!);
+            final int? id = int.tryParse(state.pathParameters['id'] ?? '');
+            if (id == null) {
+              return const _InvalidRouteScreen();
+            }
             return AutomationRuleEditorScreen(ruleId: id);
           },
         ),
@@ -207,6 +215,7 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
   Future<void> _checkClipboardForLink() async {
     if (!mounted) return;
     if (WidgetsBinding.instance.runtimeType.toString().contains('Test')) return;
+    if (!ref.read(clipboardDetectionEnabledProvider)) return;
 
     ClipboardData? data;
     try {
@@ -222,18 +231,19 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
     final String? url = const UrlExtractor().extractFirst(text);
     if (url == null || url.isEmpty) return;
 
-    if (url == _lastDismissedOrProcessedClipboardUrl) return;
+    final String normalizedUrl = const UrlNormalizer().normalize(url) ?? url;
+    if (normalizedUrl == _lastDismissedOrProcessedClipboardUrl) return;
 
     final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    final String urlHash = const UrlHasher().hash(url);
+    final String urlHash = const UrlHasher().hash(normalizedUrl);
     final Bookmark? existing = await repo.findByUrlHash(urlHash);
     if (existing != null) {
-      _lastDismissedOrProcessedClipboardUrl = url;
+      _lastDismissedOrProcessedClipboardUrl = normalizedUrl;
       return;
     }
 
     if (!mounted) return;
-    _lastDismissedOrProcessedClipboardUrl = url;
+    _lastDismissedOrProcessedClipboardUrl = normalizedUrl;
 
     final Uri? parsed = Uri.tryParse(url);
     final String host =
@@ -466,6 +476,31 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
               icon: Icons.settings_outlined,
               selectedIcon: Icons.settings_outlined,
               label: l10n?.settingsTitle ?? 'Settings',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InvalidRouteScreen extends StatelessWidget {
+  const _InvalidRouteScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(l10n?.errorGenericTitle ?? 'Something went wrong'),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () => context.go(Routes.home),
+              child: Text(l10n?.navigationHome ?? 'Home'),
             ),
           ],
         ),

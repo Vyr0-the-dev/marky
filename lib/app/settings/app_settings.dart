@@ -147,6 +147,7 @@ class AppSettings {
     required this.unreadReminderMinute,
     required this.leftSwipeAction,
     required this.rightSwipeAction,
+    this.clipboardDetectionEnabled = true,
   });
 
   /// Factory-reset defaults. Safe to materialise before
@@ -160,7 +161,8 @@ class AppSettings {
         unreadReminderHour = 20,
         unreadReminderMinute = 0,
         leftSwipeAction = SwipeAction.toggleArchive,
-        rightSwipeAction = SwipeAction.toggleRead;
+        rightSwipeAction = SwipeAction.toggleRead,
+        clipboardDetectionEnabled = true;
 
   final AppThemeMode themeMode;
   final AppLocaleChoice locale;
@@ -173,6 +175,7 @@ class AppSettings {
 
   final SwipeAction leftSwipeAction;
   final SwipeAction rightSwipeAction;
+  final bool clipboardDetectionEnabled;
 
   AppSettings copyWith({
     AppThemeMode? themeMode,
@@ -184,6 +187,7 @@ class AppSettings {
     int? unreadReminderMinute,
     SwipeAction? leftSwipeAction,
     SwipeAction? rightSwipeAction,
+    bool? clipboardDetectionEnabled,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -197,6 +201,8 @@ class AppSettings {
       unreadReminderMinute: unreadReminderMinute ?? this.unreadReminderMinute,
       leftSwipeAction: leftSwipeAction ?? this.leftSwipeAction,
       rightSwipeAction: rightSwipeAction ?? this.rightSwipeAction,
+      clipboardDetectionEnabled:
+          clipboardDetectionEnabled ?? this.clipboardDetectionEnabled,
     );
   }
 
@@ -245,7 +251,8 @@ class AppSettings {
         other.unreadReminderHour == unreadReminderHour &&
         other.unreadReminderMinute == unreadReminderMinute &&
         other.leftSwipeAction == leftSwipeAction &&
-        other.rightSwipeAction == rightSwipeAction;
+        other.rightSwipeAction == rightSwipeAction &&
+        other.clipboardDetectionEnabled == clipboardDetectionEnabled;
   }
 
   @override
@@ -259,11 +266,13 @@ class AppSettings {
         unreadReminderMinute,
         leftSwipeAction,
         rightSwipeAction,
+        clipboardDetectionEnabled,
       );
 
   @override
   String toString() => 'AppSettings(theme: $themeMode, locale: $locale, '
       'animations: $animationsEnabled, '
+      'clipboardDetection: $clipboardDetectionEnabled, '
       'unreadReminderCadence: $unreadReminderCadence, '
       'unreadReminderWeekday: $unreadReminderWeekday, '
       'unreadReminderTime: ${unreadReminderHour.toString().padLeft(2, '0')}:${unreadReminderMinute.toString().padLeft(2, '0')}, '

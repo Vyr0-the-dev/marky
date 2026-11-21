@@ -38,11 +38,15 @@ class LibraryScreen extends ConsumerWidget {
         actions: const <Widget>[],
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: ReadingRoomSpacing.lg,
-          vertical: ReadingRoomSpacing.md,
+        padding: const EdgeInsets.fromLTRB(
+          ReadingRoomSpacing.lg,
+          ReadingRoomSpacing.md,
+          ReadingRoomSpacing.lg,
+          88,
         ),
         children: <Widget>[
+          _LibraryQuickTools(l10n: l10n),
+          const SizedBox(height: ReadingRoomSpacing.lg),
           _SectionHeader(
             title: l10n?.libraryTagsTitle ?? 'Tags',
             tooltip: l10n?.actionAddTag ?? 'Add tag',
@@ -64,7 +68,8 @@ class LibraryScreen extends ConsumerWidget {
             ),
           ),
           const _CollectionList(),
-          const SizedBox(height: ReadingRoomSpacing.huge),
+          const SizedBox(height: ReadingRoomSpacing.md),
+          const _ArchivedCollectionsSection(),
         ],
       ),
     );
@@ -155,10 +160,10 @@ class _TagChip extends ConsumerWidget {
     return Semantics(
       button: true,
       label: 'Open tag ${tag.name}',
-      hint: 'Long press to edit. Delete removes the tag from all bookmarks.',
+      hint: 'Long press to edit or delete tag.',
       child: GestureDetector(
         onLongPress: () => _openEditor(context),
-        child: InputChip(
+        child: ActionChip(
           label: _TagChipLabel(tag: tag, textColor: tagStyle.textColor),
           avatar: tag.isPinned
               ? Icon(
@@ -167,8 +172,6 @@ class _TagChip extends ConsumerWidget {
                   color: tagStyle.textColor,
                 )
               : null,
-          deleteIcon: Icon(Icons.close, size: 16, color: tagStyle.textColor),
-          onDeleted: () => _confirmDelete(context, ref),
           onPressed: () {
             ref.read(feedNotifierProvider.notifier).setTagId(tag.id);
             context.go(Routes.home);
@@ -186,34 +189,6 @@ class _TagChip extends ConsumerWidget {
       isScrollControlled: true,
       builder: (_) => TagEditorSheet(initial: tag),
     );
-  }
-
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final AppLocalizations? l10n = AppLocalizations.of(context);
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: Text(
-          l10n?.libraryDeleteTagTitle(tag.name) ?? 'Delete "${tag.name}"?',
-        ),
-        content: Text(
-          l10n?.libraryDeleteTagMessage ??
-              'This removes the tag from all bookmarks.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n?.actionCancel ?? 'Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n?.actionDelete ?? 'Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || tag.id == null) return;
-    await ref.read(tagRepositoryProvider).delete(tag.id!);
   }
 }
 
@@ -393,7 +368,10 @@ class _CollectionTile extends ConsumerWidget {
                 ref.read(smartCollectionEvaluatorProvider);
             final query = evaluator.queryFor(collection);
             if (query == null) return;
-            ref.read(feedNotifierProvider.notifier).applyQuery(query);
+            ref.read(feedNotifierProvider.notifier).applyQuery(
+                  query,
+                  filterLabel: collection.title,
+                );
           } else {
             ref
                 .read(feedNotifierProvider.notifier)
@@ -518,6 +496,142 @@ class _InlineLibraryState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LibraryQuickTools extends StatelessWidget {
+  const _LibraryQuickTools({required this.l10n});
+
+  final AppLocalizations? l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: _QuickToolCard(
+            icon: Icons.notifications_active_outlined,
+            label: l10n?.remindersAppBarTitle ?? 'Reminders',
+            onTap: () => context.push(Routes.reminders),
+            theme: theme,
+          ),
+        ),
+        const SizedBox(width: ReadingRoomSpacing.sm),
+        Expanded(
+          child: _QuickToolCard(
+            icon: Icons.bar_chart_rounded,
+            label: l10n?.dashboardTitle ?? 'Dashboard',
+            onTap: () => context.push(Routes.stats),
+            theme: theme,
+          ),
+        ),
+        const SizedBox(width: ReadingRoomSpacing.sm),
+        Expanded(
+          child: _QuickToolCard(
+            icon: Icons.health_and_safety_outlined,
+            label: l10n?.brokenLinksShortTitle ?? 'Link Check',
+            onTap: () => context.push(Routes.brokenLinks),
+            theme: theme,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickToolCard extends StatelessWidget {
+  const _QuickToolCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.theme,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: theme.colorScheme.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+        side: BorderSide(color: theme.colorScheme.outline),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: ReadingRoomSpacing.sm,
+            vertical: ReadingRoomSpacing.md,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 20, color: theme.colorScheme.primary),
+              const SizedBox(height: ReadingRoomSpacing.xs),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelMedium,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ArchivedCollectionsSection extends ConsumerWidget {
+  const _ArchivedCollectionsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<List<BookmarkCollection>> allAsync =
+        ref.watch(bookmarkCollectionsWithArchivedProvider);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+
+    return allAsync.maybeWhen(
+      data: (List<BookmarkCollection> all) {
+        final List<BookmarkCollection> archived =
+            all.where((BookmarkCollection c) => c.isArchived).toList();
+        if (archived.isEmpty) return const SizedBox.shrink();
+
+        return ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: EdgeInsets.zero,
+          shape: const Border(),
+          collapsedShape: const Border(),
+          leading: const Icon(Icons.archive_outlined, size: 20),
+          title: Text(
+            '${l10n?.filterArchived ?? 'Archived'} (${archived.length})',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          children: archived.map((BookmarkCollection c) {
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.folder_outlined),
+              title: Text(c.title),
+              trailing: TextButton(
+                onPressed: () async {
+                  await ref
+                      .read(bookmarkCollectionRepositoryProvider)
+                      .save(c.copyWith(isArchived: false));
+                },
+                child: Text(l10n?.actionUnarchive ?? 'Unarchive'),
+              ),
+            );
+          }).toList(),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 }

@@ -1253,4 +1253,415 @@ class AppLocalizationsTr extends AppLocalizations {
   String settingsUnreadReminderWeeklySet(String weekday, String time) {
     return 'Her $weekday saat $time için ayarlandı';
   }
+
+  @override
+  String get brokenLinksShortTitle => 'Link Kontrolü';
+
+  @override
+  String get reminderStatusSnoozed => 'Ertelendi';
+
+  @override
+  String get reminderSnooze1h => '+1 saat';
+
+  @override
+  String get batchActionArchive => 'Arşivle';
+
+  @override
+  String get batchActionFavorite => 'Favori';
+
+  @override
+  String get batchActionRead => 'Okundu';
+
+  @override
+  String get batchActionTag => 'Etiketle';
+
+  @override
+  String get batchActionCollection => 'Koleksiyon';
+
+  @override
+  String get batchActionDelete => 'Sil';
+
+  @override
+  String batchTagSheetTitle(int count) {
+    return '$count bağlantıya etiket uygula';
+  }
+
+  @override
+  String batchCollectionSheetTitle(int count) {
+    return '$count bağlantıyı koleksiyona ekle';
+  }
+
+  @override
+  String batchUpdatedCount(int count) {
+    return '$count bağlantı güncellendi';
+  }
+
+  @override
+  String clipboardLinkFound(String host) {
+    return 'Panoda bağlantı bulundu: $host';
+  }
+
+  @override
+  String get clipboardEmpty => 'Pano boş görünüyor';
+
+  @override
+  String get clipboardNoValidLink => 'Panoda geçerli bağlantı yok';
+
+  @override
+  String get quickAddTitle => 'Hızlı Ekle';
+
+  @override
+  String get quickAddSubtitle => 'Yeni bir bağlantı eklemek için bir yol seç.';
+
+  @override
+  String get quickAddQrTitle => 'QR ile Tara';
+
+  @override
+  String get quickAddQrSubtitle =>
+      'Kamerayla QR kodu okuyup bağlantıyı yakala.';
+
+  @override
+  String get quickAddManualTitle => 'Manuel Gir';
+
+  @override
+  String get quickAddManualSubtitle =>
+      'Bağlantıyı yazarak veya yapıştırarak ekle.';
+
+  @override
+  String get quickAddClipboardTitle => 'Panodan Yapıştır';
+
+  @override
+  String get quickAddClipboardSubtitle =>
+      'Panodaki metinden ilk bağlantıyı kaydet.';
+
+  @override
+  String get quickAddSaved => 'Bağlantı kaydedildi';
+
+  @override
+  String get quickAddDuplicate => 'Bu bağlantı zaten kayıtlı';
+
+  @override
+  String get quickAddInvalidUrl => 'Geçerli bağlantı bulunamadı';
+
+  @override
+  String get quickAddSaveFailed => 'Kaydetme sırasında hata oluştu';
+
+  @override
+  String get qrScannerTitle => 'QR Tara';
+
+  @override
+  String get qrScannerHint => 'Kamerayı bağlantı içeren bir QR koda tutun';
+
+  @override
+  String get searchRecentCleared => 'Son aramalar temizlendi';
+
+  @override
+  String get homeUnreadNudgeTitle => 'Okunmamış hatırlatıcılar';
+
+  @override
+  String get homeUnreadNudgeSubtitle => 'Kayıtlı linkleri otomatik hatırlat.';
+
+  @override
+  String get homeUnreadNudgeEvening => 'Akşam';
+
+  @override
+  String get homeUnreadNudgeWeekly => 'Haftalık';
+
+  @override
+  String get badgeVideo => 'Video';
+
+  @override
+  String get badgeCode => 'Kod';
+
+  @override
+  String get badgePost => 'Gönderi';
+
+  @override
+  String get badgeForum => 'Forum';
+
+  @override
+  String get badgeDoc => 'Belge';
+
+  @override
+  String get badgeAudio => 'Ses';
+
+  @override
+  String get badgeProduct => 'Ürün';
+
+  @override
+  String get badgeImage => 'Görsel';
+
+  @override
+  String get timeJustNow => 'şimdi';
+
+  @override
+  String timeMinutesAgo(int count) {
+    return '$count dk';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    return '$count sa';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    return '${count}g';
+  }
+
+  @override
+  String timeWeeksAgo(int count) {
+    return '${count}h';
+  }
+
+  @override
+  String timeMonthsAgo(int count) {
+    return '$count ay';
+  }
+
+  @override
+  String timeYearsAgo(int count) {
+    return '$count yıl';
+  }
+
+  @override
+  String readingTimeShort(int minutes) {
+    return '$minutes dk';
+  }
+
+  @override
+  String get detailReaderMode => 'Okuma Modu';
+
+  @override
+  String get detailPlayInApp => 'Videoyu Uygulamada Oynat';
+
+  @override
+  String get detailCoverViewFull => 'Tam Ekran Görüntüle';
+
+  @override
+  String get detailCoverChangeUrl => 'Görsel URL Değiştir';
+
+  @override
+  String get detailCoverRemove => 'Kapak Görselini Kaldır';
+
+  @override
+  String get detailCoverRemoved => 'Kapak görseli kaldırıldı.';
+
+  @override
+  String get detailCoverUrlTitle => 'Kapak Görseli URL';
+
+  @override
+  String get detailUrlCopied => 'URL panoya kopyalandı';
+
+  @override
+  String get readerFallbackNotice =>
+      'Tam metin çıkarılamadı; özet ve önizleme gösteriliyor.';
+
+  @override
+  String get readerFallbackEmptyBody =>
+      'Bu web sayfası için ayrıştırılmış makale metni bulunamadı. Orijinal sayfayı tarayıcıda açarak tam içeriği görüntüleyebilirsiniz.';
+
+  @override
+  String get readerTopComments => 'Öne Çıkan Yorumlar';
+
+  @override
+  String get readerEndTitle => 'Okumayı bitirdiniz mi?';
+
+  @override
+  String get readerMarkRead => 'Okundu işaretle';
+
+  @override
+  String get readerMarkReadArchive => 'Okundu & arşivle';
+
+  @override
+  String get readerMarkedAsRead => 'Okundu olarak işaretlendi';
+
+  @override
+  String get readerSaveHighlightAsNote => 'Not olarak kaydet';
+
+  @override
+  String get readerHighlightSaved => 'Alıntı notlara kaydedildi';
+
+  @override
+  String get readerLineSpacing => 'Satır aralığı';
+
+  @override
+  String get settingsSectionCapture => 'Yakalama';
+
+  @override
+  String get settingsSectionReminders => 'Hatırlatıcılar';
+
+  @override
+  String get settingsSectionTools => 'Veri ve Araçlar';
+
+  @override
+  String get settingsAnimationsSubtitle => 'Akıcı ekran ve kart geçişleri';
+
+  @override
+  String get settingsClipboardLabel => 'Panodan otomatik link algıla';
+
+  @override
+  String get settingsClipboardSubtitle =>
+      'Uygulamaya dönünce kopyalanan linkleri kaydetmeyi öner';
+
+  @override
+  String get settingsUnreadRemindersTitle => 'Okunmamış bağlantı hatırlatıcısı';
+
+  @override
+  String get settingsReminderScheduleTitle => 'Hatırlatıcı zamanı';
+
+  @override
+  String get settingsManageRemindersTitle => 'Aktif hatırlatıcıları yönet';
+
+  @override
+  String get settingsExportFormatTitle => 'Dışa aktarma formatı';
+
+  @override
+  String get settingsExportJsonOption => 'Tam Marky Yedeği (JSON)';
+
+  @override
+  String get settingsExportHtmlOption => 'Tarayıcı Yer İmleri (Netscape HTML)';
+
+  @override
+  String get settingsImportTitle => 'Yedek / İçe Aktar (JSON, HTML)';
+
+  @override
+  String get settingsImportSubtitle =>
+      'Marky yedeği veya tarayıcı yer imleri (Chrome, Firefox, Pocket)';
+
+  @override
+  String get settingsCacheTitle => 'Önbellek ve depolama';
+
+  @override
+  String settingsCacheSubtitle(String size) {
+    return 'Çevrimdışı makaleler ve önbellek görselleri: $size';
+  }
+
+  @override
+  String get settingsCacheClearAction => 'Önbelleği temizle';
+
+  @override
+  String get settingsCacheCleared => 'Önbellek temizlendi';
+
+  @override
+  String get brokenLinksTitle => 'Bağlantı Sağlık Kontrolü';
+
+  @override
+  String get brokenLinksSubtitle => '404 ve ulaşılamayan bağlantıları tara';
+
+  @override
+  String get brokenLinksStartScan => 'Taramayı Başlat';
+
+  @override
+  String get brokenLinksStopScan => 'Durdur';
+
+  @override
+  String brokenLinksScanning(int scanned, int total) {
+    return 'Taranıyor $scanned / $total...';
+  }
+
+  @override
+  String get brokenLinksAllHealthy => 'Tüm bağlantılar sağlıklı görünüyor!';
+
+  @override
+  String brokenLinksArchiveAll(int count) {
+    return 'Tümünü Arşivle ($count)';
+  }
+
+  @override
+  String brokenLinksArchivedCount(int count) {
+    return '$count kırık bağlantı arşivlendi.';
+  }
+
+  @override
+  String get brokenLinksOpenWayback => 'Wayback Machine\'de Aç';
+
+  @override
+  String get brokenReasonNotFound => 'Sayfa Bulunamadı (404)';
+
+  @override
+  String get brokenReasonGone => 'İçerik Kaldırılmış (410)';
+
+  @override
+  String get brokenReasonServerError => 'Sunucu Hatası (5xx)';
+
+  @override
+  String get brokenReasonDns => 'DNS / Ağ Bağlantı Hatası';
+
+  @override
+  String get brokenReasonTimeout => 'Zaman Aşımı';
+
+  @override
+  String get brokenReasonOther => 'Erişim Hatası';
+
+  @override
+  String get automationRunOnExisting => 'Mevcut kayıtlara uygula';
+
+  @override
+  String get automationRunConfirmTitle =>
+      'Kural mevcut kütüphaneye uygulansın mı?';
+
+  @override
+  String automationRunConfirmBody(String name) {
+    return '\"$name\" kuralı tüm aktif bağlantılar üzerinde çalıştırılacak.';
+  }
+
+  @override
+  String automationRunResult(int count) {
+    return 'Kural $count bağlantıya uygulandı';
+  }
+
+  @override
+  String get automationLogsTooltip => 'Çalışma kayıtları';
+
+  @override
+  String get automationCreateTooltip => 'Kural oluştur';
+
+  @override
+  String get onboardingSkip => 'Atla';
+
+  @override
+  String get onboardingDone => 'Başla';
+
+  @override
+  String get onboardingNext => 'İleri';
+
+  @override
+  String get onboardingPage1Title => 'Her yerden kaydet';
+
+  @override
+  String get onboardingPage1Body =>
+      'Herhangi bir uygulamadan bağlantıları doğrudan Marky\'ye paylaşın. URL yapıştırın veya QR tarayın — kütüphaneniz zahmetsizce büyüsün.';
+
+  @override
+  String get onboardingPage2Title => 'Etiket ve koleksiyonlarla düzenle';
+
+  @override
+  String get onboardingPage2Body =>
+      'Bağlantıları konularına göre etiketleyin, manuel veya akıllı koleksiyonlarda toplayın. Aradığınız her şey elinizin altında.';
+
+  @override
+  String get onboardingPage3Title => 'Tekrarlayan işleri otomatikleştir';
+
+  @override
+  String get onboardingPage3Body =>
+      'Yeni bağlantıları domain veya türe göre otomatik etiketleyen, arşivleyen kurallar oluşturun. Bir kez ayarlayın, gerisini Marky halletsin.';
+
+  @override
+  String get onboardingPage4Title => 'Dikkat dağıtmadan oku';
+
+  @override
+  String get onboardingPage4Body =>
+      'Okunmamış linkler için hatırlatıcı kurun, operatörlerle anında arayın ve sakin çevrimdışı Okuma Modu\'nun keyfini çıkarın.';
+
+  @override
+  String get colorPaletteTitle => 'Renk paleti';
+
+  @override
+  String get actionOk => 'Tamam';
+
+  @override
+  String dashboardReadRatePercent(String percentage) {
+    return '%$percentage';
+  }
 }

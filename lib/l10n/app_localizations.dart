@@ -2360,6 +2360,732 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Set for every {weekday} at {time}'**
   String settingsUnreadReminderWeeklySet(String weekday, String time);
+
+  /// No description provided for @brokenLinksShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link Check'**
+  String get brokenLinksShortTitle;
+
+  /// No description provided for @reminderStatusSnoozed.
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozed'**
+  String get reminderStatusSnoozed;
+
+  /// No description provided for @reminderSnooze1h.
+  ///
+  /// In en, this message translates to:
+  /// **'+1 hour'**
+  String get reminderSnooze1h;
+
+  /// No description provided for @batchActionArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get batchActionArchive;
+
+  /// No description provided for @batchActionFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get batchActionFavorite;
+
+  /// No description provided for @batchActionRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get batchActionRead;
+
+  /// No description provided for @batchActionTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get batchActionTag;
+
+  /// No description provided for @batchActionCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get batchActionCollection;
+
+  /// No description provided for @batchActionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get batchActionDelete;
+
+  /// No description provided for @batchTagSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply tags to {count} bookmarks'**
+  String batchTagSheetTitle(int count);
+
+  /// No description provided for @batchCollectionSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count} bookmarks to collections'**
+  String batchCollectionSheetTitle(int count);
+
+  /// No description provided for @batchUpdatedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {count} bookmarks'**
+  String batchUpdatedCount(int count);
+
+  /// No description provided for @clipboardLinkFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Link found in clipboard: {host}'**
+  String clipboardLinkFound(String host);
+
+  /// No description provided for @clipboardEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard is empty'**
+  String get clipboardEmpty;
+
+  /// No description provided for @clipboardNoValidLink.
+  ///
+  /// In en, this message translates to:
+  /// **'No valid link in clipboard'**
+  String get clipboardNoValidLink;
+
+  /// No description provided for @quickAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick add'**
+  String get quickAddTitle;
+
+  /// No description provided for @quickAddSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a way to add a new link.'**
+  String get quickAddSubtitle;
+
+  /// No description provided for @quickAddQrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR'**
+  String get quickAddQrTitle;
+
+  /// No description provided for @quickAddQrSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use camera to read a QR code and capture the link.'**
+  String get quickAddQrSubtitle;
+
+  /// No description provided for @quickAddManualTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual input'**
+  String get quickAddManualTitle;
+
+  /// No description provided for @quickAddManualSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Type or paste a link manually.'**
+  String get quickAddManualSubtitle;
+
+  /// No description provided for @quickAddClipboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste clipboard'**
+  String get quickAddClipboardTitle;
+
+  /// No description provided for @quickAddClipboardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture the first link found in clipboard text.'**
+  String get quickAddClipboardSubtitle;
+
+  /// No description provided for @quickAddSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Link saved'**
+  String get quickAddSaved;
+
+  /// No description provided for @quickAddDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Already saved in your library'**
+  String get quickAddDuplicate;
+
+  /// No description provided for @quickAddInvalidUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'No valid link found'**
+  String get quickAddInvalidUrl;
+
+  /// No description provided for @quickAddSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Save failed'**
+  String get quickAddSaveFailed;
+
+  /// No description provided for @qrScannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR'**
+  String get qrScannerTitle;
+
+  /// No description provided for @qrScannerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at a QR code containing a URL'**
+  String get qrScannerHint;
+
+  /// No description provided for @searchRecentCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent searches cleared'**
+  String get searchRecentCleared;
+
+  /// No description provided for @homeUnreadNudgeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread reminders'**
+  String get homeUnreadNudgeTitle;
+
+  /// No description provided for @homeUnreadNudgeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring saved links back automatically.'**
+  String get homeUnreadNudgeSubtitle;
+
+  /// No description provided for @homeUnreadNudgeEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening'**
+  String get homeUnreadNudgeEvening;
+
+  /// No description provided for @homeUnreadNudgeWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get homeUnreadNudgeWeekly;
+
+  /// No description provided for @badgeVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get badgeVideo;
+
+  /// No description provided for @badgeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get badgeCode;
+
+  /// No description provided for @badgePost.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get badgePost;
+
+  /// No description provided for @badgeForum.
+  ///
+  /// In en, this message translates to:
+  /// **'Forum'**
+  String get badgeForum;
+
+  /// No description provided for @badgeDoc.
+  ///
+  /// In en, this message translates to:
+  /// **'Doc'**
+  String get badgeDoc;
+
+  /// No description provided for @badgeAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get badgeAudio;
+
+  /// No description provided for @badgeProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get badgeProduct;
+
+  /// No description provided for @badgeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get badgeImage;
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m'**
+  String timeMinutesAgo(int count);
+
+  /// No description provided for @timeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h'**
+  String timeHoursAgo(int count);
+
+  /// No description provided for @timeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d'**
+  String timeDaysAgo(int count);
+
+  /// No description provided for @timeWeeksAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}w'**
+  String timeWeeksAgo(int count);
+
+  /// No description provided for @timeMonthsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}mo'**
+  String timeMonthsAgo(int count);
+
+  /// No description provided for @timeYearsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}y'**
+  String timeYearsAgo(int count);
+
+  /// No description provided for @readingTimeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m'**
+  String readingTimeShort(int minutes);
+
+  /// No description provided for @detailReaderMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Reader'**
+  String get detailReaderMode;
+
+  /// No description provided for @detailPlayInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Play Video in App'**
+  String get detailPlayInApp;
+
+  /// No description provided for @detailCoverViewFull.
+  ///
+  /// In en, this message translates to:
+  /// **'View Full Screen'**
+  String get detailCoverViewFull;
+
+  /// No description provided for @detailCoverChangeUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Image URL'**
+  String get detailCoverChangeUrl;
+
+  /// No description provided for @detailCoverRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Cover Image'**
+  String get detailCoverRemove;
+
+  /// No description provided for @detailCoverRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover image removed.'**
+  String get detailCoverRemoved;
+
+  /// No description provided for @detailCoverUrlTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover Image URL'**
+  String get detailCoverUrlTitle;
+
+  /// No description provided for @detailUrlCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'URL copied to clipboard'**
+  String get detailUrlCopied;
+
+  /// No description provided for @readerFallbackNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Full text could not be extracted; showing summary preview.'**
+  String get readerFallbackNotice;
+
+  /// No description provided for @readerFallbackEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Parsed article text is unavailable for this page. Open the original page in your browser to view the full content.'**
+  String get readerFallbackEmptyBody;
+
+  /// No description provided for @readerTopComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Comments'**
+  String get readerTopComments;
+
+  /// No description provided for @readerEndTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished reading?'**
+  String get readerEndTitle;
+
+  /// No description provided for @readerMarkRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as read'**
+  String get readerMarkRead;
+
+  /// No description provided for @readerMarkReadArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Read & archive'**
+  String get readerMarkReadArchive;
+
+  /// No description provided for @readerMarkedAsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as read'**
+  String get readerMarkedAsRead;
+
+  /// No description provided for @readerSaveHighlightAsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as note'**
+  String get readerSaveHighlightAsNote;
+
+  /// No description provided for @readerHighlightSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote saved to notes'**
+  String get readerHighlightSaved;
+
+  /// No description provided for @readerLineSpacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Line spacing'**
+  String get readerLineSpacing;
+
+  /// No description provided for @settingsSectionCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture'**
+  String get settingsSectionCapture;
+
+  /// No description provided for @settingsSectionReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get settingsSectionReminders;
+
+  /// No description provided for @settingsSectionTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Data & Tools'**
+  String get settingsSectionTools;
+
+  /// No description provided for @settingsAnimationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth screen and card transitions'**
+  String get settingsAnimationsSubtitle;
+
+  /// No description provided for @settingsClipboardLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-detect clipboard links'**
+  String get settingsClipboardLabel;
+
+  /// No description provided for @settingsClipboardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer to save copied links when returning to Marky'**
+  String get settingsClipboardSubtitle;
+
+  /// No description provided for @settingsUnreadRemindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread reminders'**
+  String get settingsUnreadRemindersTitle;
+
+  /// No description provided for @settingsReminderScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder schedule'**
+  String get settingsReminderScheduleTitle;
+
+  /// No description provided for @settingsManageRemindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage active reminders'**
+  String get settingsManageRemindersTitle;
+
+  /// No description provided for @settingsExportFormatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export format'**
+  String get settingsExportFormatTitle;
+
+  /// No description provided for @settingsExportJsonOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Marky Backup (JSON)'**
+  String get settingsExportJsonOption;
+
+  /// No description provided for @settingsExportHtmlOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser Bookmarks (Netscape HTML)'**
+  String get settingsExportHtmlOption;
+
+  /// No description provided for @settingsImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore / Import (JSON, HTML)'**
+  String get settingsImportTitle;
+
+  /// No description provided for @settingsImportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Marky backup or browser bookmarks (Chrome, Firefox, Pocket)'**
+  String get settingsImportSubtitle;
+
+  /// No description provided for @settingsCacheTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache & storage'**
+  String get settingsCacheTitle;
+
+  /// No description provided for @settingsCacheSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline articles & cached thumbnails: {size}'**
+  String settingsCacheSubtitle(String size);
+
+  /// No description provided for @settingsCacheClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cache'**
+  String get settingsCacheClearAction;
+
+  /// No description provided for @settingsCacheCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleared'**
+  String get settingsCacheCleared;
+
+  /// No description provided for @brokenLinksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Broken Link Checker'**
+  String get brokenLinksTitle;
+
+  /// No description provided for @brokenLinksSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Audit and clean up 404/dead links'**
+  String get brokenLinksSubtitle;
+
+  /// No description provided for @brokenLinksStartScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Start scan'**
+  String get brokenLinksStartScan;
+
+  /// No description provided for @brokenLinksStopScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get brokenLinksStopScan;
+
+  /// No description provided for @brokenLinksScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning {scanned} / {total}...'**
+  String brokenLinksScanning(int scanned, int total);
+
+  /// No description provided for @brokenLinksAllHealthy.
+  ///
+  /// In en, this message translates to:
+  /// **'All links look healthy!'**
+  String get brokenLinksAllHealthy;
+
+  /// No description provided for @brokenLinksArchiveAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive all ({count})'**
+  String brokenLinksArchiveAll(int count);
+
+  /// No description provided for @brokenLinksArchivedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived {count} broken links.'**
+  String brokenLinksArchivedCount(int count);
+
+  /// No description provided for @brokenLinksOpenWayback.
+  ///
+  /// In en, this message translates to:
+  /// **'Open on Wayback Machine'**
+  String get brokenLinksOpenWayback;
+
+  /// No description provided for @brokenReasonNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Found (404)'**
+  String get brokenReasonNotFound;
+
+  /// No description provided for @brokenReasonGone.
+  ///
+  /// In en, this message translates to:
+  /// **'Gone (410)'**
+  String get brokenReasonGone;
+
+  /// No description provided for @brokenReasonServerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Error (5xx)'**
+  String get brokenReasonServerError;
+
+  /// No description provided for @brokenReasonDns.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS / Network Error'**
+  String get brokenReasonDns;
+
+  /// No description provided for @brokenReasonTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Timeout'**
+  String get brokenReasonTimeout;
+
+  /// No description provided for @brokenReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Error'**
+  String get brokenReasonOther;
+
+  /// No description provided for @automationRunOnExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Run on existing bookmarks'**
+  String get automationRunOnExisting;
+
+  /// No description provided for @automationRunConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply rule to library?'**
+  String get automationRunConfirmTitle;
+
+  /// No description provided for @automationRunConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This evaluates \"{name}\" against all active bookmarks.'**
+  String automationRunConfirmBody(String name);
+
+  /// No description provided for @automationRunResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule matched {count} bookmarks'**
+  String automationRunResult(int count);
+
+  /// No description provided for @automationLogsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution logs'**
+  String get automationLogsTooltip;
+
+  /// No description provided for @automationCreateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Create rule'**
+  String get automationCreateTooltip;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get onboardingDone;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingPage1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Save from anywhere'**
+  String get onboardingPage1Title;
+
+  /// No description provided for @onboardingPage1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Share links directly to Marky from any app. Paste a URL, scan a QR code, or type it in — your library grows effortlessly.'**
+  String get onboardingPage1Body;
+
+  /// No description provided for @onboardingPage2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize with tags'**
+  String get onboardingPage2Title;
+
+  /// No description provided for @onboardingPage2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag bookmarks by topic, group them in collections, and favorite the best ones. Everything stays tidy and easy to find.'**
+  String get onboardingPage2Body;
+
+  /// No description provided for @onboardingPage3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Automate the busywork'**
+  String get onboardingPage3Title;
+
+  /// No description provided for @onboardingPage3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Create rules to auto-tag, auto-archive, or auto-collect links as they arrive. Set it once and let Marky handle the rest.'**
+  String get onboardingPage3Body;
+
+  /// No description provided for @onboardingPage4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Read distraction-free'**
+  String get onboardingPage4Title;
+
+  /// No description provided for @onboardingPage4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Set reminders for unread links, search with operators, and enjoy a calm offline-first Reader mode.'**
+  String get onboardingPage4Body;
+
+  /// No description provided for @colorPaletteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Color palette'**
+  String get colorPaletteTitle;
+
+  /// No description provided for @actionOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get actionOk;
+
+  /// No description provided for @dashboardReadRatePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String dashboardReadRatePercent(String percentage);
 }
 
 class _AppLocalizationsDelegate

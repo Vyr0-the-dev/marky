@@ -103,9 +103,56 @@ class _TagEditorSheetState extends ConsumerState<TagEditorSheet> {
                     ? (AppLocalizations.of(context)?.actionSave ?? 'Save')
                     : (AppLocalizations.of(context)?.actionCreate ?? 'Create')),
           ),
+          if (widget.isEdit && widget.initial?.id != null) ...<Widget>[
+            const SizedBox(height: ReadingRoomSpacing.xs),
+            TextButton.icon(
+              onPressed: _saving ? null : _confirmDelete,
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: Text(AppLocalizations.of(context)?.actionDelete ?? 'Delete'),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDelete() async {
+    final Tag? tag = widget.initial;
+    if (tag?.id == null) return;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text(
+          l10n?.libraryDeleteTagTitle(tag!.name) ?? 'Delete "${tag!.name}"?',
+        ),
+        content: Text(
+          l10n?.libraryDeleteTagMessage ??
+              'This removes the tag from all bookmarks.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n?.actionCancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n?.actionDelete ?? 'Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(tagRepositoryProvider).delete(tag!.id!);
+      if (mounted) Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   Future<void> _save() async {

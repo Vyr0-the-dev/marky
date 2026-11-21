@@ -1246,4 +1246,413 @@ class AppLocalizationsEn extends AppLocalizations {
   String settingsUnreadReminderWeeklySet(String weekday, String time) {
     return 'Set for every $weekday at $time';
   }
+
+  @override
+  String get brokenLinksShortTitle => 'Link Check';
+
+  @override
+  String get reminderStatusSnoozed => 'Snoozed';
+
+  @override
+  String get reminderSnooze1h => '+1 hour';
+
+  @override
+  String get batchActionArchive => 'Archive';
+
+  @override
+  String get batchActionFavorite => 'Favorite';
+
+  @override
+  String get batchActionRead => 'Read';
+
+  @override
+  String get batchActionTag => 'Tags';
+
+  @override
+  String get batchActionCollection => 'Collections';
+
+  @override
+  String get batchActionDelete => 'Delete';
+
+  @override
+  String batchTagSheetTitle(int count) {
+    return 'Apply tags to $count bookmarks';
+  }
+
+  @override
+  String batchCollectionSheetTitle(int count) {
+    return 'Add $count bookmarks to collections';
+  }
+
+  @override
+  String batchUpdatedCount(int count) {
+    return 'Updated $count bookmarks';
+  }
+
+  @override
+  String clipboardLinkFound(String host) {
+    return 'Link found in clipboard: $host';
+  }
+
+  @override
+  String get clipboardEmpty => 'Clipboard is empty';
+
+  @override
+  String get clipboardNoValidLink => 'No valid link in clipboard';
+
+  @override
+  String get quickAddTitle => 'Quick add';
+
+  @override
+  String get quickAddSubtitle => 'Choose a way to add a new link.';
+
+  @override
+  String get quickAddQrTitle => 'Scan QR';
+
+  @override
+  String get quickAddQrSubtitle =>
+      'Use camera to read a QR code and capture the link.';
+
+  @override
+  String get quickAddManualTitle => 'Manual input';
+
+  @override
+  String get quickAddManualSubtitle => 'Type or paste a link manually.';
+
+  @override
+  String get quickAddClipboardTitle => 'Paste clipboard';
+
+  @override
+  String get quickAddClipboardSubtitle =>
+      'Capture the first link found in clipboard text.';
+
+  @override
+  String get quickAddSaved => 'Link saved';
+
+  @override
+  String get quickAddDuplicate => 'Already saved in your library';
+
+  @override
+  String get quickAddInvalidUrl => 'No valid link found';
+
+  @override
+  String get quickAddSaveFailed => 'Save failed';
+
+  @override
+  String get qrScannerTitle => 'Scan QR';
+
+  @override
+  String get qrScannerHint => 'Point the camera at a QR code containing a URL';
+
+  @override
+  String get searchRecentCleared => 'Recent searches cleared';
+
+  @override
+  String get homeUnreadNudgeTitle => 'Unread reminders';
+
+  @override
+  String get homeUnreadNudgeSubtitle => 'Bring saved links back automatically.';
+
+  @override
+  String get homeUnreadNudgeEvening => 'Evening';
+
+  @override
+  String get homeUnreadNudgeWeekly => 'Weekly';
+
+  @override
+  String get badgeVideo => 'Video';
+
+  @override
+  String get badgeCode => 'Code';
+
+  @override
+  String get badgePost => 'Post';
+
+  @override
+  String get badgeForum => 'Forum';
+
+  @override
+  String get badgeDoc => 'Doc';
+
+  @override
+  String get badgeAudio => 'Audio';
+
+  @override
+  String get badgeProduct => 'Product';
+
+  @override
+  String get badgeImage => 'Image';
+
+  @override
+  String get timeJustNow => 'now';
+
+  @override
+  String timeMinutesAgo(int count) {
+    return '${count}m';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    return '${count}h';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    return '${count}d';
+  }
+
+  @override
+  String timeWeeksAgo(int count) {
+    return '${count}w';
+  }
+
+  @override
+  String timeMonthsAgo(int count) {
+    return '${count}mo';
+  }
+
+  @override
+  String timeYearsAgo(int count) {
+    return '${count}y';
+  }
+
+  @override
+  String readingTimeShort(int minutes) {
+    return '${minutes}m';
+  }
+
+  @override
+  String get detailReaderMode => 'Reader';
+
+  @override
+  String get detailPlayInApp => 'Play Video in App';
+
+  @override
+  String get detailCoverViewFull => 'View Full Screen';
+
+  @override
+  String get detailCoverChangeUrl => 'Change Image URL';
+
+  @override
+  String get detailCoverRemove => 'Remove Cover Image';
+
+  @override
+  String get detailCoverRemoved => 'Cover image removed.';
+
+  @override
+  String get detailCoverUrlTitle => 'Cover Image URL';
+
+  @override
+  String get detailUrlCopied => 'URL copied to clipboard';
+
+  @override
+  String get readerFallbackNotice =>
+      'Full text could not be extracted; showing summary preview.';
+
+  @override
+  String get readerFallbackEmptyBody =>
+      'Parsed article text is unavailable for this page. Open the original page in your browser to view the full content.';
+
+  @override
+  String get readerTopComments => 'Top Comments';
+
+  @override
+  String get readerEndTitle => 'Finished reading?';
+
+  @override
+  String get readerMarkRead => 'Mark as read';
+
+  @override
+  String get readerMarkReadArchive => 'Read & archive';
+
+  @override
+  String get readerMarkedAsRead => 'Marked as read';
+
+  @override
+  String get readerSaveHighlightAsNote => 'Save as note';
+
+  @override
+  String get readerHighlightSaved => 'Quote saved to notes';
+
+  @override
+  String get readerLineSpacing => 'Line spacing';
+
+  @override
+  String get settingsSectionCapture => 'Capture';
+
+  @override
+  String get settingsSectionReminders => 'Reminders';
+
+  @override
+  String get settingsSectionTools => 'Data & Tools';
+
+  @override
+  String get settingsAnimationsSubtitle => 'Smooth screen and card transitions';
+
+  @override
+  String get settingsClipboardLabel => 'Auto-detect clipboard links';
+
+  @override
+  String get settingsClipboardSubtitle =>
+      'Offer to save copied links when returning to Marky';
+
+  @override
+  String get settingsUnreadRemindersTitle => 'Unread reminders';
+
+  @override
+  String get settingsReminderScheduleTitle => 'Reminder schedule';
+
+  @override
+  String get settingsManageRemindersTitle => 'Manage active reminders';
+
+  @override
+  String get settingsExportFormatTitle => 'Export format';
+
+  @override
+  String get settingsExportJsonOption => 'Full Marky Backup (JSON)';
+
+  @override
+  String get settingsExportHtmlOption => 'Browser Bookmarks (Netscape HTML)';
+
+  @override
+  String get settingsImportTitle => 'Restore / Import (JSON, HTML)';
+
+  @override
+  String get settingsImportSubtitle =>
+      'Marky backup or browser bookmarks (Chrome, Firefox, Pocket)';
+
+  @override
+  String get settingsCacheTitle => 'Cache & storage';
+
+  @override
+  String settingsCacheSubtitle(String size) {
+    return 'Offline articles & cached thumbnails: $size';
+  }
+
+  @override
+  String get settingsCacheClearAction => 'Clear cache';
+
+  @override
+  String get settingsCacheCleared => 'Cache cleared';
+
+  @override
+  String get brokenLinksTitle => 'Broken Link Checker';
+
+  @override
+  String get brokenLinksSubtitle => 'Audit and clean up 404/dead links';
+
+  @override
+  String get brokenLinksStartScan => 'Start scan';
+
+  @override
+  String get brokenLinksStopScan => 'Stop';
+
+  @override
+  String brokenLinksScanning(int scanned, int total) {
+    return 'Scanning $scanned / $total...';
+  }
+
+  @override
+  String get brokenLinksAllHealthy => 'All links look healthy!';
+
+  @override
+  String brokenLinksArchiveAll(int count) {
+    return 'Archive all ($count)';
+  }
+
+  @override
+  String brokenLinksArchivedCount(int count) {
+    return 'Archived $count broken links.';
+  }
+
+  @override
+  String get brokenLinksOpenWayback => 'Open on Wayback Machine';
+
+  @override
+  String get brokenReasonNotFound => 'Not Found (404)';
+
+  @override
+  String get brokenReasonGone => 'Gone (410)';
+
+  @override
+  String get brokenReasonServerError => 'Server Error (5xx)';
+
+  @override
+  String get brokenReasonDns => 'DNS / Network Error';
+
+  @override
+  String get brokenReasonTimeout => 'Request Timeout';
+
+  @override
+  String get brokenReasonOther => 'Access Error';
+
+  @override
+  String get automationRunOnExisting => 'Run on existing bookmarks';
+
+  @override
+  String get automationRunConfirmTitle => 'Apply rule to library?';
+
+  @override
+  String automationRunConfirmBody(String name) {
+    return 'This evaluates \"$name\" against all active bookmarks.';
+  }
+
+  @override
+  String automationRunResult(int count) {
+    return 'Rule matched $count bookmarks';
+  }
+
+  @override
+  String get automationLogsTooltip => 'Execution logs';
+
+  @override
+  String get automationCreateTooltip => 'Create rule';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingDone => 'Get started';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingPage1Title => 'Save from anywhere';
+
+  @override
+  String get onboardingPage1Body =>
+      'Share links directly to Marky from any app. Paste a URL, scan a QR code, or type it in — your library grows effortlessly.';
+
+  @override
+  String get onboardingPage2Title => 'Organize with tags';
+
+  @override
+  String get onboardingPage2Body =>
+      'Tag bookmarks by topic, group them in collections, and favorite the best ones. Everything stays tidy and easy to find.';
+
+  @override
+  String get onboardingPage3Title => 'Automate the busywork';
+
+  @override
+  String get onboardingPage3Body =>
+      'Create rules to auto-tag, auto-archive, or auto-collect links as they arrive. Set it once and let Marky handle the rest.';
+
+  @override
+  String get onboardingPage4Title => 'Read distraction-free';
+
+  @override
+  String get onboardingPage4Body =>
+      'Set reminders for unread links, search with operators, and enjoy a calm offline-first Reader mode.';
+
+  @override
+  String get colorPaletteTitle => 'Color palette';
+
+  @override
+  String get actionOk => 'OK';
+
+  @override
+  String dashboardReadRatePercent(String percentage) {
+    return '$percentage%';
+  }
 }

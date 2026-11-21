@@ -113,6 +113,12 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     await _repository.save(state);
   }
 
+  Future<void> setClipboardDetectionEnabled({required bool enabled}) async {
+    if (state.clipboardDetectionEnabled == enabled) return;
+    state = state.copyWith(clipboardDetectionEnabled: enabled);
+    await _repository.save(state);
+  }
+
   /// Replaces the whole bag — used by "reset to defaults" in Settings.
   Future<void> replace(AppSettings next) async {
     if (state == next) return;
@@ -194,6 +200,13 @@ final Provider<SwipeAction> leftSwipeActionProvider = Provider<SwipeAction>(
 final Provider<SwipeAction> rightSwipeActionProvider = Provider<SwipeAction>(
   (Ref ref) => ref.watch(
     appSettingsProvider.select((AppSettings s) => s.rightSwipeAction),
+  ),
+);
+
+final Provider<bool> clipboardDetectionEnabledProvider = Provider<bool>(
+  (Ref ref) => ref.watch(
+    appSettingsProvider
+        .select((AppSettings s) => s.clipboardDetectionEnabled),
   ),
 );
 

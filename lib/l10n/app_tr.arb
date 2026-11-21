@@ -65,7 +65,7 @@
   "snackbarBookmarkUpdated": "Yer imi güncellendi",
   "snackbarBookmarkDeleted": "Yer imi silindi",
   "snackbarBookmarkArchived": "Yer imi arşivlendi",
-  "snackbarBookmarkUnarchived": "Yer imi arşivden çıkarıldı",
+  "snackbarBookmarkUnarchived": "Yer işareti arşivden çıkarıldı",
   "snackbarMarkedAsRead": "Okundu olarak işaretlendi",
   "snackbarMarkedAsUnread": "Okunmadı olarak işaretlendi",
   "snackbarCopiedToClipboard": "Panoya kopyalandı",
@@ -284,7 +284,6 @@
   "snackbarMarkedAsFavorite": "Favorilere eklendi",
   "snackbarMarkedAsUnfavorite": "Favorilerden çıkarıldı",
   "actionUnarchive": "Arşivden çıkar",
-  "snackbarBookmarkUnarchived": "Yer işareti arşivden çıkarıldı",
   "shareLinkSaved": "Paylaşılan bağlantı kaydedildi",
   "shareLinkAlreadySaved": "Bağlantı zaten kaydedilmiş",
   "shareNoLinkFound": "Kaydedilecek bağlantı bulunamadı",
@@ -402,7 +401,6 @@
   "statusOffline": "Çevrimdışı",
   "statusOnline": "Çevrimiçi",
   "feedMainContentLabel": "Yer imi akışı içeriği",
-
   "reminderSheetTitle": "Hatırlat",
   "reminderTonight": "Bu akşam (20:00)",
   "reminderTomorrow": "Yarın (09:00)",
@@ -412,23 +410,19 @@
   "reminderPermissionRequired": "Bildirim izni gereklidir",
   "reminderExactAlarmUnavailable": "Kesin alarmlar kullanılamıyor",
   "reminderSet": "Hatırlatıcı ayarlandı",
-
   "detailActionRefetch": "Yenile",
   "detailRefetchingMetadata": "Meta veri yenileniyor…",
   "detailMetadataRefreshed": "Meta veri yenilendi",
-
   "colorPickerCustomColor": "Özel renk",
   "colorPickerHexLabel": "Hex renk",
   "colorPickerHexError": "#RRGGBB veya #AARRGGBB kullanın",
   "colorPickerUseColor": "Rengi kullan",
-
   "tagNameHint": "Etiket adı",
   "collectionNameHint": "Koleksiyon adı",
   "collectionDescriptionHint": "Açıklama (isteğe bağlı)",
   "pinToTop": "Üste sabitle",
   "actionCreate": "Oluştur",
   "actionUpdate": "Güncelle",
-
   "automationWhen": "Ne zaman…",
   "automationThen": "O zaman…",
   "automationAllFieldsRequired": "Tüm alanlar zorunludur.",
@@ -455,7 +449,6 @@
   "automationTriggerType": "Tetikleyici türü",
   "automationActionType": "Aksiyon türü",
   "automationAddAction": "Aksiyon ekle",
-
   "batchDeleteTitle": "Yer imleri silinsin mi?",
   "batchDeleteMessage": "{count, plural, one {1 yer imi kalıcı olarak silinecek.} other {{count} yer imi kalıcı olarak silinecek.}}",
   "@batchDeleteMessage": {
@@ -465,31 +458,27 @@
       }
     }
   },
-
   "homeFilteredLabel": "Filtrelendi: {label}",
   "@homeFilteredLabel": {
     "placeholders": {
       "label": {}
     }
   },
-
   "remindersAppBarTitle": "Hatırlatıcılar",
-
   "newTag": "Yeni Etiket",
   "editTag": "Etiketi Düzenle",
   "newCollection": "Yeni Koleksiyon",
   "editCollection": "Koleksiyonu Düzenle",
-
   "shareOpenBookmark": "Aç",
-
   "navigationQuickAdd": "Hızlı Ekle",
-
   "dashboardLibraryOverview": "KÜTÜPHANE GENEL BAKIŞI",
   "dashboardSavedLinks": "kayıtlı bağlantı",
   "dashboardPercentRead": "%{percentage} Okundu",
   "@dashboardPercentRead": {
     "placeholders": {
-      "percentage": { "type": "int" }
+      "percentage": {
+        "type": "int"
+      }
     }
   },
   "dashboardRead": "Okundu",
@@ -505,13 +494,14 @@
   "dashboardSavedCount": "{count} kayıt",
   "@dashboardSavedCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "dashboardTopDomainsTitle": "En Çok Okunan Kaynaklar",
   "dashboardSourceBreakdownTitle": "Kaynak Dağılımı",
   "dashboardTopTagsTitle": "Popüler Etiketler",
-
   "readerRetry": "Tekrar Dene",
   "readerOpenOriginal": "Orijinal Sayfayı Tarayıcıda Aç",
   "readerThemePaper": "Kağıt",
@@ -519,7 +509,6 @@
   "readerThemeDark": "Koyu",
   "readerFontSerif": "Serif (Tırnaklı)",
   "readerFontSans": "Sans (Düz)",
-
   "automationCreateRule": "Kural oluştur",
   "automationMatchAll": "TÜMÜ (VE)",
   "automationMatchAny": "HERHANGİ BİRİ (VEYA)",
@@ -529,24 +518,31 @@
   "automationRuleSaveError": "Kural kaydedilemedi: {error}",
   "@automationRuleSaveError": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "automationTourBack": "Geri",
   "automationTourSkip": "Geç",
   "automationTourNext": "İleri",
-
   "settingsUnreadReminderDaily": "Her gün saat {time}",
   "@settingsUnreadReminderDaily": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "settingsUnreadReminderWeekly": "Her hafta {weekday} saat {time}",
   "@settingsUnreadReminderWeekly": {
     "placeholders": {
-      "weekday": { "type": "String" },
-      "time": { "type": "String" }
+      "weekday": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
     }
   },
   "settingsUnreadReminderOffMsg": "Okunmamış hatırlatıcıları kapatıldı",
@@ -554,15 +550,270 @@
   "settingsUnreadReminderDailySet": "Her gün saat {time} için ayarlandı",
   "@settingsUnreadReminderDailySet": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "settingsUnreadReminderWeeklySet": "Her {weekday} saat {time} için ayarlandı",
   "@settingsUnreadReminderWeeklySet": {
     "placeholders": {
-      "weekday": { "type": "String" },
-      "time": { "type": "String" }
+      "weekday": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "brokenLinksShortTitle": "Link Kontrolü",
+  "reminderStatusSnoozed": "Ertelendi",
+  "reminderSnooze1h": "+1 saat",
+  "batchActionArchive": "Arşivle",
+  "batchActionFavorite": "Favori",
+  "batchActionRead": "Okundu",
+  "batchActionTag": "Etiketle",
+  "batchActionCollection": "Koleksiyon",
+  "batchActionDelete": "Sil",
+  "batchTagSheetTitle": "{count} bağlantıya etiket uygula",
+  "@batchTagSheetTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchCollectionSheetTitle": "{count} bağlantıyı koleksiyona ekle",
+  "@batchCollectionSheetTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchUpdatedCount": "{count} bağlantı güncellendi",
+  "@batchUpdatedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipboardLinkFound": "Panoda bağlantı bulundu: {host}",
+  "@clipboardLinkFound": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "clipboardEmpty": "Pano boş görünüyor",
+  "clipboardNoValidLink": "Panoda geçerli bağlantı yok",
+  "quickAddTitle": "Hızlı Ekle",
+  "quickAddSubtitle": "Yeni bir bağlantı eklemek için bir yol seç.",
+  "quickAddQrTitle": "QR ile Tara",
+  "quickAddQrSubtitle": "Kamerayla QR kodu okuyup bağlantıyı yakala.",
+  "quickAddManualTitle": "Manuel Gir",
+  "quickAddManualSubtitle": "Bağlantıyı yazarak veya yapıştırarak ekle.",
+  "quickAddClipboardTitle": "Panodan Yapıştır",
+  "quickAddClipboardSubtitle": "Panodaki metinden ilk bağlantıyı kaydet.",
+  "quickAddSaved": "Bağlantı kaydedildi",
+  "quickAddDuplicate": "Bu bağlantı zaten kayıtlı",
+  "quickAddInvalidUrl": "Geçerli bağlantı bulunamadı",
+  "quickAddSaveFailed": "Kaydetme sırasında hata oluştu",
+  "qrScannerTitle": "QR Tara",
+  "qrScannerHint": "Kamerayı bağlantı içeren bir QR koda tutun",
+  "searchRecentCleared": "Son aramalar temizlendi",
+  "homeUnreadNudgeTitle": "Okunmamış hatırlatıcılar",
+  "homeUnreadNudgeSubtitle": "Kayıtlı linkleri otomatik hatırlat.",
+  "homeUnreadNudgeEvening": "Akşam",
+  "homeUnreadNudgeWeekly": "Haftalık",
+  "badgeVideo": "Video",
+  "badgeCode": "Kod",
+  "badgePost": "Gönderi",
+  "badgeForum": "Forum",
+  "badgeDoc": "Belge",
+  "badgeAudio": "Ses",
+  "badgeProduct": "Ürün",
+  "badgeImage": "Görsel",
+  "timeJustNow": "şimdi",
+  "timeMinutesAgo": "{count} dk",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeHoursAgo": "{count} sa",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeDaysAgo": "{count}g",
+  "@timeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeWeeksAgo": "{count}h",
+  "@timeWeeksAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeMonthsAgo": "{count} ay",
+  "@timeMonthsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeYearsAgo": "{count} yıl",
+  "@timeYearsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readingTimeShort": "{minutes} dk",
+  "@readingTimeShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "detailReaderMode": "Okuma Modu",
+  "detailPlayInApp": "Videoyu Uygulamada Oynat",
+  "detailCoverViewFull": "Tam Ekran Görüntüle",
+  "detailCoverChangeUrl": "Görsel URL Değiştir",
+  "detailCoverRemove": "Kapak Görselini Kaldır",
+  "detailCoverRemoved": "Kapak görseli kaldırıldı.",
+  "detailCoverUrlTitle": "Kapak Görseli URL",
+  "detailUrlCopied": "URL panoya kopyalandı",
+  "readerFallbackNotice": "Tam metin çıkarılamadı; özet ve önizleme gösteriliyor.",
+  "readerFallbackEmptyBody": "Bu web sayfası için ayrıştırılmış makale metni bulunamadı. Orijinal sayfayı tarayıcıda açarak tam içeriği görüntüleyebilirsiniz.",
+  "readerTopComments": "Öne Çıkan Yorumlar",
+  "readerEndTitle": "Okumayı bitirdiniz mi?",
+  "readerMarkRead": "Okundu işaretle",
+  "readerMarkReadArchive": "Okundu & arşivle",
+  "readerMarkedAsRead": "Okundu olarak işaretlendi",
+  "readerSaveHighlightAsNote": "Not olarak kaydet",
+  "readerHighlightSaved": "Alıntı notlara kaydedildi",
+  "readerLineSpacing": "Satır aralığı",
+  "settingsSectionCapture": "Yakalama",
+  "settingsSectionReminders": "Hatırlatıcılar",
+  "settingsSectionTools": "Veri ve Araçlar",
+  "settingsAnimationsSubtitle": "Akıcı ekran ve kart geçişleri",
+  "settingsClipboardLabel": "Panodan otomatik link algıla",
+  "settingsClipboardSubtitle": "Uygulamaya dönünce kopyalanan linkleri kaydetmeyi öner",
+  "settingsUnreadRemindersTitle": "Okunmamış bağlantı hatırlatıcısı",
+  "settingsReminderScheduleTitle": "Hatırlatıcı zamanı",
+  "settingsManageRemindersTitle": "Aktif hatırlatıcıları yönet",
+  "settingsExportFormatTitle": "Dışa aktarma formatı",
+  "settingsExportJsonOption": "Tam Marky Yedeği (JSON)",
+  "settingsExportHtmlOption": "Tarayıcı Yer İmleri (Netscape HTML)",
+  "settingsImportTitle": "Yedek / İçe Aktar (JSON, HTML)",
+  "settingsImportSubtitle": "Marky yedeği veya tarayıcı yer imleri (Chrome, Firefox, Pocket)",
+  "settingsCacheTitle": "Önbellek ve depolama",
+  "settingsCacheSubtitle": "Çevrimdışı makaleler ve önbellek görselleri: {size}",
+  "@settingsCacheSubtitle": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCacheClearAction": "Önbelleği temizle",
+  "settingsCacheCleared": "Önbellek temizlendi",
+  "brokenLinksTitle": "Bağlantı Sağlık Kontrolü",
+  "brokenLinksSubtitle": "404 ve ulaşılamayan bağlantıları tara",
+  "brokenLinksStartScan": "Taramayı Başlat",
+  "brokenLinksStopScan": "Durdur",
+  "brokenLinksScanning": "Taranıyor {scanned} / {total}...",
+  "@brokenLinksScanning": {
+    "placeholders": {
+      "scanned": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "brokenLinksAllHealthy": "Tüm bağlantılar sağlıklı görünüyor!",
+  "brokenLinksArchiveAll": "Tümünü Arşivle ({count})",
+  "@brokenLinksArchiveAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "brokenLinksArchivedCount": "{count} kırık bağlantı arşivlendi.",
+  "@brokenLinksArchivedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "brokenLinksOpenWayback": "Wayback Machine'de Aç",
+  "brokenReasonNotFound": "Sayfa Bulunamadı (404)",
+  "brokenReasonGone": "İçerik Kaldırılmış (410)",
+  "brokenReasonServerError": "Sunucu Hatası (5xx)",
+  "brokenReasonDns": "DNS / Ağ Bağlantı Hatası",
+  "brokenReasonTimeout": "Zaman Aşımı",
+  "brokenReasonOther": "Erişim Hatası",
+  "automationRunOnExisting": "Mevcut kayıtlara uygula",
+  "automationRunConfirmTitle": "Kural mevcut kütüphaneye uygulansın mı?",
+  "automationRunConfirmBody": "\"{name}\" kuralı tüm aktif bağlantılar üzerinde çalıştırılacak.",
+  "@automationRunConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "automationRunResult": "Kural {count} bağlantıya uygulandı",
+  "@automationRunResult": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "automationLogsTooltip": "Çalışma kayıtları",
+  "automationCreateTooltip": "Kural oluştur",
+  "onboardingSkip": "Atla",
+  "onboardingDone": "Başla",
+  "onboardingNext": "İleri",
+  "onboardingPage1Title": "Her yerden kaydet",
+  "onboardingPage1Body": "Herhangi bir uygulamadan bağlantıları doğrudan Marky'ye paylaşın. URL yapıştırın veya QR tarayın — kütüphaneniz zahmetsizce büyüsün.",
+  "onboardingPage2Title": "Etiket ve koleksiyonlarla düzenle",
+  "onboardingPage2Body": "Bağlantıları konularına göre etiketleyin, manuel veya akıllı koleksiyonlarda toplayın. Aradığınız her şey elinizin altında.",
+  "onboardingPage3Title": "Tekrarlayan işleri otomatikleştir",
+  "onboardingPage3Body": "Yeni bağlantıları domain veya türe göre otomatik etiketleyen, arşivleyen kurallar oluşturun. Bir kez ayarlayın, gerisini Marky halletsin.",
+  "onboardingPage4Title": "Dikkat dağıtmadan oku",
+  "onboardingPage4Body": "Okunmamış linkler için hatırlatıcı kurun, operatörlerle anında arayın ve sakin çevrimdışı Okuma Modu'nun keyfini çıkarın.",
+  "colorPaletteTitle": "Renk paleti",
+  "actionOk": "Tamam",
+  "dashboardReadRatePercent": "%{percentage}",
+  "@dashboardReadRatePercent": {
+    "placeholders": {
+      "percentage": {
+        "type": "String"
+      }
     }
   }
 }
-
