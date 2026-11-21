@@ -64,6 +64,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Keep debug builds side-by-side with release Marky so live hot-reload
+            // sessions never overwrite or conflict with the user's installed library.
+            applicationIdSuffix = ".preview"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

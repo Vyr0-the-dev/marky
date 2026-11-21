@@ -3,4 +3,7 @@
     <!-- Marky's canonical AMOLED black base — matches the Flutter
          scaffold so the engine boot is visually seamless. -->
     <item android:drawable="@android:color/black" />
+    <item
+        android:drawable="@drawable/splash_icon"
+        android:gravity="center" />
 </layer-list>
