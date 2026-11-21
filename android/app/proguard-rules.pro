@@ -20,6 +20,9 @@
 -keep class isar.** { *; }
 -dontwarn isar.**
 
+# Transitive Apache Tika (via file_picker) references desktop StAX API absent on Android
+-dontwarn javax.xml.stream.XMLStreamException
+
 # General reflection attributes
 -keepattributes Signature
 -keepattributes Exceptions
