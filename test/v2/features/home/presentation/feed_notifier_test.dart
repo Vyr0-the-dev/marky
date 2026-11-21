@@ -180,4 +180,36 @@ void main() {
       expect(a, isNot(b));
     });
   });
+
+  group('pagination & narrowing', () {
+    test('loadMore increments query limit by pageSize', () {
+      expect(notifier.state.query.limit, FeedNotifier.pageSize);
+      notifier.loadMore();
+      expect(notifier.state.query.limit, FeedNotifier.pageSize * 2);
+      notifier.setFilter(BookmarkFeedFilter.unread);
+      expect(notifier.state.query.limit, FeedNotifier.pageSize);
+    });
+
+    test('applyQuery stores label and clearNarrowing clears all narrowing', () {
+      notifier.applyQuery(
+        BookmarkFeedQuery(
+          filter: BookmarkFeedFilter.unread,
+          host: 'github.com',
+          contentType: BookmarkContentType.code,
+          createdAfter: DateTime.utc(2026),
+        ),
+        filterLabel: 'Recent Code',
+      );
+      expect(notifier.state.hasActiveNarrowing, isTrue);
+      expect(notifier.state.activeFilterLabel, 'Recent Code');
+
+      notifier.clearNarrowing();
+      expect(notifier.state.hasActiveNarrowing, isFalse);
+      expect(notifier.state.activeFilterLabel, isNull);
+      expect(notifier.state.query.host, isNull);
+      expect(notifier.state.query.contentType, isNull);
+      expect(notifier.state.query.createdAfter, isNull);
+      expect(notifier.state.query.filter, BookmarkFeedFilter.unread);
+    });
+  });
 }

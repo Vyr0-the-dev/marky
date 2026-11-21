@@ -4,31 +4,54 @@ import 'package:marky/core/database/enums/bookmark_content_type.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/home/presentation/feed_state.dart';
 
-/// Manages [FeedState] — filter chips, sort, view mode, and
+/// Manages [FeedState] — filter chips, sort, pagination, view mode, and
 /// selection. This is pure presentation logic with no side-effects.
-///
-/// Bookmark mutation actions (archive, delete, favorite) are handled
-/// by the repository and surfaced through the stream; this notifier
-/// only manages *which* items are visible and *how* they're shown.
 class FeedNotifier extends StateNotifier<FeedState> {
   FeedNotifier() : super(const FeedState());
 
-  // ─── Filter / sort ─────────────────────────────────────────────
+  static const int pageSize = 100;
+
+  // ─── Filter / sort / pagination ────────────────────────────────
 
   void setFilter(BookmarkFeedFilter filter) {
     state = state.copyWith(
-      query: state.query.copyWith(filter: filter),
+      query: state.query.copyWith(filter: filter, limit: pageSize),
     );
   }
 
   void setSort(BookmarkSort sort) {
     state = state.copyWith(
-      query: state.query.copyWith(sort: sort),
+      query: state.query.copyWith(sort: sort, limit: pageSize),
     );
   }
 
-  void applyQuery(BookmarkFeedQuery query) {
-    state = state.copyWith(query: query);
+  void applyQuery(BookmarkFeedQuery query, {String? filterLabel}) {
+    state = state.copyWith(
+      query: query.copyWith(limit: pageSize),
+      activeFilterLabel: filterLabel,
+      clearActiveFilterLabel: filterLabel == null,
+    );
+  }
+
+  /// Increases the query limit by [pageSize] so scrolling past 100 bookmarks
+  /// seamlessly reveals the rest of the library.
+  void loadMore() {
+    state = state.copyWith(
+      query: state.query.copyWith(limit: state.query.limit + pageSize),
+    );
+  }
+
+  /// Clears all narrowing criteria (tag, collection, host, content type,
+  /// date range, smart collection label) while preserving top-level filter
+  /// and sort order.
+  void clearNarrowing() {
+    state = state.copyWith(
+      query: BookmarkFeedQuery(
+        filter: state.query.filter,
+        sort: state.query.sort,
+      ),
+      clearActiveFilterLabel: true,
+    );
   }
 
   void setTagId(int? tagId) {
@@ -42,9 +65,9 @@ class FeedNotifier extends StateNotifier<FeedState> {
         host: state.query.host,
         createdAfter: state.query.createdAfter,
         createdBefore: state.query.createdBefore,
-        limit: state.query.limit,
         offset: state.query.offset,
       ),
+      clearActiveFilterLabel: tagId == null,
     );
   }
 
@@ -59,9 +82,9 @@ class FeedNotifier extends StateNotifier<FeedState> {
         host: state.query.host,
         createdAfter: state.query.createdAfter,
         createdBefore: state.query.createdBefore,
-        limit: state.query.limit,
         offset: state.query.offset,
       ),
+      clearActiveFilterLabel: collectionId == null,
     );
   }
 
@@ -76,14 +99,14 @@ class FeedNotifier extends StateNotifier<FeedState> {
         host: state.query.host,
         createdAfter: state.query.createdAfter,
         createdBefore: state.query.createdBefore,
-        limit: state.query.limit,
         offset: state.query.offset,
       ),
+      clearActiveFilterLabel: type == null,
     );
   }
 
-  /// Narrows the feed to a single normalized host (e.g.
-  /// `nytimes.com`).  Pass `null` to clear the filter.
+  /// Narrows the feed to a single normalized host (e.g. `nytimes.com`).
+  /// Pass `null` to clear the filter.
   void setHost(String? host) {
     state = state.copyWith(
       query: BookmarkFeedQuery(
@@ -95,9 +118,9 @@ class FeedNotifier extends StateNotifier<FeedState> {
         host: host,
         createdAfter: state.query.createdAfter,
         createdBefore: state.query.createdBefore,
-        limit: state.query.limit,
         offset: state.query.offset,
       ),
+      clearActiveFilterLabel: host == null,
     );
   }
 
@@ -134,7 +157,6 @@ class FeedNotifier extends StateNotifier<FeedState> {
     } else {
       updated.add(id);
     }
-    // Auto-exit when nothing is selected.
     if (updated.isEmpty) {
       exitSelectionMode();
       return;

@@ -31,16 +31,20 @@ void main() {
     );
   });
 
-  test('produces a valid JSON envelope with version 1', () async {
+  test('produces a valid JSON envelope with version 2', () async {
     final String body = await service.exportAll();
     final Map<String, dynamic> decoded =
         json.decode(body) as Map<String, dynamic>;
 
-    expect(decoded['version'], 1);
+    expect(decoded['version'], 2);
     expect(decoded['exportedAt'], isA<String>());
     expect(decoded['bookmarks'], isA<List<dynamic>>());
     expect(decoded['tags'], isA<List<dynamic>>());
     expect(decoded['collections'], isA<List<dynamic>>());
+    expect(decoded['notes'], isA<List<dynamic>>());
+    expect(decoded['automationRules'], isA<List<dynamic>>());
+    expect(decoded['savedSearches'], isA<List<dynamic>>());
+    expect(decoded['reminders'], isA<List<dynamic>>());
   });
 
   test('serialises bookmarks with all fields', () async {
@@ -148,9 +152,66 @@ void main() {
     expect(bookmarkRepo.feedQueries.any((q) => q.limit > 10000), isFalse);
   });
 
-  test('collections include archived ones', () async {
-    await service.exportAll();
+  test('collections include archived ones and smart collection metadata', () async {
+    final DateTime now = DateTime.utc(2026);
+    collectionRepo.allCollections = <BookmarkCollection>[
+      BookmarkCollection(
+        id: 7,
+        title: 'Unread Videos',
+        slug: 'unread-videos',
+        isSmart: true,
+        smartRuleJson: const SmartCollectionRule(
+          filter: BookmarkFeedFilter.unread,
+          contentType: BookmarkContentType.video,
+        ).encode(),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+    final String body = await service.exportAll();
     expect(collectionRepo.lastIncludeArchived, isTrue);
+    final Map<String, dynamic> decoded =
+        json.decode(body) as Map<String, dynamic>;
+    final Map<String, dynamic> col =
+        (decoded['collections'] as List<dynamic>).first as Map<String, dynamic>;
+    expect(col['id'], 7);
+    expect(col['isSmart'], isTrue);
+    expect(col['smartRuleJson'], isNotEmpty);
+  });
+
+  test('exportNetscapeHtml outputs browser-compatible folders and tags', () async {
+    final DateTime now = DateTime.utc(2026, 5);
+    tagRepo.allTags = <Tag>[
+      Tag(id: 3, name: 'Flutter', slug: 'flutter', createdAt: now, updatedAt: now),
+    ];
+    collectionRepo.allCollections = <BookmarkCollection>[
+      BookmarkCollection(
+        id: 9,
+        title: 'Dev & Docs',
+        slug: 'dev-docs',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+    bookmarkRepo.feedResults = <Bookmark>[
+      Bookmark(
+        id: 1,
+        originalUrl: 'https://flutter.dev',
+        title: 'Flutter <SDK>',
+        tagIds: const <int>[3],
+        collectionIds: const <int>[9],
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+
+    final String html = await service.exportNetscapeHtml();
+    expect(html, contains('<!DOCTYPE NETSCAPE-Bookmark-file-1>'));
+    expect(html, contains('<H3 ADD_DATE='));
+    expect(html, contains('Dev &amp; Docs'));
+    expect(html, contains('HREF="https://flutter.dev"'));
+    expect(html, contains('TAGS="Flutter"'));
+    expect(html, contains('Flutter &lt;SDK&gt;'));
   });
 }
 

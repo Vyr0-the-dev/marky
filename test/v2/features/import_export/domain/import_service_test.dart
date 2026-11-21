@@ -338,6 +338,50 @@ void main() {
     expect(result.collectionsImported, 1);
     expect(result.bookmarksImported, 2);
   });
+
+  test('v2 remaps tag and collection IDs by slug and restores smart collections',
+      () async {
+    final String body = json.encode(<String, dynamic>{
+      'version': 2,
+      'tags': <Map<String, dynamic>>[
+        <String, dynamic>{'id': 55, 'name': 'Flutter', 'slug': 'flutter'},
+      ],
+      'collections': <Map<String, dynamic>>[
+        <String, dynamic>{'id': 88, 'title': 'Reading', 'slug': 'reading'},
+        <String, dynamic>{
+          'id': 99,
+          'title': 'Smart Flutter',
+          'slug': 'smart-flutter',
+          'isSmart': true,
+          'smartRuleJson':
+              const SmartCollectionRule(tagId: 55).encode(),
+          'smartRuleTagSlug': 'flutter',
+        },
+      ],
+      'bookmarks': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'originalUrl': 'https://flutter.dev',
+          'tagIds': <int>[55],
+          'tagSlugs': <String>['flutter'],
+          'collectionIds': <int>[88],
+          'collectionSlugs': <String>['reading'],
+        },
+      ],
+    });
+
+    final ImportResult result = await service.importAll(body);
+
+    expect(result.tagsImported, 1);
+    expect(result.collectionsImported, 2);
+    expect(result.bookmarksImported, 1);
+    // Tag got new id=1, manual collection got new id=1 (not old 55/88!).
+    expect(bookmarkRepo.saved.first.tagIds, <int>[1]);
+    expect(bookmarkRepo.saved.first.collectionIds, <int>[1]);
+    // Smart collection got restored with remapped tagId=1.
+    final BookmarkCollection smart = collectionRepo.created.last;
+    expect(smart.isSmart, isTrue);
+    expect(SmartCollectionRule.decode(smart.smartRuleJson!).tagId, 1);
+  });
 }
 
 // ─── Fakes ────────────────────────────────────────────────────────
@@ -438,8 +482,22 @@ class _FakeCollectionRepo implements BookmarkCollectionRepository {
     SmartCollectionRule rule, {
     int? accentColorArgb,
     String? icon,
-  }) =>
-      throw UnimplementedError();
+  }) async {
+    final DateTime now = DateTime(2026);
+    final BookmarkCollection c = BookmarkCollection(
+      id: created.length + 1,
+      title: title,
+      slug: BookmarkCollection.slugify(title),
+      accentColorArgb: accentColorArgb,
+      icon: icon,
+      isSmart: true,
+      smartRuleJson: rule.encode(),
+      createdAt: now,
+      updatedAt: now,
+    );
+    created.add(c);
+    return c;
+  }
 
   // ─── Unused stubs ──────────────────────────────────────────────
 

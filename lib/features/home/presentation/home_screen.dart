@@ -95,8 +95,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const FeedFilterBar(),
 
           // ── Active narrowing indicator ─────────────────────
-          if (query.tagId != null || query.collectionId != null)
-            _NarrowingChip(query: query),
+          if (feedState.hasActiveNarrowing)
+            _NarrowingChip(
+              query: query,
+              activeFilterLabel: feedState.activeFilterLabel,
+            ),
 
           const _UnreadReminderNudge(),
 
@@ -213,7 +216,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           body: l10n?.homeEmptyBody ??
               'Save a link from anywhere — paste, share, or add manually.',
           actionLabel: l10n?.homeAddLinkAction ?? 'Add a link',
-          onAction: () => context.go(Routes.add),
+          onAction: () => context.push(Routes.add),
         );
       case BookmarkFeedFilter.favorites:
         return MarkyEmptyState(
@@ -419,13 +422,17 @@ class _BookmarkList extends ConsumerWidget {
               bookmarks: bookmarks,
               feedState: feedState,
             )
-          : Scrollbar(
+          : NotificationListener<ScrollNotification>(
               key: const ValueKey<FeedViewMode>(FeedViewMode.list),
-              interactive: true,
-              child: ListView.separated(
-                // ignore: deprecated_member_use
-                cacheExtent: 360,
-                itemCount: bookmarks.length,
+              onNotification: (ScrollNotification notification) =>
+                  _maybeLoadMore(notification, ref),
+              child: Scrollbar(
+                interactive: true,
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(bottom: 88),
+                  // ignore: deprecated_member_use
+                  cacheExtent: 360,
+                  itemCount: bookmarks.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (BuildContext context, int index) {
                   final Bookmark bookmark = bookmarks[index];
@@ -443,16 +450,26 @@ class _BookmarkList extends ConsumerWidget {
                     return RepaintBoundary(child: card);
                   }
 
-                  return RepaintBoundary(
-                    child: _SwipeableCard(
-                      bookmark: bookmark,
-                      child: card,
-                    ),
-                  );
-                },
+                    return RepaintBoundary(
+                      child: _SwipeableCard(
+                        bookmark: bookmark,
+                        child: card,
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
     );
+  }
+
+  bool _maybeLoadMore(ScrollNotification notification, WidgetRef ref) {
+    if (bookmarks.length < feedState.query.limit) return false;
+    if (notification.metrics.pixels >=
+        notification.metrics.maxScrollExtent - 300) {
+      ref.read(feedNotifierProvider.notifier).loadMore();
+    }
+    return false;
   }
 
   void _onTap(BuildContext context, WidgetRef ref, Bookmark bookmark) {
@@ -499,12 +516,26 @@ class _BookmarkGrid extends ConsumerWidget {
             : MediaQuery.sizeOf(context).width;
         final int crossAxisCount = columnCountForWidth(width);
 
-        return Scrollbar(
-          interactive: true,
-          child: MasonryGridView.count(
-            key: ValueKey<int>(crossAxisCount),
-            cacheExtent: 360,
-            padding: const EdgeInsets.all(ReadingRoomSpacing.md),
+        return NotificationListener<ScrollNotification>(
+          onNotification: (ScrollNotification notification) {
+            if (bookmarks.length >= feedState.query.limit &&
+                notification.metrics.pixels >=
+                    notification.metrics.maxScrollExtent - 300) {
+              ref.read(feedNotifierProvider.notifier).loadMore();
+            }
+            return false;
+          },
+          child: Scrollbar(
+            interactive: true,
+            child: MasonryGridView.count(
+              key: ValueKey<int>(crossAxisCount),
+              cacheExtent: 360,
+              padding: const EdgeInsets.fromLTRB(
+                ReadingRoomSpacing.md,
+                ReadingRoomSpacing.md,
+                ReadingRoomSpacing.md,
+                88,
+              ),
             crossAxisCount: crossAxisCount,
             mainAxisSpacing: ReadingRoomSpacing.md,
             crossAxisSpacing: ReadingRoomSpacing.md,
@@ -538,6 +569,7 @@ class _BookmarkGrid extends ConsumerWidget {
                 ),
               );
             },
+          ),
           ),
         );
       },
@@ -887,29 +919,60 @@ class _SortMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppLocalizations? l10n = AppLocalizations.of(context);
+    final BookmarkSort activeSort = ref.watch(
+      feedNotifierProvider.select((FeedState s) => s.query.sort),
+    );
     return PopupMenuButton<BookmarkSort>(
       icon: const Icon(Icons.sort),
       tooltip: l10n?.homeSortTooltip ?? 'Sort',
       onSelected: (BookmarkSort sort) =>
           ref.read(feedNotifierProvider.notifier).setSort(sort),
       itemBuilder: (_) => <PopupMenuEntry<BookmarkSort>>[
-        PopupMenuItem<BookmarkSort>(
-          value: BookmarkSort.newestFirst,
-          child: Text(l10n?.sortNewest ?? 'Newest first'),
+        _sortItem(
+          BookmarkSort.newestFirst,
+          l10n?.sortNewest ?? 'Newest first',
+          activeSort,
         ),
-        PopupMenuItem<BookmarkSort>(
-          value: BookmarkSort.oldestFirst,
-          child: Text(l10n?.sortOldest ?? 'Oldest first'),
+        _sortItem(
+          BookmarkSort.oldestFirst,
+          l10n?.sortOldest ?? 'Oldest first',
+          activeSort,
         ),
-        PopupMenuItem<BookmarkSort>(
-          value: BookmarkSort.recentlyOpened,
-          child: Text(l10n?.sortRecentlyOpened ?? 'Recently opened'),
+        _sortItem(
+          BookmarkSort.recentlyOpened,
+          l10n?.sortRecentlyOpened ?? 'Recently opened',
+          activeSort,
         ),
-        PopupMenuItem<BookmarkSort>(
-          value: BookmarkSort.titleAscending,
-          child: Text(l10n?.sortTitle ?? 'Title'),
+        _sortItem(
+          BookmarkSort.titleAscending,
+          l10n?.sortTitle ?? 'Title',
+          activeSort,
         ),
       ],
+    );
+  }
+
+  static PopupMenuItem<BookmarkSort> _sortItem(
+    BookmarkSort value,
+    String label,
+    BookmarkSort active,
+  ) {
+    final bool selected = value == active;
+    return PopupMenuItem<BookmarkSort>(
+      value: value,
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              label,
+              style: selected
+                  ? const TextStyle(fontWeight: FontWeight.w700)
+                  : null,
+            ),
+          ),
+          if (selected) const Icon(Icons.check_rounded, size: 18),
+        ],
+      ),
     );
   }
 }
@@ -917,14 +980,20 @@ class _SortMenu extends ConsumerWidget {
 // ─── Narrowing chip ─────────────────────────────────────────────
 
 class _NarrowingChip extends ConsumerWidget {
-  const _NarrowingChip({required this.query});
+  const _NarrowingChip({
+    required this.query,
+    this.activeFilterLabel,
+  });
 
   final BookmarkFeedQuery query;
+  final String? activeFilterLabel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     String label;
-    if (query.tagId != null) {
+    if (activeFilterLabel != null && activeFilterLabel!.isNotEmpty) {
+      label = activeFilterLabel!;
+    } else if (query.tagId != null) {
       final AsyncValue<Tag?> tagAsync =
           ref.watch(tagByIdProvider(query.tagId!));
       label =
@@ -936,6 +1005,10 @@ class _NarrowingChip extends ConsumerWidget {
           'Collection #${query.collectionId}';
     } else if (query.host != null) {
       label = query.host!;
+    } else if (query.contentType != null) {
+      label = query.contentType!.name;
+    } else if (query.createdAfter != null || query.createdBefore != null) {
+      label = AppLocalizations.of(context)?.dashboardThisWeek ?? 'Filtered';
     } else {
       return const SizedBox.shrink();
     }
@@ -952,11 +1025,8 @@ class _NarrowingChip extends ConsumerWidget {
                 AppLocalizations.of(context)?.homeFilteredLabel(label) ??
                     'Filtered: $label'),
             deleteIcon: const Icon(Icons.close, size: 16),
-            onDeleted: () {
-              ref.read(feedNotifierProvider.notifier).setTagId(null);
-              ref.read(feedNotifierProvider.notifier).setCollectionId(null);
-              ref.read(feedNotifierProvider.notifier).setHost(null);
-            },
+            onDeleted: () =>
+                ref.read(feedNotifierProvider.notifier).clearNarrowing(),
           ),
         ],
       ),
