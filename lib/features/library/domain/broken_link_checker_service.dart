@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
+import 'package:marky/l10n/app_localizations.dart';
 
 enum BrokenLinkReason {
   notFound,
@@ -13,20 +14,20 @@ enum BrokenLinkReason {
   timeout,
   other;
 
-  String getDisplayLabel({bool isTurkish = false}) {
+  String localizedLabel(AppLocalizations? l10n) {
     switch (this) {
       case BrokenLinkReason.notFound:
-        return isTurkish ? 'Sayfa Bulunamadı (404)' : 'Not Found (404)';
+        return l10n?.brokenReasonNotFound ?? 'Not Found (404)';
       case BrokenLinkReason.gone:
-        return isTurkish ? 'İçerik Kaldırılmış (410)' : 'Gone (410)';
+        return l10n?.brokenReasonGone ?? 'Gone (410)';
       case BrokenLinkReason.serverError:
-        return isTurkish ? 'Sunucu Hatası (5xx)' : 'Server Error (5xx)';
+        return l10n?.brokenReasonServerError ?? 'Server Error (5xx)';
       case BrokenLinkReason.dnsOrNetworkError:
-        return isTurkish ? 'DNS / Ağ Bağlantı Hatası' : 'DNS / Network Error';
+        return l10n?.brokenReasonDns ?? 'DNS / Network Error';
       case BrokenLinkReason.timeout:
-        return isTurkish ? 'Zaman Aşımı' : 'Request Timeout';
+        return l10n?.brokenReasonTimeout ?? 'Request Timeout';
       case BrokenLinkReason.other:
-        return isTurkish ? 'Erişim Hatası' : 'Access Error';
+        return l10n?.brokenReasonOther ?? 'Access Error';
     }
   }
 }
@@ -65,6 +66,11 @@ class BrokenLinkCheckerService {
             );
 
   final Dio _dio;
+
+  /// Builds an Internet Archive Wayback Machine lookup URL for [originalUrl].
+  static String waybackUrlFor(String originalUrl) {
+    return 'https://web.archive.org/web/${Uri.encodeFull(originalUrl.trim())}';
+  }
 
   Future<BrokenLinkReport?> checkBookmark(Bookmark bookmark) async {
     final String url = bookmark.canonicalUrl ?? bookmark.originalUrl;

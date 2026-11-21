@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/url/url_extractor.dart';
+import 'package:marky/l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QrScannerScreen extends StatefulWidget {
@@ -39,14 +39,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isTurkish =
-        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
-              'tr',
-            );
+    final AppLocalizations? l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isTurkish ? 'QR ile Tara' : 'Scan QR'),
+        title: Text(l10n?.qrScannerTitle ?? 'Scan QR'),
       ),
       body: Stack(
         children: <Widget>[
@@ -66,9 +63,8 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(ReadingRoomSpacing.md),
                 child: Text(
-                  isTurkish
-                      ? 'Bir bağlantı içeren QR kodunu kameraya göster.'
-                      : 'Point the camera at a QR code containing a link.',
+                  l10n?.qrScannerHint ??
+                      'Point the camera at a QR code containing a URL',
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white),
                 ),

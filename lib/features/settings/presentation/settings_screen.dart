@@ -10,31 +10,46 @@ import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/storage/cache_management_service.dart';
 import 'package:marky/core/utils/l10n_extension.dart';
 import 'package:marky/features/import_export/data/import_export_providers.dart';
 import 'package:marky/features/import_export/domain/import_service.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
 import 'package:marky/features/reminders/domain/reminder_scheduler.dart';
 import 'package:marky/l10n/app_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Settings screen — theme, locale, export/import.
+final FutureProvider<String> _appVersionProvider =
+    FutureProvider<String>((Ref ref) async {
+  try {
+    final PackageInfo info = await PackageInfo.fromPlatform();
+    return info.buildNumber.isNotEmpty
+        ? 'v${info.version} (${info.buildNumber})'
+        : 'v${info.version}';
+  } on Object {
+    return 'v1.0.0';
+  }
+});
+
+enum _ExportFormat { json, html }
+
+/// Settings screen — appearance, gestures, capture, reminders, automation,
+/// data tools, cache management, and app metadata.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
-
-  bool _isTurkish(BuildContext context) {
-    return Localizations.localeOf(context)
-        .languageCode
-        .toLowerCase()
-        .startsWith('tr');
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppLocalizations? l10n = AppLocalizations.of(context);
     final AppSettings settings = ref.watch(appSettingsProvider);
     final AppSettingsNotifier notifier = ref.read(appSettingsProvider.notifier);
+    final AsyncValue<int> cacheSizeAsync = ref.watch(cacheSizeBytesProvider);
+    final AsyncValue<String> versionAsync = ref.watch(_appVersionProvider);
+    final ThemeData theme = Theme.of(context);
+    final bool unreadRemindersEnabled =
+        settings.unreadReminderCadence != UnreadReminderCadence.off;
 
     return Scaffold(
       appBar: AppBar(
@@ -48,7 +63,9 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 88),
         children: <Widget>[
+          // ── Appearance ───────────────────────────────────────
           _SectionTitle(l10n?.settingsSectionAppearance ?? 'Appearance'),
           ListTile(
             leading: const Icon(Icons.palette_outlined),
@@ -62,6 +79,19 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: Text(_localeLabel(settings.locale, l10n)),
             onTap: () => _showLocalePicker(context, notifier, settings),
           ),
+          SwitchListTile(
+            secondary: const Icon(Icons.animation_rounded),
+            title: Text(l10n?.settingsAnimationsLabel ?? 'Animations'),
+            subtitle: Text(
+              l10n?.settingsAnimationsSubtitle ??
+                  'Smooth screen and card transitions',
+            ),
+            value: settings.animationsEnabled,
+            onChanged: (bool value) =>
+                unawaited(notifier.setAnimationsEnabled(enabled: value)),
+          ),
+
+          // ── Gestures ─────────────────────────────────────────
           _SectionTitle(l10n?.settingsSectionGestures ?? 'Gestures'),
           ListTile(
             leading: const Icon(Icons.swipe_right_rounded),
@@ -85,15 +115,30 @@ class SettingsScreen extends ConsumerWidget {
               current: settings.leftSwipeAction,
             ),
           ),
-          _SectionTitle(
-            _isTurkish(context) ? 'Geri Dönüş Hatırlatıcıları' : 'Reminders',
+
+          // ── Capture ──────────────────────────────────────────
+          _SectionTitle(l10n?.settingsSectionCapture ?? 'Capture'),
+          SwitchListTile(
+            secondary: const Icon(Icons.content_paste_search_rounded),
+            title: Text(
+              l10n?.settingsClipboardLabel ?? 'Auto-detect clipboard links',
+            ),
+            subtitle: Text(
+              l10n?.settingsClipboardSubtitle ??
+                  'Offer to save copied links when returning to Marky',
+            ),
+            value: settings.clipboardDetectionEnabled,
+            onChanged: (bool value) => unawaited(
+              notifier.setClipboardDetectionEnabled(enabled: value),
+            ),
           ),
+
+          // ── Reminders ────────────────────────────────────────
+          _SectionTitle(l10n?.settingsSectionReminders ?? 'Reminders'),
           ListTile(
             leading: const Icon(Icons.auto_awesome_motion_rounded),
             title: Text(
-              _isTurkish(context)
-                  ? 'Okunmamış Bağlantı Hatırlatıcısı'
-                  : 'Unread reminders',
+              l10n?.settingsUnreadRemindersTitle ?? 'Unread reminders',
             ),
             subtitle: Text(
               _unreadReminderCadenceLabel(
@@ -112,126 +157,127 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           ListTile(
+            enabled: unreadRemindersEnabled,
             leading: const Icon(Icons.access_time_rounded),
             title: Text(
-              _isTurkish(context) ? 'Hatırlatıcı Zamanı' : 'Reminder schedule',
+              l10n?.settingsReminderScheduleTitle ?? 'Reminder schedule',
             ),
             subtitle: Text(
-              _unreadReminderScheduleLabel(context, settings),
+              unreadRemindersEnabled
+                  ? _unreadReminderScheduleLabel(context, settings)
+                  : (l10n?.settingsOffLabel ?? 'Off'),
             ),
-            onTap: () => _pickUnreadReminderSchedule(
-              context,
-              ref,
-              notifier,
-              settings,
-            ),
+            onTap: unreadRemindersEnabled
+                ? () => _pickUnreadReminderSchedule(
+                      context,
+                      ref,
+                      notifier,
+                      settings,
+                    )
+                : null,
           ),
           ListTile(
-            leading: const Icon(Icons.auto_fix_high),
+            leading: const Icon(Icons.notifications_active_outlined),
             title: Text(
-              _isTurkish(context)
-                  ? 'Otomasyon'
-                  : (l10n?.settingsAutomationLabel ?? 'Automation rules'),
+              l10n?.settingsManageRemindersTitle ?? 'Manage active reminders',
             ),
+            trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+            onTap: () => context.push(Routes.reminders),
+          ),
+
+          // ── Automation ───────────────────────────────────────
+          _SectionTitle(l10n?.settingsSectionAutomation ?? 'Automation'),
+          ListTile(
+            leading: const Icon(Icons.auto_fix_high),
+            title: Text(l10n?.settingsAutomationLabel ?? 'Automation rules'),
             subtitle: Text(
-              _isTurkish(context)
-                  ? 'Otomatik etiketleme, arşivleme ve kurallar'
-                  : (l10n?.settingsAutomationSubtitle ??
-                      'Auto-tag, archive, and more'),
+              l10n?.settingsAutomationSubtitle ??
+                  'Auto-tag, archive, and more',
             ),
+            trailing: const Icon(Icons.chevron_right_rounded, size: 20),
             onTap: () => context.push(Routes.automationRules),
           ),
-          ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(
-              horizontal: ReadingRoomSpacing.lg,
-            ),
-            childrenPadding: EdgeInsets.zero,
-            shape: const Border(),
-            collapsedShape: const Border(),
-            leading: const Icon(Icons.tune_rounded),
-            title: Text(_isTurkish(context) ? 'Gelişmiş' : 'Advanced'),
+
+          // ── Data & Tools ─────────────────────────────────────
+          _SectionTitle(l10n?.settingsSectionTools ?? 'Data & Tools'),
+          ListTile(
+            leading: const Icon(Icons.bar_chart_rounded),
+            title: Text(l10n?.settingsDashboardLabel ?? 'Dashboard'),
             subtitle: Text(
-              _isTurkish(context)
-                  ? 'Yedekleme, analiz ve uygulama bilgileri'
-                  : 'Backup, analytics, and app details',
+              l10n?.settingsDashboardSubtitle ?? 'Stats & analytics',
             ),
-            children: <Widget>[
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: ReadingRoomSpacing.lg,
-                ),
-                leading: const Icon(Icons.upload_file),
-                title: Text(
-                  l10n?.settingsExportBackupTitle ?? 'Export backup (JSON)',
-                ),
-                onTap: () => _export(context, ref),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: ReadingRoomSpacing.lg,
-                ),
-                leading: const Icon(Icons.download),
-                title: Text(
-                  _isTurkish(context)
-                      ? 'Yedek veya Yer İmlerini İçe Aktar (JSON, HTML)'
-                      : 'Restore Backup / Import (JSON, HTML)',
-                ),
-                subtitle: Text(
-                  _isTurkish(context)
-                      ? 'Marky yedeği veya tarayıcı yer imleri (Chrome, Firefox, Pocket)'
-                      : 'Marky backup or browser bookmarks (Chrome, Firefox, Pocket)',
-                ),
-                onTap: () => _import(context, ref),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: ReadingRoomSpacing.lg,
-                ),
-                leading: const Icon(Icons.bar_chart_rounded),
-                title: Text(l10n?.settingsDashboardLabel ?? 'Dashboard'),
-                subtitle: Text(
-                  l10n?.settingsDashboardSubtitle ?? 'Stats & analytics',
-                ),
-                onTap: () => context.push(Routes.stats),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: ReadingRoomSpacing.lg,
-                ),
-                leading: const Icon(Icons.health_and_safety_outlined),
-                title: Text(
-                  _isTurkish(context)
-                      ? 'Bağlantı Sağlık Kontrolü'
-                      : 'Broken Link Checker',
-                ),
-                subtitle: Text(
-                  _isTurkish(context)
-                      ? '404 ve ulaşılamayan bağlantıları tara'
-                      : 'Audit and clean up 404/dead links',
-                ),
-                onTap: () => context.push(Routes.brokenLinks),
-              ),
-              const ListTile(
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: ReadingRoomSpacing.lg,
-                ),
-                leading: Icon(Icons.info_outline),
-                title: Text('Marky'),
-                subtitle: Text('v2.0.0-dev'),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: ReadingRoomSpacing.lg,
-                ),
-                leading: const Icon(Icons.restore),
-                title: Text(
-                  l10n?.settingsResetDefaultsTitle ?? 'Reset to defaults',
-                ),
-                onTap: () => _confirmReset(context, notifier),
-              ),
-            ],
+            trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+            onTap: () => context.push(Routes.stats),
           ),
-          const SizedBox(height: ReadingRoomSpacing.huge),
+          ListTile(
+            leading: const Icon(Icons.health_and_safety_outlined),
+            title: Text(l10n?.brokenLinksTitle ?? 'Broken Link Checker'),
+            subtitle: Text(
+              l10n?.brokenLinksSubtitle ?? 'Audit and clean up 404/dead links',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+            onTap: () => context.push(Routes.brokenLinks),
+          ),
+          ListTile(
+            leading: const Icon(Icons.upload_file),
+            title: Text(
+              l10n?.settingsExportFormatTitle ?? 'Export backup',
+            ),
+            subtitle: Text(
+              '${l10n?.settingsExportJsonOption ?? 'JSON'} · '
+              '${l10n?.settingsExportHtmlOption ?? 'HTML'}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () => _showExportFormatSheet(context, ref),
+          ),
+          ListTile(
+            leading: const Icon(Icons.download),
+            title: Text(
+              l10n?.settingsImportTitle ?? 'Restore / Import (JSON, HTML)',
+            ),
+            subtitle: Text(
+              l10n?.settingsImportSubtitle ??
+                  'Marky backup or browser bookmarks (Chrome, Firefox, Pocket)',
+            ),
+            onTap: () => _import(context, ref),
+          ),
+          ListTile(
+            leading: const Icon(Icons.storage_outlined),
+            title: Text(l10n?.settingsCacheTitle ?? 'Cache & storage'),
+            subtitle: Text(
+              cacheSizeAsync.when(
+                data: (int bytes) =>
+                    l10n?.settingsCacheSubtitle(
+                      CacheManagementService.formatBytes(bytes),
+                    ) ??
+                    'Offline articles & cached thumbnails: '
+                        '${CacheManagementService.formatBytes(bytes)}',
+                loading: () => '…',
+                error: (_, __) => '—',
+              ),
+            ),
+            trailing: TextButton(
+              onPressed: () => _clearCache(context, ref),
+              child: Text(l10n?.settingsCacheClearAction ?? 'Clear cache'),
+            ),
+          ),
+
+          // ── About ────────────────────────────────────────────
+          _SectionTitle(l10n?.settingsSectionAbout ?? 'About'),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Marky'),
+            subtitle: Text(versionAsync.valueOrNull ?? 'v1.0.0'),
+          ),
+          ListTile(
+            leading: Icon(Icons.restore, color: theme.colorScheme.error),
+            title: Text(
+              l10n?.settingsResetDefaultsTitle ?? 'Reset to defaults',
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+            onTap: () => _confirmReset(context, notifier),
+          ),
         ],
       ),
     );
@@ -253,21 +299,23 @@ class SettingsScreen extends ConsumerWidget {
           RadioGroup<AppThemeMode>(
             groupValue: settings.themeMode,
             onChanged: (AppThemeMode? v) {
-              if (v != null) notifier.setThemeMode(v);
+              if (v != null) unawaited(notifier.setThemeMode(v));
               Navigator.of(ctx).pop();
             },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: AppThemeMode.values
-                  .map((AppThemeMode mode) => RadioListTile<AppThemeMode>(
-                        title: Text(
-                          _themeModeLabel(
-                            mode,
-                            AppLocalizations.of(context),
-                          ),
+                  .map(
+                    (AppThemeMode mode) => RadioListTile<AppThemeMode>(
+                      title: Text(
+                        _themeModeLabel(
+                          mode,
+                          AppLocalizations.of(context),
                         ),
-                        value: mode,
-                      ))
+                      ),
+                      value: mode,
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -306,22 +354,23 @@ class SettingsScreen extends ConsumerWidget {
           RadioGroup<AppLocaleChoice>(
             groupValue: settings.locale,
             onChanged: (AppLocaleChoice? v) {
-              if (v != null) notifier.setLocale(v);
+              if (v != null) unawaited(notifier.setLocale(v));
               Navigator.of(ctx).pop();
             },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: AppLocaleChoice.values
-                  .map((AppLocaleChoice choice) =>
-                      RadioListTile<AppLocaleChoice>(
-                        title: Text(
-                          _localeLabel(
-                            choice,
-                            AppLocalizations.of(context),
-                          ),
+                  .map(
+                    (AppLocaleChoice choice) => RadioListTile<AppLocaleChoice>(
+                      title: Text(
+                        _localeLabel(
+                          choice,
+                          AppLocalizations.of(context),
                         ),
-                        value: choice,
-                      ))
+                      ),
+                      value: choice,
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -391,10 +440,12 @@ class SettingsScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: SwipeAction.values
-                  .map((SwipeAction action) => RadioListTile<SwipeAction>(
-                        title: Text(_swipeActionLabel(action, l10n)),
-                        value: action,
-                      ))
+                  .map(
+                    (SwipeAction action) => RadioListTile<SwipeAction>(
+                      title: Text(_swipeActionLabel(action, l10n)),
+                      value: action,
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -409,44 +460,45 @@ class SettingsScreen extends ConsumerWidget {
     AppSettingsNotifier notifier,
     AppSettings settings,
   ) {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     showDialog<void>(
       context: context,
       builder: (BuildContext ctx) => SimpleDialog(
-        title: Text(
-          _isTurkish(context)
-              ? 'Okunmamış Bağlantı Hatırlatıcısı'
-              : 'Unread reminders',
-        ),
+        title: Text(l10n?.settingsUnreadRemindersTitle ?? 'Unread reminders'),
         children: <Widget>[
           RadioGroup<UnreadReminderCadence>(
             groupValue: settings.unreadReminderCadence,
             onChanged: (UnreadReminderCadence? v) {
               if (v == null) return;
               Navigator.of(ctx).pop();
-              unawaited(_applyUnreadReminderCadence(
-                context,
-                ref,
-                notifier,
-                settings,
-                v,
-              ));
+              unawaited(
+                _applyUnreadReminderCadence(
+                  context,
+                  ref,
+                  notifier,
+                  settings,
+                  v,
+                ),
+              );
             },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: UnreadReminderCadence.values
-                  .map((UnreadReminderCadence cadence) =>
-                      RadioListTile<UnreadReminderCadence>(
-                        title: Text(
-                          _unreadReminderCadenceLabel(
-                            context,
-                            cadence,
-                            weekday: settings.unreadReminderWeekday,
-                            hour: settings.unreadReminderHour,
-                            minute: settings.unreadReminderMinute,
-                          ),
+                  .map(
+                    (UnreadReminderCadence cadence) =>
+                        RadioListTile<UnreadReminderCadence>(
+                      title: Text(
+                        _unreadReminderCadenceLabel(
+                          context,
+                          cadence,
+                          weekday: settings.unreadReminderWeekday,
+                          hour: settings.unreadReminderHour,
+                          minute: settings.unreadReminderMinute,
                         ),
-                        value: cadence,
-                      ))
+                      ),
+                      value: cadence,
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -463,6 +515,7 @@ class SettingsScreen extends ConsumerWidget {
     UnreadReminderCadence cadence,
   ) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     try {
       int unreadCount = 0;
       int weekday = settings.unreadReminderWeekday;
@@ -521,13 +574,23 @@ class SettingsScreen extends ConsumerWidget {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Bildirim izni verilmedi')),
+          SnackBar(
+            content: Text(
+              l10n?.reminderPermissionRequired ??
+                  'Notification permission is required',
+            ),
+          ),
         );
     } on ReminderExactAlarmUnavailableException {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Kesin alarm izni mevcut değil')),
+          SnackBar(
+            content: Text(
+              l10n?.reminderExactAlarmUnavailable ??
+                  'Exact alarms are not available',
+            ),
+          ),
         );
     }
   }
@@ -567,19 +630,7 @@ class SettingsScreen extends ConsumerWidget {
     if (!context.mounted) return;
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final UnreadReminderCadence cadence = settings.unreadReminderCadence;
-    if (cadence == UnreadReminderCadence.off) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              'Hatırlatıcı zamanı '
-              '${_formatTime(context, hour: picked.hour, minute: picked.minute)} olarak ayarlandı',
-            ),
-          ),
-        );
-      return;
-    }
+    if (cadence == UnreadReminderCadence.off) return;
 
     try {
       final int unreadCount =
@@ -610,21 +661,13 @@ class SettingsScreen extends ConsumerWidget {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(
-            content: Text(
-              context.l10n.reminderPermissionRequired,
-            ),
-          ),
+          SnackBar(content: Text(context.l10n.reminderPermissionRequired)),
         );
     } on ReminderExactAlarmUnavailableException {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(
-            content: Text(
-              context.l10n.reminderExactAlarmUnavailable,
-            ),
-          ),
+          SnackBar(content: Text(context.l10n.reminderExactAlarmUnavailable)),
         );
     }
   }
@@ -753,17 +796,82 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  // ── Export ──────────────────────────────────────────────────────
+  // ── Export (JSON or Netscape HTML) ──────────────────────────────
 
-  Future<void> _export(BuildContext context, WidgetRef ref) async {
+  Future<void> _showExportFormatSheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final _ExportFormat? choice = await showModalBottomSheet<_ExportFormat>(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (BuildContext ctx) => SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                ReadingRoomSpacing.lg,
+                0,
+                ReadingRoomSpacing.lg,
+                ReadingRoomSpacing.sm,
+              ),
+              child: Text(
+                l10n?.settingsExportFormatTitle ?? 'Export format',
+                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.data_object_rounded),
+              title: Text(
+                l10n?.settingsExportJsonOption ?? 'Full Marky Backup (JSON)',
+              ),
+              onTap: () => Navigator.of(ctx).pop(_ExportFormat.json),
+            ),
+            ListTile(
+              leading: const Icon(Icons.language_rounded),
+              title: Text(
+                l10n?.settingsExportHtmlOption ??
+                    'Browser Bookmarks (Netscape HTML)',
+              ),
+              onTap: () => Navigator.of(ctx).pop(_ExportFormat.html),
+            ),
+            const SizedBox(height: ReadingRoomSpacing.md),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !context.mounted) return;
+    await _export(context, ref, choice);
+  }
+
+  Future<void> _export(
+    BuildContext context,
+    WidgetRef ref,
+    _ExportFormat format,
+  ) async {
     final String shareText =
         AppLocalizations.of(context)?.settingsBackupShareText ?? 'Marky backup';
     try {
-      final String json = await ref.read(exportServiceProvider).exportAll();
+      final int ts = DateTime.now().millisecondsSinceEpoch;
       final Directory dir = await getTemporaryDirectory();
-      final String path =
-          '${dir.path}/marky_backup_${DateTime.now().millisecondsSinceEpoch}.json';
-      await File(path).writeAsString(json);
+      final String path;
+      final String payload;
+      switch (format) {
+        case _ExportFormat.json:
+          payload = await ref.read(exportServiceProvider).exportAll();
+          path = '${dir.path}/marky_backup_$ts.json';
+        case _ExportFormat.html:
+          payload = await ref.read(exportServiceProvider).exportNetscapeHtml();
+          path = '${dir.path}/marky_bookmarks_$ts.html';
+      }
+      await File(path).writeAsString(payload);
       await Share.shareXFiles(
         <XFile>[XFile(path)],
         text: shareText,
@@ -782,6 +890,22 @@ class SettingsScreen extends ConsumerWidget {
           );
       }
     }
+  }
+
+  // ── Cache cleanup ───────────────────────────────────────────────
+
+  Future<void> _clearCache(BuildContext context, WidgetRef ref) async {
+    await ref.read(cacheManagementServiceProvider).clearAll();
+    ref.invalidate(cacheSizeBytesProvider);
+    if (!context.mounted) return;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n?.settingsCacheCleared ?? 'Cache cleared'),
+        ),
+      );
   }
 
   // ── Import ──────────────────────────────────────────────────────

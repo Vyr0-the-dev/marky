@@ -53,7 +53,8 @@ class _CreateTagSheetState extends ConsumerState<CreateTagSheet> {
           ),
           const SizedBox(height: ReadingRoomSpacing.md),
           ColorSwatchPicker(
-            title: 'Renk paleti',
+            title: AppLocalizations.of(context)?.colorPaletteTitle ??
+                'Color palette',
             selected: _colorArgb,
             onChanged: (int? argb) => setState(() => _colorArgb = argb),
           ),

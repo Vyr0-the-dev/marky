@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/l10n/app_localizations.dart';
 
 enum QuickAddAction {
   qr,
@@ -9,10 +9,7 @@ enum QuickAddAction {
 }
 
 Future<QuickAddAction?> showQuickAddSheet(BuildContext context) {
-  final bool isTurkish = Localizations.localeOf(context)
-      .languageCode
-      .toLowerCase()
-      .startsWith('tr');
+  final AppLocalizations? l10n = AppLocalizations.of(context);
 
   return showModalBottomSheet<QuickAddAction>(
     context: context,
@@ -38,14 +35,12 @@ Future<QuickAddAction?> showQuickAddSheet(BuildContext context) {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                isTurkish ? 'Hızlı Ekle' : 'Quick add',
+                l10n?.quickAddTitle ?? 'Quick add',
                 style: theme.textTheme.titleMedium,
               ),
               const SizedBox(height: ReadingRoomSpacing.xs),
               Text(
-                isTurkish
-                    ? 'Yeni bir bağlantı eklemek için bir yol seç.'
-                    : 'Choose a way to add a new link.',
+                l10n?.quickAddSubtitle ?? 'Choose a way to add a new link.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -53,26 +48,23 @@ Future<QuickAddAction?> showQuickAddSheet(BuildContext context) {
               const SizedBox(height: ReadingRoomSpacing.md),
               _QuickAddTile(
                 icon: Icons.qr_code_scanner_rounded,
-                title: isTurkish ? 'QR ile Tara' : 'Scan QR',
-                subtitle: isTurkish
-                    ? 'Kamerayla QR kodu okuyup bağlantıyı yakala.'
-                    : 'Use camera to read a QR code and capture the link.',
+                title: l10n?.quickAddQrTitle ?? 'Scan QR',
+                subtitle: l10n?.quickAddQrSubtitle ??
+                    'Use camera to read a QR code and capture the link.',
                 onTap: () => Navigator.of(ctx).pop(QuickAddAction.qr),
               ),
               _QuickAddTile(
                 icon: Icons.edit_rounded,
-                title: isTurkish ? 'Manuel Gir' : 'Manual input',
-                subtitle: isTurkish
-                    ? 'Bağlantıyı yazarak veya yapıştırarak ekle.'
-                    : 'Type or paste a link manually.',
+                title: l10n?.quickAddManualTitle ?? 'Manual input',
+                subtitle: l10n?.quickAddManualSubtitle ??
+                    'Type or paste a link manually.',
                 onTap: () => Navigator.of(ctx).pop(QuickAddAction.manual),
               ),
               _QuickAddTile(
                 icon: Icons.content_paste_rounded,
-                title: isTurkish ? 'Panodan Yapıştır' : 'Paste clipboard',
-                subtitle: isTurkish
-                    ? 'Panodaki metinden ilk bağlantıyı kaydet.'
-                    : 'Capture the first link found in clipboard text.',
+                title: l10n?.quickAddClipboardTitle ?? 'Paste clipboard',
+                subtitle: l10n?.quickAddClipboardSubtitle ??
+                    'Capture the first link found in clipboard text.',
                 onTap: () => Navigator.of(ctx).pop(QuickAddAction.clipboard),
               ),
             ],

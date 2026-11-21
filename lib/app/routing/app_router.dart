@@ -245,15 +245,15 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
     if (!mounted) return;
     _lastDismissedOrProcessedClipboardUrl = normalizedUrl;
 
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     final Uri? parsed = Uri.tryParse(url);
     final String host =
         parsed != null && parsed.host.isNotEmpty ? parsed.host : url;
     final String displayHost =
         host.startsWith('www.') ? host.substring(4) : host;
-    final String message = _isTurkish
-        ? 'Panoda bağlantı bulundu: $displayHost'
-        : 'Link found in clipboard: $displayHost';
-    final String actionLabel = _isTurkish ? 'Kaydet' : 'Save';
+    final String message = l10n?.clipboardLinkFound(displayHost) ??
+        'Link found in clipboard: $displayHost';
+    final String actionLabel = l10n?.actionSave ?? 'Save';
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -272,13 +272,6 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
           ),
         ),
       );
-  }
-
-  bool get _isTurkish {
-    return Localizations.localeOf(context)
-        .languageCode
-        .toLowerCase()
-        .startsWith('tr');
   }
 
   Future<void> _openQuickAddSheet() async {
@@ -307,20 +300,17 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
   Future<void> _captureFromClipboard() async {
     final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
     if (!mounted) return;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     final String text = (data?.text ?? '').trim();
     if (text.isEmpty) {
-      _showQuickAddMessage(
-        _isTurkish ? 'Pano boş görünüyor' : 'Clipboard is empty',
-      );
+      _showQuickAddMessage(l10n?.clipboardEmpty ?? 'Clipboard is empty');
       return;
     }
 
     final String? extracted = const UrlExtractor().extractFirst(text);
     if (extracted == null || extracted.isEmpty) {
       _showQuickAddMessage(
-        _isTurkish
-            ? 'Panoda geçerli bağlantı yok'
-            : 'No valid link in clipboard',
+        l10n?.clipboardNoValidLink ?? 'No valid link in clipboard',
       );
       return;
     }
@@ -335,7 +325,7 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
     } on Object {
       if (!mounted) return;
       _showQuickAddMessage(
-        _isTurkish ? 'Bağlantı kaydedilemedi' : 'Could not save the link',
+        AppLocalizations.of(context)?.quickAddSaveFailed ?? 'Save failed',
       );
       return;
     }
@@ -355,9 +345,10 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
 
   void _showQuickAddResult(CaptureResult result) {
     if (!mounted) return;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     final int? bookmarkId = result.bookmark?.id;
     final String? actionLabel =
-        bookmarkId == null ? null : (_isTurkish ? 'Aç' : 'Open');
+        bookmarkId == null ? null : (l10n?.actionOpen ?? 'Open');
     final VoidCallback? onAction = bookmarkId == null
         ? null
         : () => context.push(Routes.bookmarkDetailPath(bookmarkId));
@@ -366,7 +357,7 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
         MarkyTopToast.show(
           context,
           icon: Icons.bookmark_added_rounded,
-          message: _isTurkish ? 'Bağlantı kaydedildi' : 'Link saved',
+          message: l10n?.quickAddSaved ?? 'Link saved',
           actionLabel: actionLabel,
           onAction: onAction,
         );
@@ -375,9 +366,7 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
         MarkyTopToast.show(
           context,
           icon: Icons.bookmark_added_outlined,
-          message: _isTurkish
-              ? 'Bu bağlantı zaten kayıtlı'
-              : 'Already saved in your library',
+          message: l10n?.quickAddDuplicate ?? 'Already saved in your library',
           actionLabel: actionLabel,
           onAction: onAction,
         );
@@ -386,9 +375,7 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
         MarkyTopToast.show(
           context,
           icon: Icons.link_off_rounded,
-          message: _isTurkish
-              ? 'Geçerli bağlantı bulunamadı'
-              : 'No valid link found',
+          message: l10n?.quickAddInvalidUrl ?? 'No valid link found',
           iconColor: Theme.of(context).colorScheme.error,
         );
         break;
@@ -396,8 +383,7 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
         MarkyTopToast.show(
           context,
           icon: Icons.error_outline_rounded,
-          message:
-              _isTurkish ? 'Kaydetme sırasında hata oluştu' : 'Save failed',
+          message: l10n?.quickAddSaveFailed ?? 'Save failed',
           iconColor: Theme.of(context).colorScheme.error,
         );
         break;
@@ -463,8 +449,7 @@ class _RootShellScaffoldState extends ConsumerState<_RootShellScaffold>
             MarkyNavItem(
               icon: Icons.add_rounded,
               selectedIcon: Icons.add_rounded,
-              label: l10n?.navigationQuickAdd ??
-                  (_isTurkish ? 'Hızlı Ekle' : 'Quick Add'),
+              label: l10n?.navigationQuickAdd ?? 'Quick Add',
               role: MarkyNavItemRole.quickAdd,
             ),
             MarkyNavItem(

@@ -1,9 +1,11 @@
 import 'package:marky/core/database/enums/automation_action_type.dart';
 import 'package:marky/core/database/enums/automation_trigger_type.dart';
+import 'package:marky/core/database/enums/reminder_status.dart';
 import 'package:marky/features/automation/domain/automation_debug_log.dart';
 import 'package:marky/features/automation/domain/automation_rule.dart';
 import 'package:marky/features/automation/domain/automation_rule_repository.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
+import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
 import 'package:marky/features/collections/domain/bookmark_collection_repository.dart';
 import 'package:marky/features/reminders/domain/reminder.dart';
@@ -69,6 +71,47 @@ class AutomationEngine {
     }
 
     return fired;
+  }
+
+  /// Evaluates a single [rule] retroactively across all active bookmarks in
+  /// the library. Actions are applied idempotently (no duplicate tags,
+  /// collections, or redundant saves/reminders). Returns the number of
+  /// bookmarks that matched the rule.
+  Future<int> applyRuleToExisting(AutomationRule rule) async {
+    const int pageSize = 500;
+    int offset = 0;
+    int matchedCount = 0;
+
+    while (true) {
+      final List<Bookmark> page = await _bookmarkRepo.feed(
+        BookmarkFeedQuery(limit: pageSize, offset: offset),
+      );
+      for (final Bookmark bookmark in page) {
+        if (!_matches(rule, bookmark)) continue;
+        matchedCount++;
+        Bookmark current = bookmark;
+        for (final AutomationAction action in rule.actions) {
+          current = await _execute(action, current, idempotent: true);
+        }
+      }
+      if (page.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    if (matchedCount > 0 && rule.id != null) {
+      await _ruleRepo.recordExecution(rule.id!);
+      _debugLogSink?.add(
+        AutomationDebugLogEntry(
+          timestamp: _now(),
+          bookmarkId: null,
+          ruleId: rule.id,
+          ruleName: rule.name,
+          message: 'Applied retroactively to $matchedCount bookmark(s)',
+        ),
+      );
+    }
+
+    return matchedCount;
   }
 
   // ─── Trigger matching ───────────────────────────────────────────
@@ -149,7 +192,11 @@ class AutomationEngine {
 
   // ─── Action execution ───────────────────────────────────────────
 
-  Future<Bookmark> _execute(AutomationAction action, Bookmark bookmark) async {
+  Future<Bookmark> _execute(
+    AutomationAction action,
+    Bookmark bookmark, {
+    bool idempotent = false,
+  }) async {
     switch (action.type) {
       case AutomationActionType.addTag:
         final int? tagId = await _resolveTagId(action.arg);
@@ -187,32 +234,47 @@ class AutomationEngine {
 
       case AutomationActionType.setFavorite:
         final bool flag = _parseBool(action.arg);
+        if (idempotent && bookmark.isFavorite == flag) return bookmark;
         final Bookmark updated = bookmark.copyWith(isFavorite: flag);
         return _bookmarkRepo.save(updated);
 
       case AutomationActionType.setArchived:
         final bool flag = _parseBool(action.arg);
+        if (idempotent && bookmark.isArchived == flag) return bookmark;
         final Bookmark updated = bookmark.copyWith(isArchived: flag);
         return _bookmarkRepo.save(updated);
 
       case AutomationActionType.setPinned:
         final bool flag = _parseBool(action.arg);
+        if (idempotent && bookmark.isPinned == flag) return bookmark;
         final Bookmark updated = bookmark.copyWith(isPinned: flag);
         return _bookmarkRepo.save(updated);
+
       case AutomationActionType.addReminder:
-        await _createReminder(action, bookmark);
+        await _createReminder(action, bookmark, idempotent: idempotent);
         return bookmark;
     }
   }
 
   Future<void> _createReminder(
     AutomationAction action,
-    Bookmark bookmark,
-  ) async {
+    Bookmark bookmark, {
+    bool idempotent = false,
+  }) async {
     final ReminderRepository? repo = _reminderRepo;
     final int? bookmarkId = bookmark.id;
     final int? days = int.tryParse(action.arg.trim());
     if (repo == null || bookmarkId == null || days == null || days < 0) return;
+
+    if (idempotent) {
+      final List<Reminder> existing = await repo.getByBookmarkId(bookmarkId);
+      final bool hasPending = existing.any(
+        (Reminder r) =>
+            r.status == ReminderStatus.pending ||
+            r.status == ReminderStatus.snoozed,
+      );
+      if (hasPending) return;
+    }
 
     final DateTime now = _now();
     final Reminder reminder = Reminder(

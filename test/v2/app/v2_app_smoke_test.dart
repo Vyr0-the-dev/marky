@@ -200,7 +200,7 @@ void main() {
 
         expect(
           find.bySemanticsLabel(
-            'Bookmark, Semantic Article, example.com · now, unread, favorite',
+            'Semantic Article, example.com · now, Unread, Favorites',
           ),
           findsOneWidget,
         );
@@ -549,7 +549,7 @@ void main() {
 
           await tester.tap(find.text('D2 Scale Link').first);
           await tester.pumpAndSettle();
-          expect(find.byIcon(Icons.info_outline_rounded), findsOneWidget);
+          expect(find.byIcon(Icons.chrome_reader_mode_outlined), findsOneWidget);
           expect(tester.takeException(), isNull);
 
           await tester.binding.handlePopRoute();
@@ -691,7 +691,7 @@ void main() {
 
       await tester.tap(find.byTooltip('View detail'));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.info_outline_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.chrome_reader_mode_outlined), findsOneWidget);
       expect(find.text('B4 Smoke Link'), findsWidgets);
 
       await tester.binding.handlePopRoute();
@@ -721,7 +721,7 @@ void main() {
 
       await tester.tap(find.text('B4 Smoke Link'));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.info_outline_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.chrome_reader_mode_outlined), findsOneWidget);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -845,19 +845,26 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Görünüm'), findsOneWidget);
-      expect(find.text('Okunmamış Bağlantı Hatırlatıcısı'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Gelişmiş'),
+        find.text('Okunmamış bağlantı hatırlatıcısı'),
         150,
       );
-      expect(find.text('Gelişmiş'), findsOneWidget);
-      await tester.tap(find.text('Gelişmiş'));
-      await tester.pumpAndSettle();
+      expect(find.text('Okunmamış bağlantı hatırlatıcısı'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Yedeği dışa aktar (JSON)'),
-        200,
+        find.text('Veri ve Araçlar'),
+        150,
       );
-      expect(find.text('Yedeği dışa aktar (JSON)'), findsOneWidget);
+      expect(find.text('Veri ve Araçlar'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Dışa aktarma formatı'),
+        150,
+      );
+      expect(find.text('Dışa aktarma formatı'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Önbellek ve depolama'),
+        150,
+      );
+      expect(find.text('Önbellek ve depolama'), findsOneWidget);
     });
   });
 

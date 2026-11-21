@@ -1,17 +1,22 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
 import 'package:marky/features/library/domain/broken_link_checker_service.dart';
+import 'package:marky/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Screen allowing users to audit their bookmark library for broken / 404 links.
+/// Screen allowing users to audit their entire active bookmark library for
+/// broken / 404 links with bounded concurrency and 1-tap Wayback Machine recovery.
 class BrokenLinksScreen extends ConsumerStatefulWidget {
   const BrokenLinksScreen({super.key});
 
@@ -20,6 +25,9 @@ class BrokenLinksScreen extends ConsumerStatefulWidget {
 }
 
 class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
+  static const int _pageSize = 500;
+  static const int _maxConcurrency = 6;
+
   bool _isScanning = false;
   bool _hasScanned = false;
   int _scannedCount = 0;
@@ -27,11 +35,20 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
   final List<BrokenLinkReport> _brokenLinks = <BrokenLinkReport>[];
   bool _cancelled = false;
 
-  bool get _isTurkish {
-    return Localizations.localeOf(context)
-        .languageCode
-        .toLowerCase()
-        .startsWith('tr');
+  Future<List<Bookmark>> _loadAllActiveBookmarks(
+    BookmarkRepository repo,
+  ) async {
+    final List<Bookmark> all = <Bookmark>[];
+    int offset = 0;
+    while (true) {
+      final List<Bookmark> page = await repo.feed(
+        BookmarkFeedQuery(limit: _pageSize, offset: offset),
+      );
+      all.addAll(page);
+      if (page.length < _pageSize) break;
+      offset += _pageSize;
+    }
+    return all;
   }
 
   Future<void> _startScan() async {
@@ -39,6 +56,7 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
       _isScanning = true;
       _hasScanned = true;
       _scannedCount = 0;
+      _totalCount = 0;
       _brokenLinks.clear();
       _cancelled = false;
     });
@@ -47,27 +65,38 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
     final BrokenLinkCheckerService checker =
         ref.read(brokenLinkCheckerServiceProvider);
 
-    // Fetch all active (non-archived) bookmarks
-    final List<Bookmark> bookmarks =
-        await repo.watchFeed(const BookmarkFeedQuery()).first;
-
+    final List<Bookmark> bookmarks = await _loadAllActiveBookmarks(repo);
     if (!mounted) return;
     setState(() {
       _totalCount = bookmarks.length;
     });
 
-    for (final Bookmark bookmark in bookmarks) {
-      if (_cancelled || !mounted) break;
+    if (bookmarks.isNotEmpty) {
+      int nextIndex = 0;
+      final int workerCount = math.min(_maxConcurrency, bookmarks.length);
 
-      final BrokenLinkReport? report = await checker.checkBookmark(bookmark);
-      if (!mounted) break;
+      Future<void> runWorker() async {
+        while (!_cancelled && mounted) {
+          final int index = nextIndex;
+          if (index >= bookmarks.length) break;
+          nextIndex++;
 
-      setState(() {
-        _scannedCount++;
-        if (report != null) {
-          _brokenLinks.add(report);
+          final BrokenLinkReport? report =
+              await checker.checkBookmark(bookmarks[index]);
+          if (!mounted) break;
+
+          setState(() {
+            _scannedCount++;
+            if (report != null) {
+              _brokenLinks.add(report);
+            }
+          });
         }
-      });
+      }
+
+      await Future.wait<void>(
+        List<Future<void>>.generate(workerCount, (_) => runWorker()),
+      );
     }
 
     if (mounted) {
@@ -86,19 +115,23 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
 
   Future<void> _archiveAll() async {
     final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
-    for (final BrokenLinkReport report in _brokenLinks) {
-      await repo.save(report.bookmark.copyWith(isArchived: true));
-    }
+    final int archivedCount = _brokenLinks.length;
+    final List<Bookmark> updated = _brokenLinks
+        .map((BrokenLinkReport r) => r.bookmark.copyWith(isArchived: true))
+        .toList(growable: false);
+    await repo.saveAll(updated);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isTurkish
-              ? '${_brokenLinks.length} kırık bağlantı arşivlendi.'
-              : 'Archived ${_brokenLinks.length} broken links.',
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.brokenLinksArchivedCount(archivedCount) ??
+                'Archived $archivedCount broken links.',
+          ),
         ),
-      ),
-    );
+      );
     setState(_brokenLinks.clear);
   }
 
@@ -106,11 +139,12 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _isTurkish ? 'Bağlantı Sağlık Kontrolü' : 'Broken Link Checker',
+          l10n?.brokenLinksTitle ?? 'Broken Link Checker',
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -123,12 +157,8 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
           vertical: ReadingRoomSpacing.md,
         ),
         children: <Widget>[
-          // ── Status banner ──────────────────────────────────
-          _buildHeroCard(theme, colors),
-
+          _buildHeroCard(theme, colors, l10n),
           const SizedBox(height: ReadingRoomSpacing.lg),
-
-          // ── Progress indicator during scan ──────────────────
           if (_isScanning) ...<Widget>[
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
@@ -141,52 +171,50 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
             Row(
               children: <Widget>[
                 Text(
-                  _isTurkish
-                      ? '$_scannedCount / $_totalCount taranıyor...'
-                      : 'Scanning $_scannedCount of $_totalCount...',
+                  l10n?.brokenLinksScanning(_scannedCount, _totalCount) ??
+                      'Scanning $_scannedCount / $_totalCount...',
                   style: theme.textTheme.bodySmall,
                 ),
                 const Spacer(),
                 TextButton(
                   onPressed: _stopScan,
-                  child: Text(_isTurkish ? 'Durdur' : 'Stop'),
+                  child: Text(l10n?.brokenLinksStopScan ?? 'Stop'),
                 ),
               ],
             ),
             const SizedBox(height: ReadingRoomSpacing.md),
           ],
-
-          // ── Action bar if broken links exist ───────────────
           if (_hasScanned &&
               !_isScanning &&
               _brokenLinks.isNotEmpty) ...<Widget>[
             Row(
               children: <Widget>[
-                Text(
-                  _isTurkish
-                      ? '${_brokenLinks.length} Kırık Bağlantı'
-                      : '${_brokenLinks.length} Broken Links',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    '${_brokenLinks.length}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 FilledButton.tonalIcon(
                   icon: const Icon(Icons.archive_outlined, size: 16),
-                  label: Text(_isTurkish ? 'Tümünü Arşivle' : 'Archive All'),
+                  label: Text(
+                    l10n?.brokenLinksArchiveAll(_brokenLinks.length) ??
+                        'Archive all (${_brokenLinks.length})',
+                  ),
                   onPressed: _archiveAll,
                 ),
               ],
             ),
             const SizedBox(height: ReadingRoomSpacing.md),
           ],
-
-          // ── Results list ────────────────────────────────────
           if (_hasScanned && !_isScanning && _brokenLinks.isEmpty) ...<Widget>[
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    vertical: ReadingRoomSpacing.xxl),
+                  vertical: ReadingRoomSpacing.xxl,
+                ),
                 child: Column(
                   children: <Widget>[
                     const Icon(
@@ -196,21 +224,9 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
                     ),
                     const SizedBox(height: ReadingRoomSpacing.md),
                     Text(
-                      _isTurkish
-                          ? 'Tüm bağlantılar sağlıklı!'
-                          : 'All links are healthy!',
+                      l10n?.brokenLinksAllHealthy ?? 'All links look healthy!',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: ReadingRoomSpacing.xs),
-                    Text(
-                      _isTurkish
-                          ? 'Kütüphanenizde kırık veya 404 veren bağlantı bulunamadı.'
-                          : 'No dead or 404 links were found in your library.',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -221,7 +237,6 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
             for (final BrokenLinkReport report in _brokenLinks)
               _BrokenLinkTile(
                 report: report,
-                isTurkish: _isTurkish,
                 onDeleted: () {
                   setState(() {
                     _brokenLinks.remove(report);
@@ -239,7 +254,11 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
     );
   }
 
-  Widget _buildHeroCard(ThemeData theme, ColorScheme colors) {
+  Widget _buildHeroCard(
+    ThemeData theme,
+    ColorScheme colors,
+    AppLocalizations? l10n,
+  ) {
     return Container(
       padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
       decoration: BoxDecoration(
@@ -259,9 +278,7 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
               const SizedBox(width: ReadingRoomSpacing.sm),
               Expanded(
                 child: Text(
-                  _isTurkish
-                      ? 'Kütüphane Sağlık Denetimi'
-                      : 'Library Health Audit',
+                  l10n?.brokenLinksTitle ?? 'Broken Link Checker',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -271,9 +288,8 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
           ),
           const SizedBox(height: ReadingRoomSpacing.sm),
           Text(
-            _isTurkish
-                ? 'Web siteleri zamanla silinebilir veya adresleri değişebilir. Bu araç kütüphanenizdeki bağlantıları hafif sorgularla kontrol ederek artık açılmayan (404, 410, DNS) linkleri listeler.'
-                : 'Web links can rot or disappear over time. This tool checks your bookmarks with lightweight requests to uncover dead links (404, 410, DNS errors).',
+            l10n?.brokenLinksSubtitle ??
+                'Audit and clean up 404/dead links',
             style: theme.textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
               height: 1.4,
@@ -283,11 +299,7 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
           if (!_isScanning)
             FilledButton.icon(
               icon: const Icon(Icons.play_arrow_rounded, size: 18),
-              label: Text(
-                _hasScanned
-                    ? (_isTurkish ? 'Yeniden Tara' : 'Scan Again')
-                    : (_isTurkish ? 'Taramayı Başlat' : 'Start Scan'),
-              ),
+              label: Text(l10n?.brokenLinksStartScan ?? 'Start scan'),
               onPressed: _startScan,
             ),
         ],
@@ -299,13 +311,11 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
 class _BrokenLinkTile extends ConsumerWidget {
   const _BrokenLinkTile({
     required this.report,
-    required this.isTurkish,
     required this.onDeleted,
     required this.onArchived,
   });
 
   final BrokenLinkReport report;
-  final bool isTurkish;
   final VoidCallback onDeleted;
   final VoidCallback onArchived;
 
@@ -313,7 +323,9 @@ class _BrokenLinkTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     final Bookmark bookmark = report.bookmark;
+    final String targetUrl = bookmark.canonicalUrl ?? bookmark.originalUrl;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.sm),
@@ -330,79 +342,109 @@ class _BrokenLinkTile extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        bookmark.displayTitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+            InkWell(
+              onTap: bookmark.id == null
+                  ? null
+                  : () => context.push(Routes.bookmarkDetailPath(bookmark.id!)),
+              borderRadius: BorderRadius.circular(6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          bookmark.displayTitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        bookmark.originalUrl,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                          fontSize: 10.5,
+                        const SizedBox(height: 2),
+                        Text(
+                          targetUrl,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontSize: 10.5,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: ReadingRoomSpacing.sm),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.error.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
-                    border: Border.all(
-                      color: colors.error.withValues(alpha: 0.3),
-                      width: 0.5,
+                      ],
                     ),
                   ),
-                  child: Text(
-                    report.reason.getDisplayLabel(isTurkish: isTurkish),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colors.error,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: ReadingRoomSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.error.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
+                      border: Border.all(
+                        color: colors.error.withValues(alpha: 0.3),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Text(
+                      report.reason.localizedLabel(l10n),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.error,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: ReadingRoomSpacing.sm),
-            Row(
+            Wrap(
+              spacing: ReadingRoomSpacing.xs,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
+                TextButton.icon(
+                  icon: const Icon(Icons.history_rounded, size: 15),
+                  label: Text(
+                    l10n?.brokenLinksOpenWayback ?? 'Wayback Machine',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                  onPressed: () {
+                    final Uri? waybackUri = Uri.tryParse(
+                      BrokenLinkCheckerService.waybackUrlFor(targetUrl),
+                    );
+                    if (waybackUri != null) {
+                      unawaited(
+                        launchUrl(
+                          waybackUri,
+                          mode: LaunchMode.externalApplication,
+                        ),
+                      );
+                    }
+                  },
+                ),
                 TextButton.icon(
                   icon: const Icon(Icons.open_in_browser_rounded, size: 14),
                   label: Text(
-                    isTurkish ? 'Aç' : 'Open',
+                    l10n?.actionOpen ?? 'Open',
                     style: const TextStyle(fontSize: 11),
                   ),
-                  onPressed: () => unawaited(
-                    launchUrl(
-                      Uri.parse(bookmark.originalUrl),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                  ),
+                  onPressed: () {
+                    final Uri? uri = Uri.tryParse(targetUrl);
+                    if (uri != null) {
+                      unawaited(
+                        launchUrl(uri, mode: LaunchMode.externalApplication),
+                      );
+                    }
+                  },
                 ),
                 TextButton.icon(
                   icon: const Icon(Icons.archive_outlined, size: 14),
                   label: Text(
-                    isTurkish ? 'Arşivle' : 'Archive',
+                    l10n?.actionArchive ?? 'Archive',
                     style: const TextStyle(fontSize: 11),
                   ),
                   onPressed: () async {
@@ -413,14 +455,13 @@ class _BrokenLinkTile extends ConsumerWidget {
                     onArchived();
                   },
                 ),
-                const Spacer(),
                 IconButton(
                   icon: Icon(
                     Icons.delete_outline_rounded,
                     size: 18,
                     color: colors.error,
                   ),
-                  tooltip: isTurkish ? 'Sil' : 'Delete',
+                  tooltip: l10n?.actionDelete ?? 'Delete',
                   onPressed: () async {
                     unawaited(HapticFeedback.mediumImpact());
                     if (bookmark.id != null) {

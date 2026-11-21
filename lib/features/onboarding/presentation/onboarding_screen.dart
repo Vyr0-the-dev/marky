@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String _onboardingShownKey = 'marky_onboarding_shown';
@@ -35,35 +37,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
 
     final List<_OnboardingPage> pages = <_OnboardingPage>[
-      const _OnboardingPage(
+      _OnboardingPage(
         icon: Icons.share_rounded,
-        title: 'Save from anywhere',
-        body: 'Share links directly to Marky from any app. '
-            'Paste a URL, scan a QR code, or type it in — '
-            'your library grows effortlessly.',
+        title: l10n?.onboardingPage1Title ?? 'Save from anywhere',
+        body: l10n?.onboardingPage1Body ??
+            'Share links directly to Marky from any app. Paste a URL, scan a QR code, or type it in — your library grows effortlessly.',
       ),
-      const _OnboardingPage(
+      _OnboardingPage(
         icon: Icons.sell_outlined,
-        title: 'Organize with tags',
-        body: 'Tag bookmarks by topic, add them to collections, '
-            'favorite the best ones. Everything stays tidy '
-            'and easy to find.',
+        title: l10n?.onboardingPage2Title ?? 'Organize with tags',
+        body: l10n?.onboardingPage2Body ??
+            'Tag bookmarks by topic, group them in collections, and favorite the best ones. Everything stays tidy and easy to find.',
       ),
-      const _OnboardingPage(
+      _OnboardingPage(
         icon: Icons.auto_fix_high_rounded,
-        title: 'Automate the busywork',
-        body: 'Create rules to auto-tag, auto-archive, or '
-            'auto-collect links as they arrive. Set it once '
-            'and let Marky handle the rest.',
+        title: l10n?.onboardingPage3Title ?? 'Automate the busywork',
+        body: l10n?.onboardingPage3Body ??
+            'Create rules to auto-tag, auto-archive, or auto-collect links as they arrive. Set it once and let Marky handle the rest.',
       ),
-      const _OnboardingPage(
-        icon: Icons.notifications_active_outlined,
-        title: 'Never lose a link',
-        body: 'Set reminders for unread bookmarks. Search '
-            'instantly across your entire library. Your '
-            'saved links are always just a tap away.',
+      _OnboardingPage(
+        icon: Icons.auto_stories_outlined,
+        title: l10n?.onboardingPage4Title ?? 'Read distraction-free',
+        body: l10n?.onboardingPage4Body ??
+            'Set reminders for unread links, search with operators, and enjoy a calm offline-first Reader mode.',
       ),
     ];
 
@@ -79,7 +78,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 TextButton(
                   onPressed: _finish,
                   child: Text(
-                    _currentPage == pages.length - 1 ? 'Done' : 'Skip',
+                    _currentPage == pages.length - 1
+                        ? (l10n?.onboardingDone ?? 'Get started')
+                        : (l10n?.onboardingSkip ?? 'Skip'),
                     style: TextStyle(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -142,7 +143,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   child: Text(
-                    _currentPage == pages.length - 1 ? 'Get started' : 'Next',
+                    _currentPage == pages.length - 1
+                        ? (l10n?.onboardingDone ?? 'Get started')
+                        : (l10n?.onboardingNext ?? 'Next'),
                   ),
                 ),
               ),
@@ -155,14 +158,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _nextPage() {
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+    unawaited(
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      ),
     );
   }
 
   void _finish() {
-    markOnboardingSeen();
+    unawaited(markOnboardingSeen());
     Navigator.of(context).pop();
   }
 }

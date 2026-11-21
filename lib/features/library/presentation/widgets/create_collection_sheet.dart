@@ -70,7 +70,8 @@ class _CreateCollectionSheetState extends ConsumerState<CreateCollectionSheet> {
           ),
           const SizedBox(height: ReadingRoomSpacing.md),
           ColorSwatchPicker(
-            title: 'Renk paleti',
+            title: AppLocalizations.of(context)?.colorPaletteTitle ??
+                'Color palette',
             selected: _accentColorArgb,
             onChanged: (int? argb) => setState(() => _accentColorArgb = argb),
           ),

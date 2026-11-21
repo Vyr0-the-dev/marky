@@ -59,9 +59,9 @@ class _AutomationRulesScreenState extends ConsumerState<AutomationRulesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Otomasyon',
-          style: TextStyle(
+        title: Text(
+          l10n?.settingsSectionAutomation ?? 'Automation',
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.4,
@@ -70,17 +70,17 @@ class _AutomationRulesScreenState extends ConsumerState<AutomationRulesScreen> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.help_outline_rounded),
-            tooltip: 'Otomasyon Rehberi',
+            tooltip: l10n?.automationGuideTooltip ?? 'Automation guide',
             onPressed: () => _showGuide(context),
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
-            tooltip: 'Kayıtlar',
+            tooltip: l10n?.automationLogsTooltip ?? 'Execution logs',
             onPressed: () => _showDebugLogs(context),
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Kural Oluştur',
+            tooltip: l10n?.automationCreateTooltip ?? 'Create rule',
             onPressed: () => context.push(Routes.automationRuleNew),
           ),
         ],
@@ -105,21 +105,12 @@ class _AutomationRulesScreenState extends ConsumerState<AutomationRulesScreen> {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
-            itemCount: rules.length + 1,
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: ReadingRoomSpacing.sm),
+            itemCount: rules.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (BuildContext context, int index) {
-              if (index == 0) {
-                return Padding(
-                  padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
-                  child: _AutomationGuideCard(
-                    onCreate: () => context.push(Routes.automationRuleNew),
-                    onGuide: () => _showGuide(context),
-                  ),
-                );
-              }
-              final AutomationRule rule = rules[index - 1];
-              return _RuleTile(rule: rule);
+              return _RuleTile(rule: rules[index]);
             },
           );
         },
@@ -288,23 +279,56 @@ class _RuleTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
 
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+
     return SwitchListTile(
       title: Text(rule.name),
       subtitle: Text(
-        '${_logicLabel(rule)} ${rule.conditions.length} condition(s)  •  '
-        '${rule.actions.length} action(s)',
+        '${_logicLabel(rule)} ${rule.conditions.length}  •  '
+        '${rule.actions.length}',
         style: theme.textTheme.bodySmall,
       ),
       secondary: PopupMenuButton<String>(
         onSelected: (String value) => _onAction(context, ref, value),
         itemBuilder: (_) => <PopupMenuEntry<String>>[
           PopupMenuItem<String>(
+            value: 'run',
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.play_arrow_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  l10n?.automationRunOnExisting ?? 'Run on existing bookmarks',
+                ),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
             value: 'edit',
-            child: Text(AppLocalizations.of(context)?.actionEdit ?? 'Edit'),
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.edit_outlined, size: 18),
+                const SizedBox(width: 8),
+                Text(l10n?.actionEdit ?? 'Edit'),
+              ],
+            ),
           ),
           PopupMenuItem<String>(
             value: 'delete',
-            child: Text(AppLocalizations.of(context)?.actionDelete ?? 'Delete'),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: theme.colorScheme.error,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  l10n?.actionDelete ?? 'Delete',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -332,6 +356,11 @@ class _RuleTile extends ConsumerWidget {
     String action,
   ) async {
     if (rule.id == null) return;
+
+    if (action == 'run') {
+      await _runOnExisting(context, ref);
+      return;
+    }
 
     if (action == 'edit') {
       if (context.mounted) {
@@ -363,5 +392,46 @@ class _RuleTile extends ConsumerWidget {
     if (confirmed ?? false) {
       await ref.read(automationRuleRepositoryProvider).delete(rule.id!);
     }
+  }
+
+  Future<void> _runOnExisting(BuildContext context, WidgetRef ref) async {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text(
+          l10n?.automationRunConfirmTitle ?? 'Apply rule to library?',
+        ),
+        content: Text(
+          l10n?.automationRunConfirmBody(rule.name) ??
+              'This evaluates "${rule.name}" against all active bookmarks.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n?.actionCancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n?.automationRunOnExisting ?? 'Run'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final int matched =
+        await ref.read(automationEngineProvider).applyRuleToExisting(rule);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.automationRunResult(matched) ??
+                'Rule matched $matched bookmarks',
+          ),
+        ),
+      );
   }
 }

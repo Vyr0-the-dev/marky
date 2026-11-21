@@ -107,5 +107,14 @@ void main() {
 
       expect(report.reason, BrokenLinkReason.timeout);
     });
+
+    test('builds valid Wayback Machine recovery URL', () {
+      expect(
+        BrokenLinkCheckerService.waybackUrlFor(
+          'https://example.com/old article?a=1',
+        ),
+        'https://web.archive.org/web/https://example.com/old%20article?a=1',
+      );
+    });
   });
 }

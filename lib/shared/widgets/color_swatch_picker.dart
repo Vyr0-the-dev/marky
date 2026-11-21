@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/l10n/app_localizations.dart';
 
 abstract final class MarkyAccentPalette {
   static const List<int?> values = <int?>[
@@ -230,6 +230,7 @@ class _CustomColorDot extends StatelessWidget {
   }
 
   Future<void> _openPicker(BuildContext context) async {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     Color pickerColor = currentCustom ?? const Color(0xFFD7B56D);
 
     final Color? result = await showDialog<Color>(
@@ -238,7 +239,7 @@ class _CustomColorDot extends StatelessWidget {
         return AlertDialog(
           backgroundColor: theme.colorScheme.surface,
           title: Text(
-            'Custom color',
+            l10n?.colorPaletteTitle ?? 'Color palette',
             style: theme.textTheme.titleMedium,
           ),
           content: SingleChildScrollView(
@@ -253,11 +254,11 @@ class _CustomColorDot extends StatelessWidget {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n?.actionCancel ?? 'Cancel'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(pickerColor),
-              child: const Text('OK'),
+              child: Text(l10n?.actionOk ?? 'OK'),
             ),
           ],
         );

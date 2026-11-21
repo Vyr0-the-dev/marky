@@ -730,6 +730,41 @@ void main() {
       expect(fired.map((AutomationRule r) => r.id), <int>[2]);
     });
   });
+
+  group('applyRuleToExisting', () {
+    test('matches active bookmarks, applies actions idempotently, and records execution',
+        () async {
+      bookmarkRepo.feedItems = <Bookmark>[
+        _bm(host: 'github.com', url: 'https://github.com/a/b'),
+        _bm(
+          id: 2,
+          host: 'github.com',
+          url: 'https://github.com/c/d',
+          tagIds: const <int>[42],
+          fav: true,
+        ),
+        _bm(id: 3, host: 'example.com', url: 'https://example.com/post'),
+      ];
+
+      final AutomationRule rule = _rule(
+        id: 10,
+        value: 'github.com',
+        actions: const <AutomationAction>[
+          AutomationAction(type: AutomationActionType.addTag, arg: '42'),
+          AutomationAction(type: AutomationActionType.setFavorite, arg: 'true'),
+        ],
+      );
+
+      final int matched = await engine.applyRuleToExisting(rule);
+
+      expect(matched, 2);
+      // Only bookmark #1 needed updates (bookmark #2 already had tag 42 and fav=true).
+      expect(bookmarkRepo.savedBookmarks.map((Bookmark b) => b.id).toSet(),
+          <int>{1});
+      expect(tagRepo.incrementCalls, <int>[42]);
+      expect(ruleRepo.recordedExecutions, <int>[10]);
+    });
+  });
 }
 
 // ─── Fakes ────────────────────────────────────────────────────────
@@ -766,11 +801,19 @@ class _FakeRuleRepo implements AutomationRuleRepository {
 
 class _FakeBookmarkRepo implements BookmarkRepository {
   final List<Bookmark> savedBookmarks = <Bookmark>[];
+  List<Bookmark> feedItems = <Bookmark>[];
 
   @override
   Future<Bookmark> save(Bookmark bookmark) async {
     savedBookmarks.add(bookmark);
     return bookmark;
+  }
+
+  @override
+  Future<List<Bookmark>> feed(BookmarkFeedQuery query) async {
+    if (query.offset >= feedItems.length) return const <Bookmark>[];
+    final int end = (query.offset + query.limit).clamp(0, feedItems.length);
+    return feedItems.sublist(query.offset, end);
   }
 
   // ─── Unused stubs ──────────────────────────────────────────────
@@ -798,9 +841,6 @@ class _FakeBookmarkRepo implements BookmarkRepository {
   Future<int> countAll() => throw UnimplementedError();
   @override
   Future<int> count(BookmarkFeedQuery query) => throw UnimplementedError();
-  @override
-  Future<List<Bookmark>> feed(BookmarkFeedQuery query) =>
-      throw UnimplementedError();
   @override
   Stream<List<Bookmark>> watchFeed(BookmarkFeedQuery query) =>
       throw UnimplementedError();
