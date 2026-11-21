@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
@@ -241,6 +243,217 @@ void main() {
       expect(content.blocks.length, equals(2));
       expect(content.isFallback, isTrue);
       expect(content.author, equals('Yazar Adı'));
+    });
+
+    test('preserves spaces between adjacent inline elements in headings & paragraphs',
+        () async {
+      const String html = '''
+        <html><body>
+          <article>
+            <header><h1>Main Guide</h1></header>
+            <h2><span>01</span><span>Büyük Yanılgı</span></h2>
+            <p>Read <strong>carefully</strong><em>today</em>, because&nbsp;details&mdash;matter.</p>
+          </article>
+        </body></html>
+      ''';
+      final ArticleExtractorService service =
+          ArticleExtractorService(dio: _mockDioWithResponse(html));
+      final Bookmark bm = Bookmark(
+        id: 201,
+        originalUrl: 'https://blog.example.com/guide',
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      );
+
+      final ArticleContent article =
+          await service.fetchArticle(bm, forceRefresh: true);
+
+      expect(
+        article.blocks.any(
+          (ArticleBlock b) =>
+              b.type == ArticleBlockType.heading && b.text == '01 Büyük Yanılgı',
+        ),
+        isTrue,
+      );
+      expect(
+        article.blocks.any(
+          (ArticleBlock b) =>
+              b.type == ArticleBlockType.paragraph &&
+              b.text == 'Read carefully today, because details—matter.',
+        ),
+        isTrue,
+      );
+    });
+
+    test('skips base64 placeholder src and extracts lazy data-src / srcset images inside p & figure',
+        () async {
+      const String html = '''
+        <html><body>
+          <article>
+            <p>Intro paragraph with sufficient length to score cleanly as article content.</p>
+            <p><img src="data:image/svg+xml;base64,PHN2Zz4=" data-src="/media/real-photo.jpg" /></p>
+            <figure>
+              <picture>
+                <source srcset="https://cdn.example.com/small.webp 400w, https://cdn.example.com/large.webp 1200w" />
+                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />
+              </picture>
+              <figcaption>Diagram overview</figcaption>
+            </figure>
+          </article>
+        </body></html>
+      ''';
+      final ArticleExtractorService service =
+          ArticleExtractorService(dio: _mockDioWithResponse(html));
+      final Bookmark bm = Bookmark(
+        id: 202,
+        originalUrl: 'https://news.example.com/post/1',
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      );
+
+      final ArticleContent article =
+          await service.fetchArticle(bm, forceRefresh: true);
+      final List<ArticleBlock> images = article.blocks
+          .where((ArticleBlock b) => b.type == ArticleBlockType.image)
+          .toList();
+
+      expect(images.length, 2);
+      expect(images[0].imageUrl, 'https://news.example.com/media/real-photo.jpg');
+      expect(images[1].imageUrl, 'https://cdn.example.com/large.webp');
+      expect(images[1].caption, 'Diagram overview');
+    });
+
+    test('chooses main article over small promo sidebar <article> and preserves noisy-class wrapper',
+        () async {
+      const String html = '''
+        <html><body>
+          <div class="sidebar-promo">
+            <article><p><a href="/promo">Subscribe now for daily tips!</a></p></article>
+          </div>
+          <div class="layout-with-sidebar has-share-bar">
+            <article class="post-body">
+              <p>First long paragraph about distributed offline-first storage, conflict resolution, and deterministic indexing across devices.</p>
+              <p>Second long paragraph explaining why scoring candidate containers by text volume and link density avoids sidebar traps.</p>
+            </article>
+          </div>
+        </body></html>
+      ''';
+      final ArticleExtractorService service =
+          ArticleExtractorService(dio: _mockDioWithResponse(html));
+      final Bookmark bm = Bookmark(
+        id: 203,
+        originalUrl: 'https://tech.example.com/offline-first',
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      );
+
+      final ArticleContent article =
+          await service.fetchArticle(bm, forceRefresh: true);
+
+      expect(
+        article.blocks.any(
+          (ArticleBlock b) => b.text.contains('distributed offline-first storage'),
+        ),
+        isTrue,
+      );
+      expect(
+        article.blocks.any((ArticleBlock b) => b.text.contains('Subscribe now')),
+        isFalse,
+      );
+    });
+
+    test('extracts GitHub README markdown-body and strips Copy button from code blocks',
+        () async {
+      const String html = '''
+        <html><body>
+          <main>
+            <article class="markdown-body">
+              <h1>Marky</h1>
+              <p>An offline-first personal link manager built with Flutter and Isar.</p>
+              <pre><button class="copy-button">Copy</button><code class="language-dart">void main() => print('hi');</code></pre>
+            </article>
+          </main>
+        </body></html>
+      ''';
+      final ArticleExtractorService service =
+          ArticleExtractorService(dio: _mockDioWithResponse(html));
+      final Bookmark bm = Bookmark(
+        id: 204,
+        originalUrl: 'https://github.com/feaz/marky',
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      );
+
+      final ArticleContent article =
+          await service.fetchArticle(bm, forceRefresh: true);
+      final ArticleBlock code = article.blocks
+          .firstWhere((ArticleBlock b) => b.type == ArticleBlockType.code);
+
+      expect(code.text, equals("void main() => print('hi');"));
+      expect(code.language, equals('dart'));
+    });
+
+    test('uses JSON-LD articleBody when DOM body is truncated and caches persistently on disk',
+        () async {
+      final Directory tempDir = await Directory.systemTemp.createTemp('marky_reader_test_');
+      addTearDown(() => tempDir.delete(recursive: true));
+
+      final String longBody = List<String>.filled(
+        30,
+        'Detailed investigative journalism paragraph explaining the full story.',
+      ).join('\n\n');
+
+      final String html = '''
+        <html><head>
+          <script type="application/ld+json">
+            {
+              "@type": "NewsArticle",
+              "headline": "Full Story From JSON-LD",
+              "articleBody": "${longBody.replaceAll('\n', r'\n')}"
+            }
+          </script>
+        </head><body>
+          <article><p>Short teaser only.</p></article>
+        </body></html>
+      ''';
+
+      int networkCalls = 0;
+      final Dio dio = Dio()
+        ..interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+              networkCalls++;
+              handler.resolve(
+                Response<dynamic>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: html,
+                ),
+              );
+            },
+          ),
+        );
+
+      final ArticleExtractorService service = ArticleExtractorService(
+        dio: dio,
+        cacheDirectoryProvider: () async => tempDir,
+      );
+      final Bookmark bm = Bookmark(
+        id: 205,
+        originalUrl: 'https://paywall.example.com/story',
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      );
+
+      final ArticleContent first = await service.fetchArticle(bm);
+      expect(first.title, equals('Full Story From JSON-LD'));
+      expect(first.blocks.length, greaterThanOrEqualTo(10));
+      expect(networkCalls, equals(1));
+
+      // Second read must come from persistent cache with zero extra network requests.
+      final ArticleContent second = await service.fetchArticle(bm);
+      expect(second.title, equals('Full Story From JSON-LD'));
+      expect(networkCalls, equals(1));
     });
   });
 }

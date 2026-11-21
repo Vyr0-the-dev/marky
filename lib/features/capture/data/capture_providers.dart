@@ -47,6 +47,7 @@ final Provider<ScrapingOrchestrator> scrapingOrchestratorProvider =
     bookmarkRepo: ref.watch(bookmarkRepositoryProvider),
     scraper: ref.watch(metadataScraperServiceProvider),
     merger: ref.watch(upsertMergeServiceProvider),
+    thumbnailService: ref.watch(thumbnailServiceProvider),
   );
 });
 

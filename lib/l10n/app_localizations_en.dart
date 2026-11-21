@@ -1655,4 +1655,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String dashboardReadRatePercent(String percentage) {
     return '$percentage%';
   }
+
+  @override
+  String get readerFontAndThemeTooltip => 'Font & Theme';
+
+  @override
+  String get readerRefreshTooltip => 'Re-extract article';
+
+  @override
+  String get readerLoadingTitle => 'Extracting article content…';
+
+  @override
+  String get readerLoadingSubtitle => 'Cleaning clutter and ads';
+
+  @override
+  String get readerErrorTitle => 'Could not extract article';
+
+  @override
+  String get readerErrorSubtitle =>
+      'The site may have blocked the request or your connection dropped.';
 }

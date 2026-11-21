@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +7,7 @@ import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
+import 'package:marky/shared/widgets/bookmark_image.dart';
 
 /// Magazine-grade Dark Editorial grid card for [Bookmark] items.
 ///
@@ -87,7 +87,9 @@ class _EditorialGridCardState extends State<EditorialGridCard> {
     final bool hasSnippet = rawSnippet != null && rawSnippet.isNotEmpty;
 
     final String? heroUrl = bookmark.heroImageUrl?.trim();
-    final bool hasHeroImage = heroUrl != null && heroUrl.isNotEmpty;
+    final String? localHero = bookmark.heroImageLocalPath?.trim();
+    final bool hasHeroImage = (localHero != null && localHero.isNotEmpty) ||
+        (heroUrl != null && heroUrl.isNotEmpty);
 
     return Semantics(
       button: widget.onTap != null || widget.onLongPress != null,
@@ -133,14 +135,14 @@ class _EditorialGridCardState extends State<EditorialGridCard> {
                           child: hasHeroImage
                               ? AspectRatio(
                                   aspectRatio: 16 / 10,
-                                  child: CachedNetworkImage(
+                                  child: BookmarkImage(
+                                    localPath: localHero,
                                     imageUrl: heroUrl,
-                                    fit: BoxFit.cover,
-                                    memCacheWidth:
+                                    cacheWidth:
                                         EditorialGridCard.heroCacheWidth,
-                                    placeholder: (_, __) =>
+                                    placeholder: (_) =>
                                         const EditorialImagePlaceholder(),
-                                    errorWidget: (_, __, ___) =>
+                                    errorBuilder: (_) =>
                                         TypographicEditorialCover(
                                       bookmark: bookmark,
                                     ),

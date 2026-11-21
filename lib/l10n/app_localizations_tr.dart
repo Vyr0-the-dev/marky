@@ -1664,4 +1664,24 @@ class AppLocalizationsTr extends AppLocalizations {
   String dashboardReadRatePercent(String percentage) {
     return '%$percentage';
   }
+
+  @override
+  String get readerFontAndThemeTooltip => 'Yazı Tipi & Tema';
+
+  @override
+  String get readerRefreshTooltip => 'Yeniden Ayrıştır';
+
+  @override
+  String get readerLoadingTitle => 'Makale içeriği çıkarılıyor…';
+
+  @override
+  String get readerLoadingSubtitle =>
+      'Gereksiz ögeler ve reklamlar temizleniyor';
+
+  @override
+  String get readerErrorTitle => 'Makale içeriği çıkarılamadı';
+
+  @override
+  String get readerErrorSubtitle =>
+      'Sayfa sunucusu isteği engellemiş olabilir veya internet bağlantınız kesilmiş olabilir.';
 }

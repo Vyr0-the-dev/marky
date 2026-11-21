@@ -815,5 +815,11 @@
         "type": "String"
       }
     }
-  }
+  },
+  "readerFontAndThemeTooltip": "Font & Theme",
+  "readerRefreshTooltip": "Re-extract article",
+  "readerLoadingTitle": "Extracting article content…",
+  "readerLoadingSubtitle": "Cleaning clutter and ads",
+  "readerErrorTitle": "Could not extract article",
+  "readerErrorSubtitle": "The site may have blocked the request or your connection dropped."
 }

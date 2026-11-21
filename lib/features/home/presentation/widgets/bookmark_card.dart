@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
@@ -10,6 +9,7 @@ import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
 import 'package:marky/l10n/app_localizations.dart';
+import 'package:marky/shared/widgets/bookmark_image.dart';
 
 /// A single bookmark row in the feed.
 ///
@@ -209,20 +209,26 @@ class _Thumbnail extends StatelessWidget {
                 bookmark.scrapingStatus == BookmarkScrapingStatus.processing) &&
             isRecentlyCreated;
 
+    final bool hasAnyImage =
+        (bookmark.heroImageLocalPath?.trim().isNotEmpty ?? false) ||
+            (imageUrl != null && imageUrl.isNotEmpty);
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
       child: SizedBox(
         width: _size,
         height: _size,
-        child: imageUrl != null && imageUrl.isNotEmpty
-            ? CachedNetworkImage(
+        child: hasAnyImage
+            ? BookmarkImage(
+                localPath: bookmark.heroImageLocalPath,
                 imageUrl: imageUrl,
-                fit: BoxFit.cover,
-                memCacheWidth: cacheSize,
-                memCacheHeight: cacheSize,
-                placeholder: (_, __) => _Placeholder(
-                    bookmark: bookmark, isLoading: isActivelyScraping),
-                errorWidget: (_, __, ___) => _Placeholder(bookmark: bookmark),
+                cacheWidth: cacheSize,
+                cacheHeight: cacheSize,
+                placeholder: (_) => _Placeholder(
+                  bookmark: bookmark,
+                  isLoading: isActivelyScraping,
+                ),
+                errorBuilder: (_) => _Placeholder(bookmark: bookmark),
               )
             : _Placeholder(bookmark: bookmark, isLoading: isActivelyScraping),
       ),

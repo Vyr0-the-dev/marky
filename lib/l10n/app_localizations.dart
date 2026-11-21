@@ -3086,6 +3086,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{percentage}%'**
   String dashboardReadRatePercent(String percentage);
+
+  /// No description provided for @readerFontAndThemeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Font & Theme'**
+  String get readerFontAndThemeTooltip;
+
+  /// No description provided for @readerRefreshTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-extract article'**
+  String get readerRefreshTooltip;
+
+  /// No description provided for @readerLoadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting article content…'**
+  String get readerLoadingTitle;
+
+  /// No description provided for @readerLoadingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning clutter and ads'**
+  String get readerLoadingSubtitle;
+
+  /// No description provided for @readerErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not extract article'**
+  String get readerErrorTitle;
+
+  /// No description provided for @readerErrorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The site may have blocked the request or your connection dropped.'**
+  String get readerErrorSubtitle;
 }
 
 class _AppLocalizationsDelegate

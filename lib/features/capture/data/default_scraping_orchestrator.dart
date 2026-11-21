@@ -3,6 +3,7 @@ import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
 import 'package:marky/core/scraping/metadata_result.dart';
 import 'package:marky/core/scraping/metadata_scraper.dart';
 import 'package:marky/core/scraping/parsers/generic_html_parser.dart';
+import 'package:marky/core/scraping/thumbnail_service.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
@@ -15,21 +16,25 @@ import 'package:marky/features/capture/domain/upsert_merge_service.dart';
 /// 1. Load bookmark by id.
 /// 2. Mark scrapingStatus → processing, persist.
 /// 3. Run [MetadataScraperService.scrape] on the original URL with a bound [CancelToken].
-/// 4. Convert [MetadataResult] into a stub [Bookmark] for merging.
-/// 5. Call [UpsertMergeService.merge] to fill gaps.
-/// 6. Mark scrapingStatus → done (or failed) and persist.
+/// 4. Optionally download the hero image locally via [ThumbnailService] for offline access.
+/// 5. Convert [MetadataResult] into a stub [Bookmark] for merging.
+/// 6. Call [UpsertMergeService.merge] to fill gaps.
+/// 7. Mark scrapingStatus → done (or failed) and persist.
 class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
   DefaultScrapingOrchestrator({
     required BookmarkRepository bookmarkRepo,
     required MetadataScraper scraper,
     required UpsertMergeService merger,
+    ThumbnailService? thumbnailService,
   })  : _bookmarkRepo = bookmarkRepo,
         _scraper = scraper,
-        _merger = merger;
+        _merger = merger,
+        _thumbnailService = thumbnailService;
 
   final BookmarkRepository _bookmarkRepo;
   final MetadataScraper _scraper;
   final UpsertMergeService _merger;
+  final ThumbnailService? _thumbnailService;
   final Map<int, CancelToken> _activeTokens = <int, CancelToken>{};
   final Set<int> _attemptedIncompleteIds = <int>{};
   bool _isEnrichingIncomplete = false;
@@ -118,7 +123,25 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
           );
         }
 
-        final Bookmark stub = _stubFromMetadata(fresh, effectiveResult);
+        final String? imageUrlToCache =
+            effectiveResult.heroImageUrl ?? effectiveResult.faviconUrl;
+        String? heroImageLocalPath;
+        if (_thumbnailService != null &&
+            imageUrlToCache != null &&
+            imageUrlToCache.trim().isNotEmpty &&
+            (fresh.heroImageLocalPath == null ||
+                fresh.heroImageLocalPath!.isEmpty)) {
+          heroImageLocalPath =
+              await _thumbnailService.download(imageUrlToCache.trim());
+        }
+
+        if (token.isCancelled) return;
+
+        final Bookmark stub = _stubFromMetadata(
+          fresh,
+          effectiveResult,
+          heroImageLocalPath: heroImageLocalPath,
+        );
         final Bookmark merged = _merger.merge(fresh, stub);
 
         if (token.isCancelled) return;
@@ -159,12 +182,12 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
             if (id == null || _attemptedIncompleteIds.contains(id)) {
               return false;
             }
+            if (now.difference(b.createdAt).inMinutes > 30) {
+              return false;
+            }
             if (b.scrapingStatus == BookmarkScrapingStatus.pending ||
                 b.scrapingStatus == BookmarkScrapingStatus.processing) {
               return true;
-            }
-            if (now.difference(b.createdAt).inMinutes > 30) {
-              return false;
             }
             final bool neverEnriched =
                 (b.heroImageUrl == null || b.heroImageUrl!.isEmpty) &&
@@ -194,7 +217,11 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
   /// Builds a transient [Bookmark] from a [MetadataResult] suitable
   /// for [UpsertMergeService.merge]. Only metadata-derived fields
   /// are populated; identity / flags come from the existing record.
-  static Bookmark _stubFromMetadata(Bookmark existing, MetadataResult m) {
+  static Bookmark _stubFromMetadata(
+    Bookmark existing,
+    MetadataResult m, {
+    String? heroImageLocalPath,
+  }) {
     return existing.copyWith(
       title: m.title,
       description: m.description,
@@ -205,6 +232,7 @@ class DefaultScrapingOrchestrator implements ScrapingOrchestrator {
       publishDate: m.publishDate,
       languageCode: m.languageCode,
       heroImageUrl: m.heroImageUrl ?? m.faviconUrl,
+      heroImageLocalPath: heroImageLocalPath,
       faviconUrl: m.faviconUrl,
       canonicalUrl: m.canonicalUrl ?? existing.canonicalUrl,
       readingTimeMinutes: m.readingTimeMinutes,

@@ -14,8 +14,10 @@ import 'package:path_provider/path_provider.dart';
 /// Service responsible for extracting distraction-free, rich article content
 /// from web pages, Reddit posts, Twitter/X links, and cached snapshots.
 class ArticleExtractorService {
-  ArticleExtractorService({Dio? dio})
-      : _dio = dio ??
+  ArticleExtractorService({
+    Dio? dio,
+    Future<Directory> Function()? cacheDirectoryProvider,
+  })  : _dio = dio ??
             Dio(
               BaseOptions(
                 connectTimeout: const Duration(seconds: 12),
@@ -24,14 +26,49 @@ class ArticleExtractorService {
                 maxRedirects: 6,
                 headers: GenericHtmlParser.browserNavigationHeaders(),
               ),
-            );
+            ),
+        _cacheDirectoryProvider = cacheDirectoryProvider;
 
   final Dio _dio;
+  final Future<Directory> Function()? _cacheDirectoryProvider;
+
+  /// Sentinel text emitted for the Reddit top-comments section heading so
+  /// [ReaderScreen] can localize it cleanly at render time.
+  static const String topCommentsHeadingMarker = '__marky_top_comments__';
 
   static final RegExp _noiseSelectors = RegExp(
-    '(cookie|banner|popup|modal|sidebar|footer|header|navbar|nav-|menu|breadcrumb|social|share|comment|promo|advert|sponsor|newsletter|related|outbrain|taboola|recommend)',
+    r'(^|[\s_-])(cookie|consent|banner|popup|modal|sidebar|footer|navbar|nav-menu|site-nav|main-nav|breadcrumb|social-share|share-bar|share-buttons|comments-section|comment-list|promo|advert|ad-slot|sponsor|newsletter|related-posts|outbrain|taboola|recommend|paywall-banner)([\s_-]|$)',
     caseSensitive: false,
   );
+
+  static const Set<String> _blockElementTags = <String>{
+    'p',
+    'div',
+    'section',
+    'article',
+    'main',
+    'ul',
+    'ol',
+    'pre',
+    'blockquote',
+    'table',
+    'figure',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+  };
+
+  static const Set<String> _skippedTextTags = <String>{
+    'script',
+    'style',
+    'noscript',
+    'svg',
+    'button',
+    'template',
+  };
 
   static final RegExp _redditShortlinkPattern = RegExp(
     r'(redd\.it|\/s\/)',
@@ -136,76 +173,101 @@ class ArticleExtractorService {
       } catch (_) {}
     }
 
-    // 2. Clone body and clean noise
+    // 2. Clone body and clean noise safely
     final dom.Element? bodyClone = doc.body?.clone(true);
     if (bodyClone == null) {
       return _buildFallbackContent(bookmark);
     }
 
+    // Remove unconditionally non-article elements (keep <header> for now so
+    // <article><header><h1>...</h1><p class="subtitle">...</p></header> survives).
     for (final dom.Element el in bodyClone.querySelectorAll(
-      'script, style, noscript, iframe, svg, nav, footer, header, aside, form, button, dialog, canvas',
+      'script, style, noscript, iframe, svg, nav, footer, aside, form, button, dialog, canvas, template',
     )) {
       el.remove();
     }
 
-    // Strip elements with noise class or ID
+    // Remove site-level <header> elements that are NOT inside <article>/<main>
+    // and do not hold substantial article paragraphs.
+    for (final dom.Element header
+        in bodyClone.querySelectorAll('header').toList()) {
+      if (_hasAncestorTag(header, const <String>{'article', 'main'})) continue;
+      final int pCount = header
+          .querySelectorAll('p')
+          .where((dom.Element p) => p.text.trim().length > 40)
+          .length;
+      if (pCount < 2) {
+        header.remove();
+      }
+    }
+
+    // Strip elements with noise class or ID only when they do not wrap the main
+    // article body (protects wrappers like "post-with-sidebar" or "has-comments").
     for (final dom.Element el in bodyClone.querySelectorAll('*').toList()) {
+      if (el.parent == null) continue;
       final String tag = el.localName?.toLowerCase() ?? '';
       if (tag == 'article' || tag == 'main' || tag == 'body') continue;
       final String classAndId =
           '${el.attributes['class'] ?? ''} ${el.attributes['id'] ?? ''}';
-      if (_noiseSelectors.hasMatch(classAndId) &&
-          el.querySelector('article, main') == null) {
-        el.remove();
-      }
+      if (!_noiseSelectors.hasMatch(classAndId)) continue;
+      if (el.querySelector('article, main, .markdown-body') != null) continue;
+
+      final String plain = el.text.trim();
+      final int substantiveParagraphs = el
+          .querySelectorAll('p')
+          .where((dom.Element p) => p.text.trim().length > 40)
+          .length;
+      if (plain.length > 400 && substantiveParagraphs >= 2) continue;
+
+      el.remove();
     }
 
     // 3. Find primary article container
+    final String host = baseUri.host.toLowerCase();
     dom.Element? contentContainer;
-    final List<String> highConfidenceSelectors = <String>[
-      'article',
-      '[role="article"]',
-      'main',
-      '[role="main"]',
-      '.article-content',
-      '.entry-content',
-      '.post-content',
-      '.article-body',
-      '.story-body',
-      '.content-body',
-      '.post-body',
-      '.article__body',
-      '.rich-text',
-      '#article-body',
-      '#content-body',
-    ];
 
-    for (final String selector in highConfidenceSelectors) {
-      final dom.Element? el = bodyClone.querySelector(selector);
-      if (el != null && el.querySelectorAll('p').isNotEmpty) {
-        contentContainer = el;
-        break;
-      }
+    // Dedicated GitHub README / markdown rendering path.
+    if (host == 'github.com' || host.endsWith('.github.com')) {
+      contentContainer = bodyClone.querySelector('article.markdown-body') ??
+          bodyClone.querySelector('.markdown-body');
     }
 
-    // If still null, score containers by paragraph text density
-    contentContainer ??= _findBestContainerByScoring(bodyClone);
+    // Evaluate all high-confidence semantic candidates AND scored paragraph
+    // containers together so a small promo/sidebar <article> never beats the
+    // real article body.
+    contentContainer ??= _selectBestArticleContainer(bodyClone);
 
-    // 4. Extract blocks from container
+    // 4. Resolve article title before block extraction so duplicate H1s can be skipped.
+    final String? rawDocH1 =
+        _extractReadableTextOrNull(contentContainer?.querySelector('h1')) ??
+            _extractReadableTextOrNull(doc.querySelector('h1'));
+    final String title = _cleanText(
+      jsonLdTitle ?? rawDocH1 ?? bookmark.displayTitle,
+    );
+
+    // 5. Extract structured blocks from container
     final List<ArticleBlock> blocks = <ArticleBlock>[];
     if (contentContainer != null) {
-      _extractBlocksFromElement(contentContainer, blocks, baseUri);
+      _extractBlocksFromElement(
+        contentContainer,
+        blocks,
+        baseUri,
+        articleTitle: title,
+      );
     }
 
-    // If blocks too short or empty, try JSON-LD articleBody fallback
-    if (blocks.length < 2 && jsonLdBody != null && jsonLdBody.length > 200) {
-      blocks.clear();
-      final List<String> paragraphs = jsonLdBody.split(RegExp(r'\n+'));
-      for (final String p in paragraphs) {
-        final String clean = _cleanText(p);
-        if (clean.length > 25) {
+    // 6. Smart JSON-LD fallback based on word count (handles paywalled/JS-hydrated pages)
+    final int extractedWords = _countBlockWords(blocks);
+    if (jsonLdBody != null && jsonLdBody.trim().isNotEmpty) {
+      final int jsonLdWords = _countStringWords(jsonLdBody);
+      if (blocks.isEmpty ||
+          (extractedWords < 80 && jsonLdWords > extractedWords * 2)) {
+        final List<ArticleBlock> jsonLdBlocks =
+            _blocksFromJsonLdBody(jsonLdBody, baseUri);
+        if (jsonLdBlocks.isNotEmpty) {
           blocks
-              .add(ArticleBlock(type: ArticleBlockType.paragraph, text: clean));
+            ..clear()
+            ..addAll(jsonLdBlocks);
         }
       }
     }
@@ -214,22 +276,12 @@ class ArticleExtractorService {
       return _buildFallbackContent(bookmark);
     }
 
-    final String title = jsonLdTitle ??
-        doc.querySelector('h1')?.text.trim() ??
-        bookmark.displayTitle;
-
-    final int totalWords = blocks.fold<int>(
-      0,
-      (int acc, ArticleBlock b) =>
-          acc +
-          b.text.split(RegExp(r'\s+')).where((String w) => w.isNotEmpty).length,
-    );
-
+    final int totalWords = _countBlockWords(blocks);
     final int readingTimeMinutes =
         totalWords >= 60 ? (totalWords / 200.0).ceil().clamp(1, 120) : 1;
 
     return ArticleContent(
-      title: title,
+      title: title.isNotEmpty ? title : bookmark.displayTitle,
       author: jsonLdAuthor ?? bookmark.author,
       siteName: bookmark.siteName ?? baseUri.host,
       publishDate: bookmark.publishDate,
@@ -240,18 +292,161 @@ class ArticleExtractorService {
     );
   }
 
+  dom.Element? _selectBestArticleContainer(dom.Element body) {
+    const List<String> candidateSelectors = <String>[
+      'article',
+      '[role="article"]',
+      'main',
+      '[role="main"]',
+      '.markdown-body',
+      '.article-content',
+      '.entry-content',
+      '.post-content',
+      '.article-body',
+      '.story-body',
+      '.content-body',
+      '.post-body',
+      '.article__body',
+      '.rich-text',
+      '.prose',
+      '.available-content',
+      '.body.markup',
+      '#article-body',
+      '#content-body',
+    ];
+
+    final Set<dom.Element> candidates = <dom.Element>{};
+    for (final String selector in candidateSelectors) {
+      candidates.addAll(body.querySelectorAll(selector));
+    }
+
+    // Also include parent containers of substantive paragraphs and text divs.
+    for (final dom.Element p in body.querySelectorAll('p')) {
+      if (p.text.trim().length < 30) continue;
+      if (p.parent != null && p.parent != body) {
+        candidates.add(p.parent!);
+      }
+      if (p.parent?.parent != null && p.parent!.parent != body) {
+        candidates.add(p.parent!.parent!);
+      }
+    }
+
+    if (candidates.isEmpty) {
+      return _findBestContainerByScoring(body) ?? body;
+    }
+
+    dom.Element? best;
+    double bestScore = 0;
+    for (final dom.Element candidate in candidates) {
+      final double score = _scoreCandidateElement(candidate);
+      if (score > bestScore) {
+        bestScore = score;
+        best = candidate;
+      }
+    }
+
+    return best ?? _findBestContainerByScoring(body);
+  }
+
+  double _scoreCandidateElement(dom.Element el) {
+    double score = 0;
+    int totalTextLen = 0;
+
+    final List<dom.Element> textBlocks =
+        el.querySelectorAll('p, li, blockquote, pre');
+    for (final dom.Element block in textBlocks) {
+      final String text = block.text.trim();
+      if (text.length < 20) continue;
+      totalTextLen += text.length;
+      score += text.length;
+      // Punctuation / sentence density bonus (favors real prose over nav lists)
+      score += (text.split(RegExp('[,.;:!?]')).length - 1) * 18.0;
+    }
+
+    // Account for sites that use <div> for paragraphs directly.
+    if (textBlocks.isEmpty) {
+      final String direct = _directOwnText(el).trim();
+      if (direct.length >= 40) {
+        totalTextLen += direct.length;
+        score += direct.length;
+      } else {
+        for (final dom.Element div in el.querySelectorAll('div')) {
+          if (div.children.any(
+            (dom.Element c) =>
+                _blockElementTags.contains(c.localName?.toLowerCase()),
+          )) {
+            continue;
+          }
+          final String divText = div.text.trim();
+          if (divText.length >= 40) {
+            totalTextLen += divText.length;
+            score += divText.length * 0.9;
+          }
+        }
+      }
+    }
+
+    if (score <= 0 || totalTextLen <= 0) return 0;
+
+    // Link density penalty: navigation menus and related-link blocks have high
+    // anchor-to-text ratios.
+    final int linkTextLen = el.querySelectorAll('a').fold<int>(
+          0,
+          (int acc, dom.Element a) => acc + a.text.trim().length,
+        );
+    final double linkDensity = (linkTextLen / totalTextLen).clamp(0.0, 1.0);
+    if (linkDensity > 0.55) {
+      score *= 0.12;
+    } else {
+      score *= 1.0 - (linkDensity * 0.65);
+    }
+
+    // Semantic boost for dedicated article tags / known content classes.
+    final String tag = el.localName?.toLowerCase() ?? '';
+    final String classAndId =
+        '${el.attributes['class'] ?? ''} ${el.attributes['id'] ?? ''}'
+            .toLowerCase();
+    if (tag == 'article' ||
+        el.attributes['role'] == 'article' ||
+        classAndId.contains('markdown-body') ||
+        classAndId.contains('article-body') ||
+        classAndId.contains('article-content') ||
+        classAndId.contains('entry-content') ||
+        classAndId.contains('post-content') ||
+        classAndId.contains('available-content') ||
+        classAndId.contains('prose')) {
+      score *= 1.25;
+    } else if (tag == 'main' || el.attributes['role'] == 'main') {
+      score *= 1.1;
+    }
+
+    return score;
+  }
+
   void _extractBlocksFromElement(
     dom.Element container,
     List<ArticleBlock> blocks,
-    Uri baseUri,
-  ) {
+    Uri baseUri, {
+    String? articleTitle,
+  }) {
+    final String normalizedTitle =
+        (articleTitle ?? '').trim().toLowerCase();
+
     for (final dom.Element child in container.children) {
       final String tag = child.localName?.toLowerCase() ?? '';
+      if (_skippedTextTags.contains(tag)) continue;
 
       if (RegExp(r'^h[1-6]$').hasMatch(tag)) {
         final int level = int.tryParse(tag.substring(1)) ?? 1;
-        final String text = _cleanText(child.text);
-        if (text.length > 3) {
+        final String text = _extractReadableText(child);
+        if (text.length > 1) {
+          // Skip leading H1 that merely duplicates the header article title.
+          if (level == 1 &&
+              blocks.isEmpty &&
+              normalizedTitle.isNotEmpty &&
+              text.toLowerCase() == normalizedTitle) {
+            continue;
+          }
           blocks.add(ArticleBlock(
             type: ArticleBlockType.heading,
             text: text,
@@ -259,26 +454,59 @@ class ArticleExtractorService {
           ));
         }
       } else if (tag == 'p') {
-        final String text = _cleanText(child.text);
-        if (text.length > 3) {
+        // Extract any valid images embedded inside <p> (common on WordPress/Medium).
+        for (final dom.Element media
+            in child.querySelectorAll('picture, img')) {
+          if (media.localName == 'img' &&
+              media.parent?.localName == 'picture') {
+            continue;
+          }
+          _tryAddImageBlock(media, blocks, baseUri);
+        }
+        final String text = _extractReadableText(child);
+        if (text.length > 1) {
           blocks
               .add(ArticleBlock(type: ArticleBlockType.paragraph, text: text));
         }
       } else if (tag == 'blockquote') {
-        final String text = _cleanText(child.text);
+        final String text = _extractReadableText(child);
         if (text.isNotEmpty) {
           blocks
               .add(ArticleBlock(type: ArticleBlockType.blockquote, text: text));
         }
       } else if (tag == 'pre') {
-        final String code = child.text.trim();
+        final dom.Element preClone = child.clone(true);
+        for (final dom.Element btn in preClone.querySelectorAll(
+          'button, .copy-button, .copy-code, [aria-label]',
+        )) {
+          final String btnTag = btn.localName?.toLowerCase() ?? '';
+          final String classes = (btn.attributes['class'] ?? '').toLowerCase();
+          final String aria =
+              (btn.attributes['aria-label'] ?? '').toLowerCase();
+          if (btnTag == 'button' ||
+              classes.contains('copy') ||
+              aria.contains('copy') ||
+              aria.contains('kopyala')) {
+            btn.remove();
+          }
+        }
+        final String code = preClone.text.trim();
         if (code.isNotEmpty) {
-          blocks.add(ArticleBlock(type: ArticleBlockType.code, text: code));
+          final String? lang = _detectCodeLanguage(preClone);
+          blocks.add(ArticleBlock(
+            type: ArticleBlockType.code,
+            text: code,
+            language: lang,
+          ));
         }
       } else if (tag == 'ul' || tag == 'ol') {
-        final List<String> items = child
-            .querySelectorAll('li')
-            .map((dom.Element li) => _cleanText(li.text))
+        final List<dom.Element> directLis = child.children
+            .where((dom.Element e) => e.localName?.toLowerCase() == 'li')
+            .toList();
+        final List<dom.Element> listNodes =
+            directLis.isNotEmpty ? directLis : child.querySelectorAll('li');
+        final List<String> items = listNodes
+            .map(_extractReadableText)
             .where((String t) => t.isNotEmpty)
             .toList();
         if (items.isNotEmpty) {
@@ -289,29 +517,287 @@ class ArticleExtractorService {
             listItems: items,
           ));
         }
-      } else if (tag == 'figure' || tag == 'img') {
-        final dom.Element img =
-            tag == 'img' ? child : (child.querySelector('img') ?? child);
-        final String? rawSrc = img.attributes['src'] ??
-            img.attributes['data-src'] ??
-            img.attributes['data-original'];
-        final String? caption = child.querySelector('figcaption')?.text.trim();
-        if (rawSrc != null && rawSrc.isNotEmpty) {
-          final String resolved = _resolveUrl(baseUri, rawSrc);
-          if (resolved.startsWith('http')) {
-            blocks.add(ArticleBlock(
-              type: ArticleBlockType.image,
-              text: '',
-              imageUrl: resolved,
-              caption: caption,
-            ));
+      } else if (tag == 'table') {
+        final List<String> rows = <String>[];
+        for (final dom.Element tr in child.querySelectorAll('tr')) {
+          final List<String> cells = tr
+              .querySelectorAll('th, td')
+              .map(_extractReadableText)
+              .where((String c) => c.isNotEmpty)
+              .toList();
+          if (cells.isNotEmpty) {
+            rows.add(cells.join(' · '));
           }
         }
+        if (rows.isNotEmpty) {
+          blocks.add(ArticleBlock(
+            type: ArticleBlockType.list,
+            text: '',
+            listItems: rows,
+          ));
+        }
+      } else if (tag == 'figure' || tag == 'picture' || tag == 'img') {
+        final String? caption =
+            _extractReadableTextOrNull(child.querySelector('figcaption'));
+        _tryAddImageBlock(child, blocks, baseUri, caption: caption);
       } else if (child.children.isNotEmpty) {
-        // Recurse into wrapping divs or sections
-        _extractBlocksFromElement(child, blocks, baseUri);
+        // Recurse into wrapping divs, sections, headers, etc.
+        final bool hasBlockChild = child.children.any(
+          (dom.Element c) =>
+              _blockElementTags.contains(c.localName?.toLowerCase()),
+        );
+        if (!hasBlockChild) {
+          final String text = _extractReadableText(child);
+          if (text.length >= 25) {
+            blocks.add(
+              ArticleBlock(type: ArticleBlockType.paragraph, text: text),
+            );
+            continue;
+          }
+        }
+        _extractBlocksFromElement(
+          child,
+          blocks,
+          baseUri,
+          articleTitle: articleTitle,
+        );
+      } else {
+        // Leaf div/section with direct text (e.g. React/Notion style paragraphs).
+        final String text = _extractReadableText(child);
+        if (text.length >= 30) {
+          blocks
+              .add(ArticleBlock(type: ArticleBlockType.paragraph, text: text));
+        }
       }
     }
+  }
+
+  void _tryAddImageBlock(
+    dom.Element element,
+    List<ArticleBlock> blocks,
+    Uri baseUri, {
+    String? caption,
+  }) {
+    final String? rawSrc = _resolveBestImageSrc(element);
+    if (rawSrc == null || rawSrc.isEmpty) return;
+    final String resolved = _resolveUrl(baseUri, rawSrc);
+    if (!resolved.startsWith('http://') && !resolved.startsWith('https://')) {
+      return;
+    }
+    // Avoid duplicate consecutive identical images.
+    if (blocks.isNotEmpty &&
+        blocks.last.type == ArticleBlockType.image &&
+        blocks.last.imageUrl == resolved) {
+      return;
+    }
+    blocks.add(ArticleBlock(
+      type: ArticleBlockType.image,
+      text: '',
+      imageUrl: resolved,
+      caption: caption,
+    ));
+  }
+
+  String? _resolveBestImageSrc(dom.Element element) {
+    final dom.Element? img = element.localName?.toLowerCase() == 'img'
+        ? element
+        : element.querySelector('img');
+
+    // Skip obvious tracking pixels or tiny avatar/icon decorations.
+    if (img != null) {
+      final int? w = int.tryParse(img.attributes['width'] ?? '');
+      final int? h = int.tryParse(img.attributes['height'] ?? '');
+      if ((w != null && w <= 2) || (h != null && h <= 2)) {
+        return null;
+      }
+    }
+
+    // Priority 1: explicit lazy-load attributes (always preferred over src
+    // because sites put SVG/GIF base64 placeholders in src!).
+    final List<String?> candidates = <String?>[
+      if (img != null) ...<String?>[
+        img.attributes['data-src'],
+        img.attributes['data-lazy-src'],
+        img.attributes['data-original'],
+        img.attributes['data-actualsrc'],
+        img.attributes['data-hi-res-src'],
+        _bestSrcFromSrcset(img.attributes['data-srcset']),
+        _bestSrcFromSrcset(img.attributes['srcset']),
+      ],
+      for (final dom.Element source in element.querySelectorAll('source')) ...<String?>[
+        _bestSrcFromSrcset(source.attributes['data-srcset']),
+        _bestSrcFromSrcset(source.attributes['srcset']),
+      ],
+      if (img != null) img.attributes['src'],
+    ];
+
+    for (final String? candidate in candidates) {
+      final String? cleaned = _validImageCandidate(candidate);
+      if (cleaned != null) return cleaned;
+    }
+    return null;
+  }
+
+  static String? _validImageCandidate(String? raw) {
+    if (raw == null) return null;
+    final String trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+    final String lower = trimmed.toLowerCase();
+    if (lower.startsWith('data:') ||
+        lower.startsWith('javascript:') ||
+        lower == 'about:blank' ||
+        lower.contains('spacer.gif') ||
+        lower.contains('pixel.gif') ||
+        lower.contains('1x1.')) {
+      return null;
+    }
+    return trimmed;
+  }
+
+  static String? _bestSrcFromSrcset(String? srcset) {
+    if (srcset == null || srcset.trim().isEmpty) return null;
+    String? bestUrl;
+    double bestWeight = -1;
+    for (final String entry in srcset.split(',')) {
+      final List<String> parts =
+          entry.trim().split(RegExp(r'\s+')).where((String s) => s.isNotEmpty).toList();
+      if (parts.isEmpty) continue;
+      final String? candidate = _validImageCandidate(parts.first);
+      if (candidate == null) continue;
+      double weight = 1;
+      if (parts.length > 1) {
+        final String descriptor = parts[1].toLowerCase();
+        if (descriptor.endsWith('w')) {
+          weight = double.tryParse(descriptor.substring(0, descriptor.length - 1)) ?? 1;
+        } else if (descriptor.endsWith('x')) {
+          weight = (double.tryParse(descriptor.substring(0, descriptor.length - 1)) ?? 1) * 1000;
+        }
+      }
+      if (weight > bestWeight) {
+        bestWeight = weight;
+        bestUrl = candidate;
+      }
+    }
+    return bestUrl;
+  }
+
+  static String? _detectCodeLanguage(dom.Element pre) {
+    final dom.Element? codeEl = pre.querySelector('code');
+    final String classes =
+        '${pre.attributes['class'] ?? ''} ${codeEl?.attributes['class'] ?? ''}';
+    final Match? match =
+        RegExp('(?:language|lang)-([a-zA-Z0-9_+-]+)').firstMatch(classes);
+    return match?.group(1);
+  }
+
+  static bool _hasAncestorTag(dom.Element el, Set<String> tags) {
+    dom.Element? current = el.parent;
+    while (current != null) {
+      if (tags.contains(current.localName?.toLowerCase())) return true;
+      current = current.parent;
+    }
+    return false;
+  }
+
+  static String _directOwnText(dom.Element el) {
+    final StringBuffer buffer = StringBuffer();
+    for (final dom.Node node in el.nodes) {
+      if (node is dom.Text) {
+        buffer.write(node.text);
+      }
+    }
+    return buffer.toString();
+  }
+
+  /// Extracts readable text from [node] while preserving single-space boundaries
+  /// between adjacent sibling inline/block elements (e.g.
+  /// `<h2><span>01</span><span>Title</span></h2>` -> `"01 Title"`).
+  String _extractReadableText(dom.Node node) {
+    final StringBuffer buf = StringBuffer();
+    _appendReadableText(node, buf);
+    return _cleanText(buf.toString());
+  }
+
+  String? _extractReadableTextOrNull(dom.Node? node) {
+    if (node == null) return null;
+    final String text = _extractReadableText(node);
+    return text.isEmpty ? null : text;
+  }
+
+  void _appendReadableText(dom.Node node, StringBuffer buf) {
+    if (node is dom.Text) {
+      _writeTextPiece(buf, node.text);
+      return;
+    }
+    if (node is! dom.Element) return;
+    final String tag = node.localName?.toLowerCase() ?? '';
+    if (_skippedTextTags.contains(tag)) return;
+    if (tag == 'br') {
+      if (buf.isNotEmpty && !buf.toString().endsWith(' ')) {
+        buf.write(' ');
+      }
+      return;
+    }
+    for (final dom.Node child in node.nodes) {
+      _appendReadableText(child, buf);
+    }
+  }
+
+  static final RegExp _noLeadingSpaceRegex = RegExp(r'''^[,.;:!?)\]}'"”’%]''');
+  static final RegExp _noTrailingSpaceRegex = RegExp(r'''[(\[{"“‘/\-—]$''');
+
+  static void _writeTextPiece(StringBuffer buf, String raw) {
+    if (raw.isEmpty) return;
+    if (buf.isNotEmpty) {
+      final String existing = buf.toString();
+      final bool endsWithSpace = RegExp(r'\s$').hasMatch(existing);
+      final bool startsWithSpace = RegExp(r'^\s').hasMatch(raw);
+      if (!endsWithSpace &&
+          !startsWithSpace &&
+          !_noLeadingSpaceRegex.hasMatch(raw) &&
+          !_noTrailingSpaceRegex.hasMatch(existing)) {
+        buf.write(' ');
+      }
+    }
+    buf.write(raw);
+  }
+
+  List<ArticleBlock> _blocksFromJsonLdBody(String body, Uri baseUri) {
+    final List<ArticleBlock> blocks = <ArticleBlock>[];
+    if (body.contains('<p') || body.contains('<div') || body.contains('<br')) {
+      final dom.DocumentFragment frag = html_parser.parseFragment(body);
+      final dom.Element wrapper = dom.Element.tag('div')..nodes.addAll(frag.nodes.toList());
+      _extractBlocksFromElement(wrapper, blocks, baseUri);
+      if (blocks.isNotEmpty) return blocks;
+    }
+    final List<String> paragraphs = body.split(RegExp(r'\n+'));
+    for (final String p in paragraphs) {
+      final String clean = _cleanText(p);
+      if (clean.length > 15) {
+        blocks.add(ArticleBlock(type: ArticleBlockType.paragraph, text: clean));
+      }
+    }
+    return blocks;
+  }
+
+  static int _countBlockWords(List<ArticleBlock> blocks) {
+    return blocks.fold<int>(
+      0,
+      (int acc, ArticleBlock b) {
+        if (b.type == ArticleBlockType.list) {
+          return acc +
+              b.listItems.fold<int>(
+                0,
+                (int s, String item) => s + _countStringWords(item),
+              );
+        }
+        return acc + _countStringWords(b.text);
+      },
+    );
+  }
+
+  static int _countStringWords(String text) {
+    return text.split(RegExp(r'\s+')).where((String w) => w.isNotEmpty).length;
   }
 
   dom.Element? _findBestContainerByScoring(dom.Element body) {
@@ -333,8 +819,10 @@ class ArticleExtractorService {
     dom.Element? best;
     double maxScore = -1;
     scores.forEach((dom.Element el, double score) {
-      if (score > maxScore) {
-        maxScore = score;
+      final double adjusted = _scoreCandidateElement(el);
+      final double effective = adjusted > 0 ? adjusted : score;
+      if (effective > maxScore) {
+        maxScore = effective;
         best = el;
       }
     });
@@ -505,7 +993,7 @@ class ArticleExtractorService {
             type: ArticleBlockType.image,
             text: '',
             imageUrl: galleryImages[i],
-            caption: 'Görsel ${i + 1}/${galleryImages.length}',
+            caption: '${i + 1}/${galleryImages.length}',
           ));
         }
       }
@@ -520,7 +1008,7 @@ class ArticleExtractorService {
         if (commentsData is List && commentsData.isNotEmpty) {
           blocks.add(const ArticleBlock(
             type: ArticleBlockType.heading,
-            text: 'Öne Çıkan Yorumlar',
+            text: topCommentsHeadingMarker,
             level: 2,
           ));
 
@@ -934,14 +1422,6 @@ class ArticleExtractorService {
       ));
     }
 
-    if (blocks.isEmpty) {
-      blocks.add(const ArticleBlock(
-        type: ArticleBlockType.paragraph,
-        text:
-            'Bu web sayfası için ayrıştırılmış makale metni bulunamadı. Orijinal sayfayı tarayıcıda açarak tam içeriği görüntüleyebilirsiniz.',
-      ));
-    }
-
     return ArticleContent(
       title: bookmark.displayTitle,
       author: bookmark.author,
@@ -955,19 +1435,26 @@ class ArticleExtractorService {
     );
   }
 
+  Future<Directory> _resolveCacheDir() async {
+    final Directory root = _cacheDirectoryProvider != null
+        ? await _cacheDirectoryProvider()
+        : await getApplicationDocumentsDirectory();
+    final Directory dir = Directory('${root.path}/reader_cache');
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+    return dir;
+  }
+
   Future<ArticleContent?> _readFromCache(String key) async {
     try {
-      final Directory tempDir = await getTemporaryDirectory();
-      final File cacheFile = File('${tempDir.path}/reader_cache/$key.json');
+      final Directory dir = await _resolveCacheDir();
+      final File cacheFile = File('${dir.path}/$key.json');
       if (cacheFile.existsSync()) {
         final String raw = await cacheFile.readAsString();
         final Map<String, dynamic> json =
             jsonDecode(raw) as Map<String, dynamic>;
-        final ArticleContent content = ArticleContent.fromJson(json);
-        // Expire cache after 7 days
-        if (DateTime.now().difference(content.cachedAt).inDays < 7) {
-          return content;
-        }
+        return ArticleContent.fromJson(json);
       }
     } catch (_) {}
     return null;
@@ -975,11 +1462,7 @@ class ArticleExtractorService {
 
   Future<void> _saveToCache(String key, ArticleContent content) async {
     try {
-      final Directory tempDir = await getTemporaryDirectory();
-      final Directory dir = Directory('${tempDir.path}/reader_cache');
-      if (!dir.existsSync()) {
-        dir.createSync(recursive: true);
-      }
+      final Directory dir = await _resolveCacheDir();
       final File cacheFile = File('${dir.path}/$key.json');
       await cacheFile.writeAsString(jsonEncode(content.toJson()));
     } catch (_) {}
@@ -993,7 +1476,19 @@ class ArticleExtractorService {
       }
     } else if (json is Map<String, dynamic>) {
       final dynamic type = json['@type'];
-      if (type == 'Article' || type == 'NewsArticle' || type == 'BlogPosting') {
+      final bool isArticleType = type == 'Article' ||
+          type == 'NewsArticle' ||
+          type == 'BlogPosting' ||
+          type == 'TechArticle' ||
+          (type is List &&
+              type.any(
+                (dynamic t) =>
+                    t == 'Article' ||
+                    t == 'NewsArticle' ||
+                    t == 'BlogPosting' ||
+                    t == 'TechArticle',
+              ));
+      if (isArticleType) {
         return json;
       }
       if (json['@graph'] != null) {
@@ -1004,14 +1499,39 @@ class ArticleExtractorService {
   }
 
   String _cleanText(String input) {
-    return input
+    String decoded = input
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('\u00A0', ' ')
         .replaceAll('&amp;', '&')
         .replaceAll('&quot;', '"')
         .replaceAll('&#39;', "'")
+        .replaceAll('&apos;', "'")
         .replaceAll('&lt;', '<')
         .replaceAll('&gt;', '>')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+        .replaceAll('&mdash;', '—')
+        .replaceAll('&ndash;', '–')
+        .replaceAll('&hellip;', '…')
+        .replaceAll('&rsquo;', '’')
+        .replaceAll('&lsquo;', '‘')
+        .replaceAll('&rdquo;', '”')
+        .replaceAll('&ldquo;', '“');
+
+    decoded = decoded.replaceAllMapped(
+      RegExp('&#x([0-9a-fA-F]+);'),
+      (Match m) {
+        final int? code = int.tryParse(m.group(1)!, radix: 16);
+        return code != null ? String.fromCharCode(code) : m.group(0)!;
+      },
+    );
+    decoded = decoded.replaceAllMapped(
+      RegExp(r'&#(\d+);'),
+      (Match m) {
+        final int? code = int.tryParse(m.group(1)!);
+        return code != null ? String.fromCharCode(code) : m.group(0)!;
+      },
+    );
+
+    return decoded.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 
   String _resolveUrl(Uri baseUri, String relative) {

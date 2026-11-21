@@ -1,68 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/utils/l10n_extension.dart';
+import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
+import 'package:marky/features/notes/data/note_providers.dart';
+import 'package:marky/features/reader/data/article_extractor_service.dart';
+import 'package:marky/features/reader/data/reader_preferences_provider.dart';
 import 'package:marky/features/reader/domain/article_content.dart';
 import 'package:marky/features/reader/presentation/reader_providers.dart';
+import 'package:marky/features/widgets/data/widget_providers.dart';
+import 'package:marky/features/widgets/domain/widget_feed_snapshot_service.dart';
+import 'package:marky/l10n/app_localizations.dart';
+import 'package:marky/shared/widgets/bookmark_image.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-enum ReaderThemeMode {
-  light(
-    name: 'Kağıt',
-    background: Color(0xFFFDFBF7),
-    surface: Color(0xFFF5F0E6),
-    text: Color(0xFF1E1E1E),
-    subtext: Color(0xFF6E6E6C),
-    accent: Color(0xFF8C5E35),
-    border: Color(0xFFE8E2D5),
-  ),
-  sepia(
-    name: 'Sepya',
-    background: Color(0xFFF4ECD8),
-    surface: Color(0xFFEADFCA),
-    text: Color(0xFF382C1E),
-    subtext: Color(0xFF7A6A55),
-    accent: Color(0xFF7A4A25),
-    border: Color(0xFFDDD2BC),
-  ),
-  dark(
-    name: 'Koyu',
-    background: Color(0xFF141413),
-    surface: Color(0xFF20201E),
-    text: Color(0xFFE6E5E3),
-    subtext: Color(0xFF9E9D9A),
-    accent: Color(0xFFD4A373),
-    border: Color(0xFF2C2C28),
-  );
-
-  const ReaderThemeMode({
-    required this.name,
-    required this.background,
-    required this.surface,
-    required this.text,
-    required this.subtext,
-    required this.accent,
-    required this.border,
-  });
-
-  final String name;
-  final Color background;
-  final Color surface;
-  final Color text;
-  final Color subtext;
-  final Color accent;
-  final Color border;
-}
-
-enum ReaderFontFamily {
-  serif('Serif (Tırnaklı)'),
-  sans('Sans (Düz)');
-
-  const ReaderFontFamily(this.label);
-  final String label;
-}
 
 /// Immersive, distraction-free reader mode for articles and long-form bookmarks.
 class ReaderScreen extends ConsumerStatefulWidget {
@@ -86,14 +40,13 @@ class ReaderScreen extends ConsumerStatefulWidget {
 class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final ScrollController _scrollController = ScrollController();
   double _readingProgress = 0;
-  double _fontSize = 17;
-  ReaderFontFamily _fontFamily = ReaderFontFamily.serif;
-  ReaderThemeMode _themeMode = ReaderThemeMode.dark;
+  bool _markedReadInSession = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _markedReadInSession = widget.bookmark.isRead;
   }
 
   @override
@@ -119,17 +72,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
   }
 
+  ReaderThemeMode _effectiveTheme(
+    BuildContext context,
+    ReaderPreferences prefs,
+  ) {
+    if (prefs.themeMode != null) return prefs.themeMode!;
+    return Theme.of(context).brightness == Brightness.dark
+        ? ReaderThemeMode.dark
+        : ReaderThemeMode.light;
+  }
+
   TextStyle _getTextStyle(
-    ReaderThemeMode theme, {
+    ReaderThemeMode theme,
+    ReaderPreferences prefs, {
     double? size,
     FontWeight? weight,
     double? height,
     FontStyle? fontStyle,
   }) {
-    final double effectiveSize = size ?? _fontSize;
-    final double effectiveHeight = height ?? 1.68;
-    return switch (_fontFamily) {
-      ReaderFontFamily.serif => GoogleFonts.merriweather(
+    final double effectiveSize = size ?? prefs.fontSize;
+    final double effectiveHeight = height ?? prefs.lineHeight;
+    return switch (prefs.fontFamily) {
+      ReaderFontFamily.serif => GoogleFonts.sourceSerif4(
           fontSize: effectiveSize,
           fontWeight: weight ?? FontWeight.normal,
           height: effectiveHeight,
@@ -146,21 +110,122 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     };
   }
 
+  Widget _buildSelectionContextMenu(
+    BuildContext context,
+    EditableTextState editableTextState,
+  ) {
+    final List<ContextMenuButtonItem> items =
+        List<ContextMenuButtonItem>.of(editableTextState.contextMenuButtonItems);
+    final TextEditingValue value = editableTextState.textEditingValue;
+    final TextSelection selection = value.selection;
+    final String selected = selection.isValid && !selection.isCollapsed
+        ? selection.textInside(value.text).trim()
+        : '';
+
+    if (selected.isNotEmpty && widget.bookmark.id != null) {
+      items.insert(
+        0,
+        ContextMenuButtonItem(
+          label: context.l10n.readerSaveHighlightAsNote,
+          onPressed: () {
+            ContextMenuController.removeAny();
+            unawaited(_saveHighlightAsNote(selected));
+          },
+        ),
+      );
+    }
+
+    return AdaptiveTextSelectionToolbar.buttonItems(
+      anchors: editableTextState.contextMenuAnchors,
+      buttonItems: items,
+    );
+  }
+
+  Future<void> _saveHighlightAsNote(String quote) async {
+    final int? bookmarkId = widget.bookmark.id;
+    if (bookmarkId == null || quote.trim().isEmpty) return;
+    try {
+      await ref
+          .read(noteRepositoryProvider)
+          .createForBookmark(bookmarkId, '> ${quote.trim()}');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.readerHighlightSaved)),
+        );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.detailInlineError(e.toString()))),
+        );
+    }
+  }
+
+  Future<void> _markFinished({required bool alsoArchive}) async {
+    final int? bookmarkId = widget.bookmark.id;
+    if (bookmarkId == null) return;
+    final Bookmark current =
+        await ref.read(bookmarkRepositoryProvider).getById(bookmarkId) ??
+            widget.bookmark;
+    await ref.read(bookmarkRepositoryProvider).save(
+          current.copyWith(
+            isRead: true,
+            isArchived: alsoArchive || current.isArchived,
+          ),
+        );
+    unawaited(_refreshWidgetBestEffort());
+    if (!mounted) return;
+    setState(() => _markedReadInSession = true);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            alsoArchive
+                ? context.l10n.snackbarBookmarkArchived
+                : context.l10n.readerMarkedAsRead,
+          ),
+        ),
+      );
+    if (alsoArchive) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _refreshWidgetBestEffort() async {
+    try {
+      final WidgetFeedSnapshotService service =
+          await ref.read(widgetFeedSnapshotServiceProvider.future);
+      await service.refresh();
+    } on Object {
+      // Best-effort home widget refresh.
+    }
+  }
+
   void _showAppearanceSheet() {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext sheetContext) {
-        return StatefulBuilder(
-          builder: (BuildContext ctx, StateSetter setSheetState) {
+        return Consumer(
+          builder: (BuildContext ctx, WidgetRef sheetRef, _) {
+            final ReaderPreferences prefs =
+                sheetRef.watch(readerPreferencesProvider);
+            final ReaderThemeMode themeMode = _effectiveTheme(ctx, prefs);
+            final ReaderPreferencesNotifier notifier =
+                sheetRef.read(readerPreferencesProvider.notifier);
+
             return Container(
               padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
               decoration: BoxDecoration(
-                color: _themeMode.surface,
+                color: themeMode.surface,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(ReadingRoomRadii.sheet),
                 ),
-                border: Border(top: BorderSide(color: _themeMode.border)),
+                border: Border(top: BorderSide(color: themeMode.border)),
               ),
               child: SafeArea(
                 top: false,
@@ -173,9 +238,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         width: 36,
                         height: 4,
                         margin: const EdgeInsets.only(
-                            bottom: ReadingRoomSpacing.md),
+                          bottom: ReadingRoomSpacing.md,
+                        ),
                         decoration: BoxDecoration(
-                          color: _themeMode.subtext.withValues(alpha: 0.4),
+                          color: themeMode.subtext.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -184,16 +250,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
                         Text(
-                          'Yazı Tipi & Tema',
+                          ctx.l10n.readerFontAndThemeTooltip,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: _themeMode.text,
+                            color: themeMode.text,
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.close_rounded,
-                              size: 20, color: _themeMode.text),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            size: 20,
+                            color: themeMode.text,
+                          ),
+                          tooltip: ctx.l10n.actionClose,
                           onPressed: () => Navigator.of(ctx).pop(),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -206,22 +276,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     Row(
                       children:
                           ReaderThemeMode.values.map((ReaderThemeMode mode) {
-                        final bool isSelected = _themeMode == mode;
+                        final bool isSelected = themeMode == mode;
                         return Expanded(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: GestureDetector(
-                              onTap: () {
-                                setState(() => _themeMode = mode);
-                                setSheetState(() {});
-                              },
+                              onTap: () => unawaited(notifier.setThemeMode(mode)),
                               child: Container(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
                                   color: mode.background,
                                   borderRadius: BorderRadius.circular(
-                                      ReadingRoomRadii.standard),
+                                    ReadingRoomRadii.standard,
+                                  ),
                                   border: Border.all(
                                     color:
                                         isSelected ? mode.accent : mode.border,
@@ -230,7 +298,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    _themeName(context, mode),
+                                    _themeName(ctx, mode),
                                     style: TextStyle(
                                       color: mode.text,
                                       fontWeight: isSelected
@@ -251,31 +319,29 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     Row(
                       children:
                           ReaderFontFamily.values.map((ReaderFontFamily font) {
-                        final bool isSelected = _fontFamily == font;
+                        final bool isSelected = prefs.fontFamily == font;
                         return Expanded(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: isSelected
-                                    ? _themeMode.accent.withValues(alpha: 0.15)
+                                    ? themeMode.accent.withValues(alpha: 0.15)
                                     : Colors.transparent,
                                 side: BorderSide(
                                   color: isSelected
-                                      ? _themeMode.accent
-                                      : _themeMode.border,
+                                      ? themeMode.accent
+                                      : themeMode.border,
                                 ),
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 12),
                               ),
-                              onPressed: () {
-                                setState(() => _fontFamily = font);
-                                setSheetState(() {});
-                              },
+                              onPressed: () =>
+                                  unawaited(notifier.setFontFamily(font)),
                               child: Text(
-                                _fontLabel(context, font),
+                                _fontLabel(ctx, font),
                                 style: TextStyle(
-                                  color: _themeMode.text,
+                                  color: themeMode.text,
                                   fontWeight: isSelected
                                       ? FontWeight.bold
                                       : FontWeight.normal,
@@ -291,29 +357,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     // ── Font Size Controls ────────────────────
                     Row(
                       children: <Widget>[
-                        Icon(Icons.format_size_rounded,
-                            size: 18, color: _themeMode.subtext),
+                        Icon(
+                          Icons.format_size_rounded,
+                          size: 18,
+                          color: themeMode.subtext,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'A',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: _themeMode.text,
+                            color: themeMode.text,
                           ),
                         ),
                         Expanded(
                           child: Slider(
-                            value: _fontSize,
+                            value: prefs.fontSize,
                             min: 14,
                             max: 26,
                             divisions: 6,
-                            activeColor: _themeMode.accent,
-                            inactiveColor: _themeMode.border,
-                            onChanged: (double val) {
-                              setState(() => _fontSize = val);
-                              setSheetState(() {});
-                            },
+                            activeColor: themeMode.accent,
+                            inactiveColor: themeMode.border,
+                            onChanged: (double val) =>
+                                unawaited(notifier.setFontSize(val)),
                           ),
                         ),
                         Text(
@@ -321,7 +388,38 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: _themeMode.text,
+                            color: themeMode.text,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // ── Line Spacing Controls ─────────────────
+                    Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.format_line_spacing_rounded,
+                          size: 18,
+                          color: themeMode.subtext,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          ctx.l10n.readerLineSpacing,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: themeMode.subtext,
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: prefs.lineHeight,
+                            min: 1.4,
+                            max: 2,
+                            divisions: 6,
+                            activeColor: themeMode.accent,
+                            inactiveColor: themeMode.border,
+                            onChanged: (double val) =>
+                                unawaited(notifier.setLineHeight(val)),
                           ),
                         ),
                       ],
@@ -339,11 +437,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final Bookmark bookmark = widget.bookmark;
+    final ReaderPreferences prefs = ref.watch(readerPreferencesProvider);
+    final ReaderThemeMode themeMode = _effectiveTheme(context, prefs);
     final AsyncValue<ArticleContent> articleAsync =
         ref.watch(readerArticleProvider(bookmark));
 
     return Scaffold(
-      backgroundColor: _themeMode.background,
+      backgroundColor: themeMode.background,
       body: SafeArea(
         child: Column(
           children: <Widget>[
@@ -351,8 +451,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             LinearProgressIndicator(
               value: _readingProgress,
               minHeight: 2.5,
-              backgroundColor: _themeMode.border,
-              valueColor: AlwaysStoppedAnimation<Color>(_themeMode.accent),
+              backgroundColor: themeMode.border,
+              valueColor: AlwaysStoppedAnimation<Color>(themeMode.accent),
             ),
 
             // ── Custom App Bar ────────────────────────────
@@ -364,26 +464,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               child: Row(
                 children: <Widget>[
                   IconButton(
-                    icon:
-                        Icon(Icons.arrow_back_rounded, color: _themeMode.text),
+                    icon: Icon(Icons.arrow_back_rounded, color: themeMode.text),
                     onPressed: () => Navigator.of(context).pop(),
-                    tooltip: 'Geri',
+                    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                   ),
                   const Spacer(),
                   articleAsync.when(
                     data: (ArticleContent article) => Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: _themeMode.surface,
+                        color: themeMode.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _themeMode.border),
+                        border: Border.all(color: themeMode.border),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          Icon(Icons.schedule_rounded,
-                              size: 14, color: _themeMode.subtext),
+                          Icon(
+                            Icons.schedule_rounded,
+                            size: 14,
+                            color: themeMode.subtext,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             context.l10n
@@ -391,7 +495,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: _themeMode.subtext,
+                              color: themeMode.subtext,
                             ),
                           ),
                         ],
@@ -402,18 +506,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   ),
                   const SizedBox(width: 6),
                   IconButton(
-                    icon: Icon(Icons.refresh_rounded, color: _themeMode.text),
-                    tooltip: 'Yeniden Ayrıştır',
+                    icon: Icon(Icons.refresh_rounded, color: themeMode.text),
+                    tooltip: context.l10n.readerRefreshTooltip,
                     onPressed: () {
-                      ref
-                          .read(readerArticleProvider(bookmark).notifier)
-                          .refresh();
+                      unawaited(
+                        ref
+                            .read(readerArticleProvider(bookmark).notifier)
+                            .refresh(),
+                      );
                     },
                   ),
                   IconButton(
                     icon:
-                        Icon(Icons.text_fields_rounded, color: _themeMode.text),
-                    tooltip: 'Yazı Tipi & Tema',
+                        Icon(Icons.text_fields_rounded, color: themeMode.text),
+                    tooltip: context.l10n.readerFontAndThemeTooltip,
                     onPressed: _showAppearanceSheet,
                   ),
                 ],
@@ -423,9 +529,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             // ── Article Body ──────────────────────────────
             Expanded(
               child: articleAsync.when(
-                data: _buildArticleScroll,
-                loading: _buildLoadingState,
-                error: (Object err, _) => _buildErrorState(err),
+                data: (ArticleContent article) =>
+                    _buildArticleScroll(article, themeMode, prefs),
+                loading: () => _buildLoadingState(themeMode),
+                error: (Object err, _) => _buildErrorState(err, themeMode),
               ),
             ),
           ],
@@ -434,7 +541,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(ReaderThemeMode themeMode) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(ReadingRoomSpacing.xl),
@@ -446,24 +553,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               height: 36,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                color: _themeMode.accent,
+                color: themeMode.accent,
               ),
             ),
             const SizedBox(height: ReadingRoomSpacing.lg),
             Text(
-              'Makale içeriği çıkarılıyor…',
+              context.l10n.readerLoadingTitle,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: _themeMode.text,
+                color: themeMode.text,
               ),
             ),
             const SizedBox(height: ReadingRoomSpacing.xs),
             Text(
-              'Gereksiz ögeler ve reklamlar temizleniyor',
+              context.l10n.readerLoadingSubtitle,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: _themeMode.subtext,
+                color: themeMode.subtext,
               ),
             ),
           ],
@@ -472,40 +580,45 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  Widget _buildErrorState(Object error) {
+  Widget _buildErrorState(Object error, ReaderThemeMode themeMode) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(ReadingRoomSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(Icons.error_outline_rounded,
-                size: 48, color: _themeMode.accent),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: themeMode.accent,
+            ),
             const SizedBox(height: ReadingRoomSpacing.md),
             Text(
-              'Makale içeriği çıkarılamadı',
+              context.l10n.readerErrorTitle,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: _themeMode.text,
+                color: themeMode.text,
               ),
             ),
             const SizedBox(height: ReadingRoomSpacing.sm),
             Text(
-              'Sayfa sunucusu isteği engellemiş olabilir veya internet bağlantınız kesilmiş olabilir.',
+              context.l10n.readerErrorSubtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: _themeMode.subtext),
+              style: TextStyle(fontSize: 13, color: themeMode.subtext),
             ),
             const SizedBox(height: ReadingRoomSpacing.lg),
             FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: _themeMode.accent,
+                backgroundColor: themeMode.accent,
                 foregroundColor: Colors.white,
               ),
               onPressed: () {
-                ref
-                    .read(readerArticleProvider(widget.bookmark).notifier)
-                    .refresh();
+                unawaited(
+                  ref
+                      .read(readerArticleProvider(widget.bookmark).notifier)
+                      .refresh(),
+                );
               },
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: Text(context.l10n.readerRetry),
@@ -516,7 +629,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  Widget _buildArticleScroll(ArticleContent article) {
+  Widget _buildArticleScroll(
+    ArticleContent article,
+    ReaderThemeMode themeMode,
+    ReaderPreferences prefs,
+  ) {
+    final AppLocalizations l10n = context.l10n;
     return SingleChildScrollView(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(
@@ -533,21 +651,24 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               padding: const EdgeInsets.all(ReadingRoomSpacing.md),
               margin: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
               decoration: BoxDecoration(
-                color: _themeMode.surface,
+                color: themeMode.surface,
                 borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-                border: Border.all(color: _themeMode.border),
+                border: Border.all(color: themeMode.border),
               ),
               child: Row(
                 children: <Widget>[
-                  Icon(Icons.info_outline_rounded,
-                      size: 18, color: _themeMode.accent),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: themeMode.accent,
+                  ),
                   const SizedBox(width: ReadingRoomSpacing.sm),
                   Expanded(
                     child: Text(
-                      'Tam metin çıkarılamadı; özet ve önizleme gösteriliyor.',
+                      l10n.readerFallbackNotice,
                       style: TextStyle(
                         fontSize: 12,
-                        color: _themeMode.subtext,
+                        color: themeMode.subtext,
                       ),
                     ),
                   ),
@@ -564,17 +685,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 fontSize: 12,
                 letterSpacing: 1.2,
                 fontWeight: FontWeight.w600,
-                color: _themeMode.accent,
+                color: themeMode.accent,
               ),
             ),
           const SizedBox(height: ReadingRoomSpacing.sm),
 
           // Article Title
-          Text(
+          SelectableText(
             article.title,
+            contextMenuBuilder: _buildSelectionContextMenu,
             style: _getTextStyle(
-              _themeMode,
-              size: _fontSize * 1.45,
+              themeMode,
+              prefs,
+              size: prefs.fontSize * 1.45,
               weight: FontWeight.bold,
               height: 1.28,
             ),
@@ -586,28 +709,38 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             children: <Widget>[
               if (article.author != null &&
                   article.author!.isNotEmpty) ...<Widget>[
-                Icon(Icons.person_outline_rounded,
-                    size: 14, color: _themeMode.subtext),
+                Icon(
+                  Icons.person_outline_rounded,
+                  size: 14,
+                  color: themeMode.subtext,
+                ),
                 const SizedBox(width: 4),
-                Text(
-                  article.author!,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: _themeMode.subtext,
+                Flexible(
+                  child: Text(
+                    article.author!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: themeMode.subtext,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
               ],
               if (article.publishDate != null) ...<Widget>[
-                Icon(Icons.calendar_today_outlined,
-                    size: 12, color: _themeMode.subtext),
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 12,
+                  color: themeMode.subtext,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   '${article.publishDate!.day}.${article.publishDate!.month}.${article.publishDate!.year}',
                   style: TextStyle(
                     fontSize: 13,
-                    color: _themeMode.subtext,
+                    color: themeMode.subtext,
                   ),
                 ),
               ],
@@ -615,32 +748,49 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ),
           const SizedBox(height: ReadingRoomSpacing.lg),
 
-          // Hero Image
-          if (article.heroImageUrl != null &&
-              article.heroImageUrl!.isNotEmpty) ...<Widget>[
+          // Hero Image (local cached thumbnail first, then network)
+          if ((widget.bookmark.heroImageLocalPath?.isNotEmpty ?? false) ||
+              (article.heroImageUrl != null &&
+                  article.heroImageUrl!.isNotEmpty)) ...<Widget>[
             ClipRRect(
               borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-              child: Image.network(
-                article.heroImageUrl!,
+              child: BookmarkImage(
+                localPath: widget.bookmark.heroImageLocalPath,
+                imageUrl: article.heroImageUrl,
                 width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
               ),
             ),
             const SizedBox(height: ReadingRoomSpacing.xl),
           ],
 
-          // Render Rich Article Blocks
-          ...article.blocks.map(_buildBlock),
+          // Render Rich Article Blocks (or localized fallback notice when empty)
+          if (article.blocks.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
+              child: Text(
+                l10n.readerFallbackEmptyBody,
+                style: _getTextStyle(themeMode, prefs),
+              ),
+            )
+          else
+            ...article.blocks.map(
+              (ArticleBlock b) => _buildBlock(b, themeMode, prefs),
+            ),
 
-          const SizedBox(height: ReadingRoomSpacing.huge),
+          const SizedBox(height: ReadingRoomSpacing.xl),
+
+          // End-of-article completion actions
+          if (widget.bookmark.id != null) ...<Widget>[
+            _buildEndOfArticleCard(themeMode, l10n),
+            const SizedBox(height: ReadingRoomSpacing.lg),
+          ],
 
           // Bottom Open in Web action
           Center(
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: _themeMode.text,
-                side: BorderSide(color: _themeMode.border),
+                foregroundColor: themeMode.text,
+                side: BorderSide(color: themeMode.border),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
@@ -649,11 +799,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     widget.bookmark.canonicalUrl ?? widget.bookmark.originalUrl;
                 final Uri? uri = Uri.tryParse(url);
                 if (uri != null) {
-                  launchUrl(uri, mode: LaunchMode.externalApplication);
+                  unawaited(
+                    launchUrl(uri, mode: LaunchMode.externalApplication),
+                  );
                 }
               },
               icon: const Icon(Icons.open_in_browser_rounded, size: 18),
-              label: Text(context.l10n.readerOpenOriginal),
+              label: Text(l10n.readerOpenOriginal),
             ),
           ),
           const SizedBox(height: ReadingRoomSpacing.huge),
@@ -662,7 +814,75 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  Widget _buildBlock(ArticleBlock block) {
+  Widget _buildEndOfArticleCard(
+    ReaderThemeMode themeMode,
+    AppLocalizations l10n,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
+      decoration: BoxDecoration(
+        color: themeMode.surface,
+        borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+        border: Border.all(color: themeMode.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            l10n.readerEndTitle,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: themeMode.text,
+            ),
+          ),
+          const SizedBox(height: ReadingRoomSpacing.md),
+          Wrap(
+            spacing: ReadingRoomSpacing.sm,
+            runSpacing: ReadingRoomSpacing.sm,
+            children: <Widget>[
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: themeMode.accent,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _markedReadInSession
+                    ? null
+                    : () => unawaited(_markFinished(alsoArchive: false)),
+                icon: Icon(
+                  _markedReadInSession
+                      ? Icons.check_circle_rounded
+                      : Icons.check_circle_outline_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  _markedReadInSession
+                      ? l10n.readerMarkedAsRead
+                      : l10n.readerMarkRead,
+                ),
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: themeMode.text,
+                  side: BorderSide(color: themeMode.border),
+                ),
+                onPressed: () => unawaited(_markFinished(alsoArchive: true)),
+                icon: const Icon(Icons.archive_outlined, size: 18),
+                label: Text(l10n.readerMarkReadArchive),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlock(
+    ArticleBlock block,
+    ReaderThemeMode themeMode,
+    ReaderPreferences prefs,
+  ) {
     switch (block.type) {
       case ArticleBlockType.heading:
         final double scale = switch (block.level) {
@@ -670,16 +890,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           2 => 1.22,
           _ => 1.1,
         };
+        final String headingText =
+            block.text == ArticleExtractorService.topCommentsHeadingMarker
+                ? context.l10n.readerTopComments
+                : block.text;
         return Padding(
           padding: const EdgeInsets.only(
             top: ReadingRoomSpacing.xl,
             bottom: ReadingRoomSpacing.sm,
           ),
-          child: Text(
-            block.text,
+          child: SelectableText(
+            headingText,
+            contextMenuBuilder: _buildSelectionContextMenu,
             style: _getTextStyle(
-              _themeMode,
-              size: _fontSize * scale,
+              themeMode,
+              prefs,
+              size: prefs.fontSize * scale,
               weight: FontWeight.bold,
               height: 1.3,
             ),
@@ -689,9 +915,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       case ArticleBlockType.paragraph:
         return Padding(
           padding: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
-          child: Text(
+          child: SelectableText(
             block.text,
-            style: _getTextStyle(_themeMode),
+            contextMenuBuilder: _buildSelectionContextMenu,
+            style: _getTextStyle(themeMode, prefs),
           ),
         );
 
@@ -703,18 +930,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             vertical: ReadingRoomSpacing.sm,
           ),
           decoration: BoxDecoration(
-            color: _themeMode.surface.withValues(alpha: 0.5),
+            color: themeMode.surface.withValues(alpha: 0.5),
             border: Border(
-              left: BorderSide(color: _themeMode.accent, width: 3.5),
+              left: BorderSide(color: themeMode.accent, width: 3.5),
             ),
             borderRadius: const BorderRadius.horizontal(
               right: Radius.circular(8),
             ),
           ),
-          child: Text(
+          child: SelectableText(
             block.text,
+            contextMenuBuilder: _buildSelectionContextMenu,
             style: _getTextStyle(
-              _themeMode,
+              themeMode,
+              prefs,
               fontStyle: FontStyle.italic,
               height: 1.55,
             ),
@@ -727,17 +956,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           margin: const EdgeInsets.only(bottom: ReadingRoomSpacing.lg),
           padding: const EdgeInsets.all(ReadingRoomSpacing.md),
           decoration: BoxDecoration(
-            color: _themeMode.surface,
+            color: themeMode.surface,
             borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-            border: Border.all(color: _themeMode.border),
+            border: Border.all(color: themeMode.border),
           ),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Text(
+            child: SelectableText(
               block.text,
-              style: GoogleFonts.firaCode(
-                fontSize: _fontSize * 0.85,
-                color: _themeMode.text,
+              contextMenuBuilder: _buildSelectionContextMenu,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: prefs.fontSize * 0.85,
+                color: themeMode.text,
                 height: 1.5,
               ),
             ),
@@ -762,12 +992,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   children: <Widget>[
                     Text(
                       prefix,
-                      style: _getTextStyle(_themeMode, weight: FontWeight.bold),
+                      style: _getTextStyle(
+                        themeMode,
+                        prefs,
+                        weight: FontWeight.bold,
+                      ),
                     ),
                     Expanded(
-                      child: Text(
+                      child: SelectableText(
                         entry.value,
-                        style: _getTextStyle(_themeMode),
+                        contextMenuBuilder: _buildSelectionContextMenu,
+                        style: _getTextStyle(themeMode, prefs),
                       ),
                     ),
                   ],
@@ -788,11 +1023,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
-                child: Image.network(
-                  block.imageUrl!,
+                child: BookmarkImage(
+                  imageUrl: block.imageUrl,
                   width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
               ),
               if (block.caption != null &&
@@ -803,7 +1036,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: _themeMode.subtext,
+                    color: themeMode.subtext,
                   ),
                 ),
               ],

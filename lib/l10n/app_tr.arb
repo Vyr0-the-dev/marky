@@ -815,5 +815,11 @@
         "type": "String"
       }
     }
-  }
+  },
+  "readerFontAndThemeTooltip": "Yazı Tipi & Tema",
+  "readerRefreshTooltip": "Yeniden Ayrıştır",
+  "readerLoadingTitle": "Makale içeriği çıkarılıyor…",
+  "readerLoadingSubtitle": "Gereksiz ögeler ve reklamlar temizleniyor",
+  "readerErrorTitle": "Makale içeriği çıkarılamadı",
+  "readerErrorSubtitle": "Sayfa sunucusu isteği engellemiş olabilir veya internet bağlantınız kesilmiş olabilir."
 }

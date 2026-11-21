@@ -30,6 +30,7 @@ import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
 import 'package:marky/l10n/app_localizations.dart';
 import 'package:marky/shared/errors/safe_error_details.dart';
+import 'package:marky/shared/widgets/bookmark_image.dart';
 import 'package:marky/shared/widgets/marky_error_state.dart';
 import 'package:marky/shared/widgets/marky_loading_state.dart';
 import 'package:share_plus/share_plus.dart';
@@ -361,15 +362,16 @@ class _HeroAppBar extends ConsumerWidget {
               },
               child: ColoredBox(
                 color: Colors.black,
-                child: Image.network(
-                  imageUrl,
+                child: BookmarkImage(
+                  localPath: bookmark.heroImageLocalPath,
+                  imageUrl: imageUrl,
                   fit: BoxFit.contain,
                   width: double.infinity,
                   height: double.infinity,
                   semanticLabel:
                       l10n?.detailPreviewImageLabel(bookmark.displayTitle) ??
                           'Preview image for ${bookmark.displayTitle}',
-                  errorBuilder: (_, __, ___) => ColoredBox(
+                  errorBuilder: (_) => ColoredBox(
                     color: theme.colorScheme.outlineVariant,
                   ),
                 ),
