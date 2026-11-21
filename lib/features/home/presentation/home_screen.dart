@@ -28,10 +28,13 @@ import 'package:marky/features/reminders/data/reminder_providers.dart';
 import 'package:marky/features/reminders/domain/reminder_scheduler.dart';
 import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
+import 'package:marky/features/widgets/data/widget_providers.dart';
+import 'package:marky/features/widgets/domain/widget_feed_snapshot_service.dart';
 import 'package:marky/l10n/app_localizations.dart';
 import 'package:marky/shared/errors/safe_error_details.dart';
 import 'package:marky/shared/widgets/marky_empty_state.dart';
 import 'package:marky/shared/widgets/marky_error_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// The main library feed screen.
 ///
@@ -246,11 +249,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class _UnreadReminderNudge extends ConsumerWidget {
+class _UnreadReminderNudge extends ConsumerStatefulWidget {
   const _UnreadReminderNudge();
 
+  static const String _dismissedKey = 'marky_unread_nudge_dismissed';
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_UnreadReminderNudge> createState() =>
+      _UnreadReminderNudgeState();
+}
+
+class _UnreadReminderNudgeState extends ConsumerState<_UnreadReminderNudge> {
+  bool _dismissed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadDismissed());
+  }
+
+  Future<void> _loadDismissed() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final bool dismissed =
+          prefs.getBool(_UnreadReminderNudge._dismissedKey) ?? false;
+      if (mounted && dismissed != _dismissed) {
+        setState(() => _dismissed = dismissed);
+      }
+    } on Object {
+      // Ignore in widget tests without SharedPreferences binding.
+    }
+  }
+
+  Future<void> _dismiss() async {
+    setState(() => _dismissed = true);
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_UnreadReminderNudge._dismissedKey, true);
+    } on Object {
+      // Best-effort persistence.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+
     final UnreadReminderCadence cadence =
         ref.watch(unreadReminderCadenceProvider);
     if (cadence != UnreadReminderCadence.off) return const SizedBox.shrink();
@@ -268,6 +312,7 @@ class _UnreadReminderNudge extends ConsumerWidget {
     if (!hasUnread) return const SizedBox.shrink();
 
     final ThemeData theme = Theme.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         ReadingRoomSpacing.lg,
@@ -280,7 +325,7 @@ class _UnreadReminderNudge extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(
           ReadingRoomSpacing.md,
           ReadingRoomSpacing.sm,
-          ReadingRoomSpacing.sm,
+          ReadingRoomSpacing.xs,
           ReadingRoomSpacing.sm,
         ),
         decoration: BoxDecoration(
@@ -288,57 +333,69 @@ class _UnreadReminderNudge extends ConsumerWidget {
           borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
           border: Border.all(color: theme.colorScheme.outline),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(
-              Icons.auto_awesome_motion_rounded,
-              color: theme.colorScheme.primary,
-              size: 20,
-            ),
-            const SizedBox(width: ReadingRoomSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    'Unread reminders',
+            Row(
+              children: <Widget>[
+                Icon(
+                  Icons.auto_awesome_motion_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 18,
+                ),
+                const SizedBox(width: ReadingRoomSpacing.sm),
+                Expanded(
+                  child: Text(
+                    l10n?.homeUnreadNudgeTitle ?? 'Unread reminders',
                     style: theme.textTheme.titleSmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
+                ),
+                IconButton(
+                  onPressed: _dismiss,
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  tooltip: l10n?.actionClose ?? 'Close',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: ReadingRoomSpacing.sm),
+              child: Text(
+                l10n?.homeUnreadNudgeSubtitle ??
                     'Bring saved links back automatically.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: ReadingRoomSpacing.sm),
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            const SizedBox(height: ReadingRoomSpacing.sm),
+            Wrap(
+              spacing: ReadingRoomSpacing.sm,
+              runSpacing: ReadingRoomSpacing.xs,
               children: <Widget>[
                 FilledButton.tonalIcon(
                   onPressed: () => _enable(
                     context,
-                    ref,
                     UnreadReminderCadence.dailyEvening,
                   ),
-                  icon: const Icon(Icons.nightlight_round, size: 16),
-                  label: const Text('Evening'),
+                  icon: const Icon(Icons.nightlight_round, size: 15),
+                  label: Text(l10n?.homeUnreadNudgeEvening ?? 'Evening'),
                 ),
-                IconButton(
+                OutlinedButton.icon(
                   onPressed: () => _enable(
                     context,
-                    ref,
                     UnreadReminderCadence.weekly,
                   ),
-                  icon: const Icon(Icons.calendar_view_week_rounded),
-                  tooltip: 'Weekly',
+                  icon: const Icon(Icons.calendar_view_week_rounded, size: 15),
+                  label: Text(l10n?.homeUnreadNudgeWeekly ?? 'Weekly'),
                 ),
               ],
             ),
@@ -350,10 +407,10 @@ class _UnreadReminderNudge extends ConsumerWidget {
 
   Future<void> _enable(
     BuildContext context,
-    WidgetRef ref,
     UnreadReminderCadence cadence,
   ) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     final AppSettings settings = ref.read(appSettingsProvider);
     try {
       await ref.read(unreadReminderSchedulerProvider).schedule(
@@ -368,31 +425,47 @@ class _UnreadReminderNudge extends ConsumerWidget {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text(_message(cadence))),
+          SnackBar(content: Text(_message(cadence, l10n))),
         );
     } on ReminderNotificationPermissionDeniedException {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Notification permission is required')),
+          SnackBar(
+            content: Text(
+              l10n?.reminderPermissionRequired ??
+                  'Notification permission is required',
+            ),
+          ),
         );
     } on ReminderExactAlarmUnavailableException {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Exact alarms are not available')),
+          SnackBar(
+            content: Text(
+              l10n?.reminderExactAlarmUnavailable ??
+                  'Exact alarms are not available',
+            ),
+          ),
         );
     }
   }
 
-  static String _message(UnreadReminderCadence cadence) {
+  static String _message(
+    UnreadReminderCadence cadence,
+    AppLocalizations? l10n,
+  ) {
     switch (cadence) {
       case UnreadReminderCadence.off:
-        return 'Unread reminders turned off';
+        return l10n?.settingsUnreadReminderOffMsg ??
+            'Unread reminders turned off';
       case UnreadReminderCadence.dailyEvening:
-        return 'Unread reminders set for every evening';
+        return l10n?.settingsUnreadReminderDailySet('20:00') ??
+            'Unread reminders set for every evening';
       case UnreadReminderCadence.weekly:
-        return 'Unread reminders set for weekly reading';
+        return l10n?.settingsUnreadReminderWeeklySet('Sunday', '20:00') ??
+            'Unread reminders set for weekly reading';
     }
   }
 }
@@ -657,6 +730,7 @@ class _SwipeableCard extends ConsumerWidget {
         unawaited(HapticFeedback.lightImpact());
         final bool newRead = !bookmark.isRead;
         await repo.save(bookmark.copyWith(isRead: newRead));
+        _refreshWidgetBestEffort(ref);
         if (context.mounted) {
           final ScaffoldMessengerState messenger =
               ScaffoldMessenger.of(context);
@@ -669,7 +743,13 @@ class _SwipeableCard extends ConsumerWidget {
               content: Text(message),
               action: SnackBarAction(
                 label: l10n?.actionUndo ?? 'Undo',
-                onPressed: () => repo.save(bookmark.copyWith(isRead: !newRead)),
+                onPressed: () {
+                  unawaited(
+                    repo
+                        .save(bookmark.copyWith(isRead: !newRead))
+                        .then((_) => _refreshWidgetBestEffort(ref)),
+                  );
+                },
               ),
             ),
           );
@@ -680,6 +760,7 @@ class _SwipeableCard extends ConsumerWidget {
         unawaited(HapticFeedback.mediumImpact());
         if (bookmark.isArchived) {
           await repo.save(bookmark.copyWith(isArchived: false));
+          _refreshWidgetBestEffort(ref);
           if (context.mounted) {
             final ScaffoldMessengerState messenger =
                 ScaffoldMessenger.of(context);
@@ -691,8 +772,13 @@ class _SwipeableCard extends ConsumerWidget {
                 ),
                 action: SnackBarAction(
                   label: l10n?.actionUndo ?? 'Undo',
-                  onPressed: () =>
-                      repo.save(bookmark.copyWith(isArchived: true)),
+                  onPressed: () {
+                    unawaited(
+                      repo
+                          .save(bookmark.copyWith(isArchived: true))
+                          .then((_) => _refreshWidgetBestEffort(ref)),
+                    );
+                  },
                 ),
               ),
             );
@@ -700,6 +786,7 @@ class _SwipeableCard extends ConsumerWidget {
           return true;
         } else {
           await repo.save(bookmark.copyWith(isArchived: true));
+          _refreshWidgetBestEffort(ref);
           if (context.mounted) {
             final ScaffoldMessengerState messenger =
                 ScaffoldMessenger.of(context);
@@ -711,8 +798,13 @@ class _SwipeableCard extends ConsumerWidget {
                 ),
                 action: SnackBarAction(
                   label: l10n?.actionUndo ?? 'Undo',
-                  onPressed: () =>
-                      repo.save(bookmark.copyWith(isArchived: false)),
+                  onPressed: () {
+                    unawaited(
+                      repo
+                          .save(bookmark.copyWith(isArchived: false))
+                          .then((_) => _refreshWidgetBestEffort(ref)),
+                    );
+                  },
                 ),
               ),
             );
@@ -748,6 +840,7 @@ class _SwipeableCard extends ConsumerWidget {
         unawaited(HapticFeedback.heavyImpact());
         ref.read(scrapingOrchestratorProvider).cancel(bookmark.id!);
         await repo.delete(bookmark.id!);
+        _refreshWidgetBestEffort(ref);
         if (context.mounted) {
           final ScaffoldMessengerState messenger =
               ScaffoldMessenger.of(context);
@@ -759,7 +852,13 @@ class _SwipeableCard extends ConsumerWidget {
               ),
               action: SnackBarAction(
                 label: l10n?.actionUndo ?? 'Undo',
-                onPressed: () => repo.save(bookmark),
+                onPressed: () {
+                  unawaited(
+                    repo
+                        .save(bookmark)
+                        .then((_) => _refreshWidgetBestEffort(ref)),
+                  );
+                },
               ),
             ),
           );
@@ -798,6 +897,20 @@ class _SwipeableCard extends ConsumerWidget {
       case SwipeAction.none:
         return false;
     }
+  }
+
+  static void _refreshWidgetBestEffort(WidgetRef ref) {
+    unawaited(
+      Future<void>(() async {
+        try {
+          final WidgetFeedSnapshotService service =
+              await ref.read(widgetFeedSnapshotServiceProvider.future);
+          await service.refresh();
+        } on Object {
+          // Best-effort Android home widget refresh.
+        }
+      }),
+    );
   }
 
   Widget _buildBackground({

@@ -177,7 +177,7 @@ void main() {
           find.byIcon(Icons.add_rounded),
         );
         expect(quickAddIcon.size, 28);
-        expect(quickAddIcon.color, Colors.white);
+        expect(quickAddIcon.color, ReadingRoomColors.lightInk);
 
         await tester.tap(find.text('Search'));
         await tester.pumpAndSettle();

@@ -34,7 +34,7 @@ class DashboardAnalyticsService {
 
     return DashboardStats(
       totalBookmarks: combined.length,
-      unreadCount: combined.where((Bookmark b) => !b.isRead).length,
+      unreadCount: active.where((Bookmark b) => !b.isRead).length,
       favoritesCount: combined.where((Bookmark b) => b.isFavorite).length,
       archivedCount: archived.length,
       addedThisWeek: _countAddedThisWeek(combined, now),
@@ -86,6 +86,7 @@ class DashboardAnalyticsService {
         .map((MapEntry<int, int> e) => TagCount(
               namesById[e.key] ?? '#${e.key}',
               e.value,
+              tagId: e.key,
             ))
         .toList()
       ..sort((TagCount a, TagCount b) => _compareCountLabel(
@@ -149,7 +150,13 @@ class DashboardAnalyticsService {
   }
 
   static String _hostLabel(String? host) {
-    final String? trimmed = host?.trim();
-    return trimmed == null || trimmed.isEmpty ? 'unknown' : trimmed;
+    final String? trimmed = host?.trim().toLowerCase();
+    if (trimmed == null || trimmed.isEmpty) return 'unknown';
+    if (trimmed == 'twitter.com' ||
+        trimmed == 'www.twitter.com' ||
+        trimmed == 'mobile.twitter.com') {
+      return 'x.com';
+    }
+    return trimmed;
   }
 }

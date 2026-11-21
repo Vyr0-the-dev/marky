@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:marky/app/marky_app.dart';
@@ -17,12 +16,6 @@ Future<void> shareOverlayMain() => runShareOverlayApp();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  unawaited(
-    SystemChrome.setPreferredOrientations(<DeviceOrientation>[
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]).catchError((Object _) {}),
-  );
 
   final (
     SharedPreferencesAppSettingsRepository settingsRepository,

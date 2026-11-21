@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
+import 'package:marky/core/database/enums/bookmark_content_type.dart';
 import 'package:marky/core/database/enums/bookmark_scraping_status.dart';
+import 'package:marky/core/database/enums/bookmark_source_type.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/l10n/app_localizations.dart';
 
@@ -147,12 +151,12 @@ class BookmarkInfoSheet extends StatelessWidget {
                     _buildInfoRow(
                       context,
                       label: l10n?.detailMetaType ?? 'İçerik Türü',
-                      value: _formatContentType(bookmark.contentType.name),
+                      value: _formatContentType(context, bookmark.contentType),
                     ),
                     _buildInfoRow(
                       context,
-                      label: l10n?.detailMetaSource ?? 'Kaynak',
-                      value: _formatSourceType(bookmark.sourceType.name),
+                      label: l10n?.detailMetaSource ?? 'Source',
+                      value: _formatSourceType(context, bookmark.sourceType),
                     ),
                     if (bookmark.publishDate != null)
                       _buildInfoRow(
@@ -229,26 +233,28 @@ class BookmarkInfoSheet extends StatelessWidget {
 
   Widget _buildStatusChip(BuildContext context, BookmarkScrapingStatus status) {
     final ThemeData theme = Theme.of(context);
+    final bool isTr =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'tr';
     final (Color color, IconData icon, String label) = switch (status) {
       BookmarkScrapingStatus.done => (
           Colors.greenAccent.shade700,
           Icons.check_circle_outline,
-          'Senkronize Edildi',
+          isTr ? 'Senkronize' : 'Synced',
         ),
       BookmarkScrapingStatus.failed => (
           theme.colorScheme.error,
           Icons.error_outline,
-          'Başarısız',
+          isTr ? 'Başarısız' : 'Failed',
         ),
       BookmarkScrapingStatus.processing => (
           Colors.orangeAccent,
           Icons.sync,
-          'İşleniyor',
+          isTr ? 'İşleniyor' : 'Processing',
         ),
       BookmarkScrapingStatus.pending => (
           Colors.orangeAccent,
           Icons.hourglass_empty_rounded,
-          'Bekliyor',
+          isTr ? 'Bekliyor' : 'Pending',
         ),
     };
 
@@ -359,15 +365,18 @@ class BookmarkInfoSheet extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.copy_rounded, size: 16),
-            tooltip: 'URL Kopyala',
+            tooltip: AppLocalizations.of(context)?.actionCopy ?? 'Copy',
             onPressed: () {
-              Clipboard.setData(ClipboardData(text: url));
+              unawaited(Clipboard.setData(ClipboardData(text: url)));
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
-                  const SnackBar(
-                    content: Text('URL panoya kopyalandı'),
-                    duration: Duration(seconds: 2),
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context)?.detailUrlCopied ??
+                          'URL copied to clipboard',
+                    ),
+                    duration: const Duration(seconds: 2),
                   ),
                 );
             },
@@ -378,26 +387,38 @@ class BookmarkInfoSheet extends StatelessWidget {
     );
   }
 
-  static String _formatContentType(String name) {
-    return switch (name.toLowerCase()) {
-      'article' => 'Makale',
-      'video' => 'Video',
-      'tweet' => 'Gönderi',
-      'audio' => 'Ses',
-      'document' => 'Belge',
-      'image' => 'Görsel',
-      'repository' => 'Depo (Repo)',
-      _ => 'Bilinmiyor',
+  static String _formatContentType(
+    BuildContext context,
+    BookmarkContentType type,
+  ) {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final bool isTr =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'tr';
+    return switch (type) {
+      BookmarkContentType.article => isTr ? 'Makale' : 'Article',
+      BookmarkContentType.video => l10n?.badgeVideo ?? 'Video',
+      BookmarkContentType.code => l10n?.badgeCode ?? 'Code',
+      BookmarkContentType.discussion => l10n?.badgeForum ?? 'Discussion',
+      BookmarkContentType.document => l10n?.badgeDoc ?? 'Document',
+      BookmarkContentType.audio => l10n?.badgeAudio ?? 'Audio',
+      BookmarkContentType.product => l10n?.badgeProduct ?? 'Product',
+      BookmarkContentType.image => l10n?.badgeImage ?? 'Image',
+      BookmarkContentType.unknown => isTr ? 'Bilinmiyor' : 'Unknown',
     };
   }
 
-  static String _formatSourceType(String name) {
-    return switch (name.toLowerCase()) {
-      'manual' => 'Manuel',
-      'sharetarget' => 'Paylaşım Menüsü',
-      'browserextension' => 'Tarayıcı Eklentisi',
-      'import' => 'İçe Aktarma',
-      _ => name,
+  static String _formatSourceType(
+    BuildContext context,
+    BookmarkSourceType source,
+  ) {
+    final bool isTr =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'tr';
+    return switch (source) {
+      BookmarkSourceType.manual => isTr ? 'Manuel' : 'Manual',
+      BookmarkSourceType.share => isTr ? 'Paylaşım' : 'Share',
+      BookmarkSourceType.clipboard => isTr ? 'Pano' : 'Clipboard',
+      BookmarkSourceType.import => isTr ? 'İçe Aktarma' : 'Import',
+      BookmarkSourceType.automation => isTr ? 'Otomasyon' : 'Automation',
     };
   }
 

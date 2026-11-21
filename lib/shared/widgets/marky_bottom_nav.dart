@@ -141,31 +141,27 @@ class _QuickAddButton extends StatelessWidget {
             children: <Widget>[
               Transform.translate(
                 offset: const Offset(0, -12),
-                child: AnimatedSwitcher(
-                  duration:
-                      reduceMotion ? Duration.zero : ReadingRoomMotion.quick,
-                  child: DecoratedBox(
-                    key: const ValueKey<String>('quick_add_button'),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color:
-                              theme.colorScheme.primary.withValues(alpha: 0.28),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: const SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Icon(
-                        Icons.add_rounded,
-                        size: 28,
-                        color: Colors.white,
+                child: DecoratedBox(
+                  key: const ValueKey<String>('quick_add_button'),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.28),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
                       ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(
+                      Icons.add_rounded,
+                      size: 28,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                 ),

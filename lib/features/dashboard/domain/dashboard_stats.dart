@@ -42,9 +42,10 @@ class HostCount {
 
 @immutable
 class TagCount {
-  const TagCount(this.tagName, this.count);
+  const TagCount(this.tagName, this.count, {this.tagId});
   final String tagName;
   final int count;
+  final int? tagId;
 }
 
 @immutable

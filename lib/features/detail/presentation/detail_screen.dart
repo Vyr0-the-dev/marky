@@ -17,11 +17,12 @@ import 'package:marky/features/collections/data/bookmark_collection_providers.da
 import 'package:marky/features/collections/domain/bookmark_collection.dart';
 import 'package:marky/features/detail/presentation/detail_action_controller.dart';
 import 'package:marky/features/detail/presentation/widgets/bookmark_info_sheet.dart';
+import 'package:marky/features/detail/presentation/widgets/detail_bottom_bar.dart';
+import 'package:marky/features/detail/presentation/widgets/detail_more_actions_sheet.dart';
 import 'package:marky/features/detail/presentation/widgets/edit_bookmark_sheet.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/notes/data/note_providers.dart';
 import 'package:marky/features/notes/domain/note.dart';
-import 'package:marky/features/reader/presentation/reader_screen.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
 import 'package:marky/features/reminders/domain/reminder.dart';
 import 'package:marky/features/reminders/presentation/create_reminder_sheet.dart';
@@ -39,23 +40,36 @@ import 'package:url_launcher/url_launcher.dart';
 /// Receives the bookmark [id] from the route parameter, subscribes
 /// to [bookmarkByIdProvider] so background scraping and edits push
 /// live updates, and auto-pops when the bookmark is deleted.
-class DetailScreen extends ConsumerWidget {
+class DetailScreen extends ConsumerStatefulWidget {
   const DetailScreen({required this.id, super.key});
 
   final int id;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends ConsumerState<DetailScreen> {
+  bool _popScheduled = false;
+
+  @override
+  Widget build(BuildContext context) {
     final AppLocalizations? l10n = AppLocalizations.of(context);
-    final AsyncValue<Bookmark?> async = ref.watch(bookmarkByIdProvider(id));
+    final AsyncValue<Bookmark?> async =
+        ref.watch(bookmarkByIdProvider(widget.id));
 
     return async.when(
       data: (Bookmark? bookmark) {
         if (bookmark == null) {
           // Bookmark was deleted while this screen was open.
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) Navigator.of(context).maybePop();
-          });
+          if (!_popScheduled) {
+            _popScheduled = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                unawaited(Navigator.of(context).maybePop());
+              }
+            });
+          }
           return Scaffold(
             body: Center(
               child: Text(l10n?.detailBookmarkDeleted ?? 'Bookmark deleted'),
@@ -71,7 +85,7 @@ class DetailScreen extends ConsumerWidget {
           title: l10n?.detailCouldNotLoadBookmark ?? 'Could not load bookmark',
           body: l10n?.errorGenericTitle ?? 'Something went wrong',
           detail: debugOnlyErrorDetails(error),
-          onRetry: () => ref.invalidate(bookmarkByIdProvider(id)),
+          onRetry: () => ref.invalidate(bookmarkByIdProvider(widget.id)),
         ),
       ),
     );
@@ -80,13 +94,35 @@ class DetailScreen extends ConsumerWidget {
 
 // ─── Body ───────────────────────────────────────────────────────
 
-class _DetailBody extends ConsumerWidget {
+class _DetailBody extends ConsumerStatefulWidget {
   const _DetailBody({required this.bookmark});
 
   final Bookmark bookmark;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DetailBody> createState() => _DetailBodyState();
+}
+
+class _DetailBodyState extends ConsumerState<_DetailBody> {
+  bool _isHeroCollapsed = false;
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+    final Bookmark bookmark = widget.bookmark;
+    final bool hasImage =
+        (bookmark.heroImageUrl ?? bookmark.faviconUrl ?? '').isNotEmpty;
+    final double expandedHeight = hasImage ? 220 : 140;
+    final bool collapsed =
+        notification.metrics.pixels >= (expandedHeight - kToolbarHeight - 16);
+    if (collapsed != _isHeroCollapsed) {
+      setState(() => _isHeroCollapsed = collapsed);
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Bookmark bookmark = widget.bookmark;
     ref.listen<DetailActionState>(
       detailActionControllerProvider,
       (DetailActionState? previous, DetailActionState next) {
@@ -116,11 +152,16 @@ class _DetailBody extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      bottomNavigationBar: _DetailBottomBar(bookmark: bookmark),
-      body: CustomScrollView(
-        slivers: <Widget>[
-          // ── Hero image app bar ──────────────────────────────
-          _HeroAppBar(bookmark: bookmark),
+      bottomNavigationBar: DetailBottomBar(bookmark: bookmark),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: _handleScrollNotification,
+        child: CustomScrollView(
+          slivers: <Widget>[
+            // ── Hero image app bar ──────────────────────────────
+            _HeroAppBar(
+              bookmark: bookmark,
+              isCollapsed: _isHeroCollapsed,
+            ),
 
           SliverToBoxAdapter(
             child: Padding(
@@ -175,6 +216,7 @@ class _DetailBody extends ConsumerWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -183,18 +225,24 @@ class _DetailBody extends ConsumerWidget {
 // ─── Hero app bar ───────────────────────────────────────────────
 
 class _HeroAppBar extends ConsumerWidget {
-  const _HeroAppBar({required this.bookmark});
+  const _HeroAppBar({
+    required this.bookmark,
+    required this.isCollapsed,
+  });
 
   final Bookmark bookmark;
+  final bool isCollapsed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final String imageUrl = bookmark.heroImageUrl ?? bookmark.faviconUrl ?? '';
     final bool hasImage = imageUrl.isNotEmpty;
+    final bool isVideo = _isVideo(bookmark);
+    final bool useOverlayStyle = (hasImage || isVideo) && !isCollapsed;
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
-    final ButtonStyle buttonStyle = _iconButtonStyle(theme, hasImage);
-    final List<Shadow>? iconShadows = hasImage
+    final ButtonStyle buttonStyle = _iconButtonStyle(theme, useOverlayStyle);
+    final List<Shadow>? iconShadows = useOverlayStyle
         ? const <Shadow>[
             Shadow(color: Colors.black87, blurRadius: 8),
             Shadow(color: Colors.black54, blurRadius: 4),
@@ -206,7 +254,7 @@ class _HeroAppBar extends ConsumerWidget {
         style: buttonStyle,
         icon: Icon(
           Icons.arrow_back_rounded,
-          color: hasImage ? Colors.white : theme.colorScheme.onSurface,
+          color: useOverlayStyle ? Colors.white : theme.colorScheme.onSurface,
           shadows: iconShadows,
         ),
         tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -218,11 +266,9 @@ class _HeroAppBar extends ConsumerWidget {
       ref,
       l10n,
       buttonStyle,
-      hasImage,
+      useOverlayStyle,
       iconShadows,
     );
-
-    final bool isVideo = _isVideo(bookmark);
 
     if (!hasImage && !isVideo) {
       return SliverAppBar(
@@ -277,9 +323,9 @@ class _HeroAppBar extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Videoyu Uygulamada Oynat',
-                      style: TextStyle(
+                    Text(
+                      l10n?.detailPlayInApp ?? 'Play Video in App',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -395,18 +441,18 @@ class _HeroAppBar extends ConsumerWidget {
                       color: Colors.white.withValues(alpha: 0.25),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(
+                      const Icon(
                         Icons.play_circle_fill_rounded,
                         color: Colors.white,
                         size: 14,
                       ),
-                      SizedBox(width: 5),
+                      const SizedBox(width: 5),
                       Text(
-                        'VİDEO',
-                        style: TextStyle(
+                        (l10n?.badgeVideo ?? 'Video').toUpperCase(),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -560,28 +606,6 @@ class _HeroAppBar extends ConsumerWidget {
       IconButton(
         style: buttonStyle,
         icon: Icon(
-          Icons.chrome_reader_mode_outlined,
-          color: defaultColor,
-          shadows: iconShadows,
-        ),
-        tooltip: 'Okuma Modu',
-        onPressed: () {
-          Navigator.of(context).push(ReaderScreen.route(bookmark));
-        },
-      ),
-      IconButton(
-        style: buttonStyle,
-        icon: Icon(
-          Icons.info_outline_rounded,
-          color: defaultColor,
-          shadows: iconShadows,
-        ),
-        tooltip: l10n?.detailMetadataTitle ?? 'Details & Metadata',
-        onPressed: () => BookmarkInfoSheet.show(context, bookmark),
-      ),
-      IconButton(
-        style: buttonStyle,
-        icon: Icon(
           Icons.share_outlined,
           color: defaultColor,
           shadows: iconShadows,
@@ -615,7 +639,7 @@ class _HeroAppBar extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => _DetailMoreActionsSheet(bookmark: bookmark),
+      builder: (_) => DetailMoreActionsSheet(bookmark: bookmark),
     );
     if (action == null || !context.mounted) return;
     final DetailActionController controller =
@@ -623,6 +647,8 @@ class _HeroAppBar extends ConsumerWidget {
     switch (action) {
       case 'edit':
         await _editTitleAndDescription(context, ref);
+      case 'info':
+        await BookmarkInfoSheet.show(context, bookmark);
       case 'coverOptions':
         await _showCoverImageOptions(context, ref);
       case 'refetch':
@@ -716,6 +742,7 @@ class _HeroAppBar extends ConsumerWidget {
   ) async {
     final String? img = bookmark.heroImageUrl ?? bookmark.faviconUrl;
     final ThemeData theme = Theme.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     final Color dividerColor = theme.colorScheme.outline.withValues(alpha: 0.4);
 
     await showModalBottomSheet<void>(
@@ -757,7 +784,7 @@ class _HeroAppBar extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  'Kapak Görseli',
+                  l10n?.detailCoverUrlTitle ?? 'Cover Image',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -766,7 +793,9 @@ class _HeroAppBar extends ConsumerWidget {
                 if (img != null && img.isNotEmpty) ...<Widget>[
                   ListTile(
                     leading: const Icon(Icons.fullscreen_rounded),
-                    title: const Text('Tam Ekran Görüntüle'),
+                    title: Text(
+                      l10n?.detailCoverViewFull ?? 'View Full Screen',
+                    ),
                     onTap: () {
                       Navigator.of(ctx).pop();
                       _openImagePreview(context, img, bookmark);
@@ -776,7 +805,9 @@ class _HeroAppBar extends ConsumerWidget {
                 ],
                 ListTile(
                   leading: const Icon(Icons.edit_outlined),
-                  title: const Text('Görsel URL Değiştir'),
+                  title: Text(
+                    l10n?.detailCoverChangeUrl ?? 'Change Image URL',
+                  ),
                   onTap: () async {
                     Navigator.of(ctx).pop();
                     await _promptEditCoverImageUrl(context, ref);
@@ -791,7 +822,7 @@ class _HeroAppBar extends ConsumerWidget {
                       color: theme.colorScheme.error,
                     ),
                     title: Text(
-                      'Kapak Görselini Kaldır',
+                      l10n?.detailCoverRemove ?? 'Remove Cover Image',
                       style: TextStyle(color: theme.colorScheme.error),
                     ),
                     onTap: () async {
@@ -801,9 +832,12 @@ class _HeroAppBar extends ConsumerWidget {
                           .updateCoverImage(bookmark);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Kapak görseli kaldırıldı.'),
-                            duration: Duration(seconds: 2),
+                          SnackBar(
+                            content: Text(
+                              l10n?.detailCoverRemoved ??
+                                  'Cover image removed.',
+                            ),
+                            duration: const Duration(seconds: 2),
                           ),
                         );
                       }
@@ -822,34 +856,36 @@ class _HeroAppBar extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     final TextEditingController urlCtrl = TextEditingController(
       text: bookmark.heroImageUrl ?? '',
     );
     final String? newUrl = await showDialog<String>(
       context: context,
       builder: (BuildContext dialogCtx) => AlertDialog(
-        title: const Text('Kapak Görseli URL'),
+        title: Text(l10n?.detailCoverUrlTitle ?? 'Cover Image URL'),
         content: TextField(
           controller: urlCtrl,
           keyboardType: TextInputType.url,
           autofocus: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'https://example.com/image.jpg',
-            labelText: 'Görsel Bağlantısı',
+            labelText: l10n?.detailCoverUrlTitle ?? 'Image URL',
           ),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('İptal'),
+            child: Text(l10n?.actionCancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogCtx).pop(urlCtrl.text.trim()),
-            child: const Text('Kaydet'),
+            child: Text(l10n?.actionSave ?? 'Save'),
           ),
         ],
       ),
     );
+    urlCtrl.dispose();
     if (newUrl == null) return;
     await ref.read(detailActionControllerProvider.notifier).updateCoverImage(
         bookmark,
@@ -901,284 +937,6 @@ class _HeroAppBar extends ConsumerWidget {
         .read(detailActionControllerProvider.notifier)
         .deleteBookmark(bookmark.id!);
     // Stream will emit null → screen auto-pops.
-  }
-}
-
-class _DetailMoreActionsSheet extends StatelessWidget {
-  const _DetailMoreActionsSheet({required this.bookmark});
-
-  final Bookmark bookmark;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final AppLocalizations? l10n = AppLocalizations.of(context);
-    final Color dividerColor = theme.colorScheme.outline.withValues(alpha: 0.4);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(ReadingRoomRadii.sheet),
-        ),
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outline.withValues(alpha: 0.6),
-          ),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            ReadingRoomSpacing.lg,
-            ReadingRoomSpacing.md,
-            ReadingRoomSpacing.lg,
-            ReadingRoomSpacing.xl,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.3,
-                    ),
-                    borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
-                  ),
-                ),
-              ),
-              const SizedBox(height: ReadingRoomSpacing.lg),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.35,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      _ActionSheetTile(
-                        icon: Icons.edit_outlined,
-                        label: l10n?.actionEdit ?? 'Edit',
-                        onTap: () => _select(context, 'edit'),
-                      ),
-                      if ((bookmark.heroImageUrl?.isNotEmpty ?? false) ||
-                          (bookmark.faviconUrl?.isNotEmpty ??
-                              false)) ...<Widget>[
-                        Divider(height: 1, thickness: 1, color: dividerColor),
-                        _ActionSheetTile(
-                          icon: Icons.image_outlined,
-                          label: 'Kapak Görseli',
-                          onTap: () => _select(context, 'coverOptions'),
-                        ),
-                      ],
-                      Divider(height: 1, thickness: 1, color: dividerColor),
-                      _ActionSheetTile(
-                        icon: Icons.refresh_rounded,
-                        label: l10n?.detailActionRefetch ?? 'Refetch',
-                        onTap: () => _select(context, 'refetch'),
-                      ),
-                      Divider(height: 1, thickness: 1, color: dividerColor),
-                      _ActionSheetTile(
-                        icon: bookmark.isRead
-                            ? Icons.visibility_off_outlined
-                            : Icons.check_circle_outline_rounded,
-                        label: bookmark.isRead
-                            ? (l10n?.detailActionUnread ?? 'Unread')
-                            : (l10n?.detailActionRead ?? 'Read'),
-                        onTap: () => _select(context, 'toggleRead'),
-                      ),
-                      Divider(height: 1, thickness: 1, color: dividerColor),
-                      _ActionSheetTile(
-                        icon: bookmark.isArchived
-                            ? Icons.unarchive_outlined
-                            : Icons.archive_outlined,
-                        label: bookmark.isArchived
-                            ? (l10n?.detailActionUnarchive ?? 'Unarchive')
-                            : (l10n?.actionArchive ?? 'Archive'),
-                        onTap: () => _select(context, 'toggleArchive'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: ReadingRoomSpacing.md),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.error.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.error.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                  clipBehavior: Clip.antiAlias,
-                  child: _ActionSheetTile(
-                    icon: Icons.delete_outline_rounded,
-                    label: l10n?.actionDelete ?? 'Delete',
-                    accentColor: theme.colorScheme.error,
-                    onTap: () => _select(context, 'delete'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _select(BuildContext context, String value) {
-    unawaited(HapticFeedback.selectionClick());
-    Navigator.of(context).pop(value);
-  }
-}
-
-class _ActionSheetTile extends StatelessWidget {
-  const _ActionSheetTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.accentColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? accentColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color badgeColor = accentColor ?? theme.colorScheme.primary;
-    final Color? textColor = accentColor;
-
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: ReadingRoomSpacing.md,
-          vertical: ReadingRoomSpacing.md,
-        ),
-        child: Row(
-          children: <Widget>[
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: badgeColor),
-            ),
-            const SizedBox(width: ReadingRoomSpacing.md),
-            Expanded(
-              child: Text(
-                label,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 18,
-              color: (accentColor ?? theme.colorScheme.onSurfaceVariant)
-                  .withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Sticky bottom action bar ───────────────────────────────────
-
-class _DetailBottomBar extends StatelessWidget {
-  const _DetailBottomBar({required this.bookmark});
-
-  final Bookmark bookmark;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final AppLocalizations? l10n = AppLocalizations.of(context);
-    final Color surfaceColor =
-        theme.scaffoldBackgroundColor == ReadingRoomColors.oledSurface
-            ? ReadingRoomColors.oledSurface
-            : theme.colorScheme.surface;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        border: Border(
-          top: BorderSide(color: theme.colorScheme.outline),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: ReadingRoomSpacing.lg,
-            vertical: ReadingRoomSpacing.md,
-          ),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => _openInBrowser(context),
-                  icon: const Icon(Icons.open_in_browser, size: 18),
-                  label: Text(l10n?.actionOpen ?? 'Open'),
-                ),
-              ),
-              const SizedBox(width: ReadingRoomSpacing.sm),
-              OutlinedButton.icon(
-                onPressed: () => _copyUrl(context),
-                icon: const Icon(Icons.copy_outlined, size: 18),
-                label: Text(l10n?.actionCopy ?? 'Copy'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openInBrowser(BuildContext context) async {
-    final Uri? uri =
-        Uri.tryParse(bookmark.canonicalUrl ?? bookmark.originalUrl);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  void _copyUrl(BuildContext context) {
-    final String url = bookmark.canonicalUrl ?? bookmark.originalUrl;
-    Clipboard.setData(ClipboardData(text: url));
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)?.detailLinkCopied ?? 'Link copied',
-          ),
-        ),
-      );
   }
 }
 
@@ -1952,7 +1710,7 @@ class _NoteCard extends StatelessWidget {
           Row(
             children: <Widget>[
               Text(
-                _relativeTime(note.createdAt),
+                _relativeTime(note.createdAt, l10n),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -1993,18 +1751,28 @@ class _NoteCard extends StatelessWidget {
 
   /// Lightweight relative timestamp — same format the rest of the
   /// detail screen uses, kept inline to avoid pulling a date package.
-  static String _relativeTime(DateTime ts) {
+  static String _relativeTime(DateTime ts, AppLocalizations? l10n) {
     final Duration delta = DateTime.now().difference(ts);
-    if (delta.inMinutes < 1) return 'az önce';
-    if (delta.inMinutes < 60) return '${delta.inMinutes} dk önce';
-    if (delta.inHours < 24) return '${delta.inHours} sa önce';
-    if (delta.inDays < 7) return '${delta.inDays} gün önce';
+    if (delta.inMinutes < 1) return l10n?.timeJustNow ?? 'now';
+    if (delta.inMinutes < 60) {
+      return l10n?.timeMinutesAgo(delta.inMinutes) ?? '${delta.inMinutes}m';
+    }
+    if (delta.inHours < 24) {
+      return l10n?.timeHoursAgo(delta.inHours) ?? '${delta.inHours}h';
+    }
+    if (delta.inDays < 7) {
+      return l10n?.timeDaysAgo(delta.inDays) ?? '${delta.inDays}d';
+    }
     final int weeks = delta.inDays ~/ 7;
-    if (weeks < 5) return '$weeks hf önce';
+    if (weeks < 5) {
+      return l10n?.timeWeeksAgo(weeks) ?? '${weeks}w';
+    }
     final int months = delta.inDays ~/ 30;
-    if (months < 12) return '$months ay önce';
+    if (months < 12) {
+      return l10n?.timeMonthsAgo(months) ?? '${months}mo';
+    }
     final int years = delta.inDays ~/ 365;
-    return '$years yıl önce';
+    return l10n?.timeYearsAgo(years) ?? '${years}y';
   }
 }
 

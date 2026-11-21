@@ -31,13 +31,15 @@ abstract final class ReadingRoomTheme {
       primary: p.accent,
       onPrimary: variant == ReadingRoomVariant.light
           ? ReadingRoomColors.lightSurfaceRaised
-          : ReadingRoomColors.darkInk,
+          : ReadingRoomColors.lightInk,
       secondary: p.accent,
-      onSecondary: p.ink,
+      onSecondary: variant == ReadingRoomVariant.light
+          ? ReadingRoomColors.lightSurfaceRaised
+          : ReadingRoomColors.lightInk,
       error: p.danger,
       onError: variant == ReadingRoomVariant.light
           ? ReadingRoomColors.lightSurfaceRaised
-          : ReadingRoomColors.darkInk,
+          : ReadingRoomColors.lightInk,
       surface: p.surface,
       onSurface: p.ink,
       surfaceContainer: p.surface,
@@ -72,8 +74,9 @@ abstract final class ReadingRoomTheme {
       canvasColor: p.surface,
       dividerColor: p.outline,
       textTheme: baseText,
-      splashFactory: NoSplash.splashFactory,
-      highlightColor: Colors.transparent,
+      splashFactory: InkSparkle.splashFactory,
+      splashColor: p.ink.withValues(alpha: 0.06),
+      highlightColor: p.ink.withValues(alpha: 0.04),
       // ─── AppBar: flat, solid, large-title by default ───
       appBarTheme: AppBarTheme(
         backgroundColor: p.surface,

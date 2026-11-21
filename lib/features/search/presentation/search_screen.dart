@@ -51,7 +51,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       appBar: AppBar(
         title: TextField(
           controller: _controller,
-          autofocus: true,
           decoration: InputDecoration(
             labelText: l10n?.searchHint ?? 'Search bookmarks...',
             floatingLabelBehavior: FloatingLabelBehavior.never,
@@ -138,6 +137,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         savedSearches: savedSearches,
         onQuerySelected: _applyQuery,
         onClearRecent: _clearRecentSearches,
+        onRemoveRecent: _removeRecentSearch,
       );
     }
 
@@ -155,6 +155,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
 
     return ListView.separated(
+      padding: const EdgeInsets.only(bottom: 88),
       itemCount: state.results.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (BuildContext context, int index) {
@@ -211,8 +212,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(content: Text('Recent searches cleared')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.searchRecentCleared ??
+                'Recent searches cleared',
+          ),
+        ),
       );
+  }
+
+  Future<void> _removeRecentSearch(int id) async {
+    await ref.read(searchQueryRepositoryProvider).removeRecent(id);
   }
 
   static SearchQuery? _savedQueryFor(List<SearchQuery> items, String query) {
@@ -281,19 +291,26 @@ class _SearchLanding extends StatelessWidget {
     required this.savedSearches,
     required this.onQuerySelected,
     required this.onClearRecent,
+    required this.onRemoveRecent,
   });
 
   final AsyncValue<List<SearchQuery>> recentSearches;
   final AsyncValue<List<SearchQuery>> savedSearches;
   final ValueChanged<String> onQuerySelected;
   final ValueChanged<BuildContext> onClearRecent;
+  final ValueChanged<int> onRemoveRecent;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final AppLocalizations? l10n = AppLocalizations.of(context);
     return ListView(
-      padding: const EdgeInsets.all(ReadingRoomSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        ReadingRoomSpacing.lg,
+        ReadingRoomSpacing.lg,
+        ReadingRoomSpacing.lg,
+        88,
+      ),
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -340,11 +357,12 @@ class _SearchLanding extends StatelessWidget {
           searches: recentSearches,
           icon: Icons.history_rounded,
           onQuerySelected: onQuerySelected,
+          onRemoveItem: onRemoveRecent,
           trailingBuilder: (BuildContext context, List<SearchQuery> items) {
             if (items.isEmpty) return null;
             return TextButton(
               onPressed: () => onClearRecent(context),
-              child: const Text('Clear'),
+              child: Text(l10n?.actionClear ?? 'Clear'),
             );
           },
         ),
@@ -369,6 +387,7 @@ class _SearchQuerySection extends StatelessWidget {
     required this.searches,
     required this.icon,
     required this.onQuerySelected,
+    this.onRemoveItem,
     this.trailingBuilder,
   });
 
@@ -377,12 +396,14 @@ class _SearchQuerySection extends StatelessWidget {
   final AsyncValue<List<SearchQuery>> searches;
   final IconData icon;
   final ValueChanged<String> onQuerySelected;
+  final ValueChanged<int>? onRemoveItem;
   final Widget? Function(BuildContext context, List<SearchQuery> items)?
       trailingBuilder;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     return searches.when(
       data: (List<SearchQuery> items) {
         return Column(
@@ -414,6 +435,14 @@ class _SearchQuerySection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: item.label == null ? null : Text(item.query),
+                  trailing: onRemoveItem != null && item.id != null
+                      ? IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          tooltip: l10n?.actionDelete ?? 'Remove',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => onRemoveItem!(item.id!),
+                        )
+                      : null,
                   onTap: () => onQuerySelected(item.query),
                 ),
           ],
@@ -514,7 +543,7 @@ class _SearchOperatorChipsBar extends StatelessWidget {
                   ? theme.colorScheme.onPrimaryContainer
                   : theme.colorScheme.onSurfaceVariant,
             ),
-            label: Text(chip.label),
+            label: Text(_localizedChipLabel(context, chip)),
             labelStyle: theme.textTheme.labelMedium?.copyWith(
               color: isSelected
                   ? theme.colorScheme.onPrimaryContainer
@@ -539,5 +568,23 @@ class _SearchOperatorChipsBar extends StatelessWidget {
         },
       ),
     );
+  }
+
+  static String _localizedChipLabel(
+    BuildContext context,
+    _OperatorChipData chip,
+  ) {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final bool isTr =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'tr';
+    return switch (chip.operatorToken) {
+      'is:unread' => l10n?.filterUnread ?? chip.label,
+      'is:favorite' => l10n?.filterFavorites ?? chip.label,
+      'type:article' => isTr ? 'Makaleler' : chip.label,
+      'type:video' => isTr ? 'Videolar' : chip.label,
+      'has:notes' => isTr ? 'Notlu' : chip.label,
+      'is:archived' => l10n?.filterArchived ?? chip.label,
+      _ => chip.label,
+    };
   }
 }

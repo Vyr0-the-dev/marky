@@ -68,8 +68,9 @@ class _EditorialGridCardState extends State<EditorialGridCard> {
     final bool reduceMotion = MediaQuery.of(context).disableAnimations;
     final Bookmark bookmark = widget.bookmark;
 
-    final Color surfaceColor =
-        isDark ? EditorialGridCard.darkSurface : ReadingRoomColors.lightSurface;
+    final Color surfaceColor = isDark
+        ? EditorialGridCard.darkSurface
+        : ReadingRoomColors.lightSurfaceRaised;
     final Color defaultBorderColor =
         isDark ? EditorialGridCard.darkBorder : ReadingRoomColors.lightOutline;
     final Color borderColor = widget.selectionMode && widget.isSelected
@@ -77,6 +78,8 @@ class _EditorialGridCardState extends State<EditorialGridCard> {
         : defaultBorderColor;
     final Color titleColor =
         isDark ? const Color(0xFFEDEDEC) : ReadingRoomColors.lightInk;
+    final Color snippetColor =
+        isDark ? EditorialGridCard.snippetColor : ReadingRoomColors.lightMuted;
 
     final String? rawSnippet = (bookmark.snippet?.trim().isNotEmpty ?? false)
         ? bookmark.snippet!.trim()
@@ -170,7 +173,7 @@ class _EditorialGridCardState extends State<EditorialGridCard> {
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
-                                    color: EditorialGridCard.snippetColor,
+                                    color: snippetColor,
                                     height: 1.38,
                                   ),
                                 ),

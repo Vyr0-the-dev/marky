@@ -9,6 +9,7 @@ import 'package:marky/core/utils/color_contrast_utils.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
+import 'package:marky/l10n/app_localizations.dart';
 
 /// A single bookmark row in the feed.
 ///
@@ -43,11 +44,12 @@ class BookmarkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
 
     return Semantics(
       button: onTap != null || onLongPress != null,
       selected: selectionMode && isSelected,
-      label: _semanticsLabel(bookmark),
+      label: _semanticsLabel(bookmark, l10n),
       child: ExcludeSemantics(
         child: InkWell(
           onTap: onTap,
@@ -103,7 +105,7 @@ class BookmarkCard extends StatelessWidget {
 
                       // Domain · time ago
                       Text(
-                        _subtitle(bookmark),
+                        _subtitle(bookmark, l10n),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: ReadingRoomTextStyles.metadata(context),
@@ -130,21 +132,23 @@ class BookmarkCard extends StatelessWidget {
     );
   }
 
-  static String _subtitle(Bookmark b) {
+  static String _subtitle(Bookmark b, AppLocalizations? l10n) {
     final String domain = b.normalizedHost ?? _domainFromUrl(b.originalUrl);
-    final String timeAgo = _relativeTime(b.createdAt);
+    final String timeAgo = _relativeTime(b.createdAt, l10n);
     return '$domain · $timeAgo';
   }
 
-  static String _semanticsLabel(Bookmark b) {
+  static String _semanticsLabel(Bookmark b, AppLocalizations? l10n) {
     final List<String> parts = <String>[
-      'Bookmark',
       b.displayTitle,
-      _subtitle(b),
-      if (b.isRead) 'read' else 'unread',
-      if (b.isFavorite) 'favorite',
-      if (b.isPinned) 'pinned',
-      if (b.isArchived) 'archived',
+      _subtitle(b, l10n),
+      if (b.isRead)
+        l10n?.dashboardRead ?? 'read'
+      else
+        l10n?.filterUnread ?? 'unread',
+      if (b.isFavorite) l10n?.filterFavorites ?? 'favorite',
+      if (b.isPinned) l10n?.detailActionPin ?? 'pinned',
+      if (b.isArchived) l10n?.filterArchived ?? 'archived',
     ];
     return parts.join(', ');
   }
@@ -157,16 +161,29 @@ class BookmarkCard extends StatelessWidget {
     return host;
   }
 
-  static String _relativeTime(DateTime? dt) {
+  static String _relativeTime(DateTime? dt, AppLocalizations? l10n) {
     if (dt == null) return '';
     final Duration diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    if (diff.inDays < 7) return '${diff.inDays}d';
-    if (diff.inDays < 30) return '${diff.inDays ~/ 7}w';
-    if (diff.inDays < 365) return '${diff.inDays ~/ 30}mo';
-    return '${diff.inDays ~/ 365}y';
+    if (diff.inMinutes < 1) return l10n?.timeJustNow ?? 'now';
+    if (diff.inMinutes < 60) {
+      return l10n?.timeMinutesAgo(diff.inMinutes) ?? '${diff.inMinutes}m';
+    }
+    if (diff.inHours < 24) {
+      return l10n?.timeHoursAgo(diff.inHours) ?? '${diff.inHours}h';
+    }
+    if (diff.inDays < 7) {
+      return l10n?.timeDaysAgo(diff.inDays) ?? '${diff.inDays}d';
+    }
+    if (diff.inDays < 30) {
+      final int weeks = diff.inDays ~/ 7;
+      return l10n?.timeWeeksAgo(weeks) ?? '${weeks}w';
+    }
+    if (diff.inDays < 365) {
+      final int months = diff.inDays ~/ 30;
+      return l10n?.timeMonthsAgo(months) ?? '${months}mo';
+    }
+    final int years = diff.inDays ~/ 365;
+    return l10n?.timeYearsAgo(years) ?? '${years}y';
   }
 }
 
@@ -311,37 +328,47 @@ class _StatusRow extends StatelessWidget {
     ThemeData theme,
     Color muted,
   ) {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
     final IconData icon;
     final String label;
 
     switch (bookmark.contentType) {
       case BookmarkContentType.video:
         icon = Icons.play_circle_outline_rounded;
-        label = 'Video';
+        label = l10n?.badgeVideo ?? 'Video';
         break;
       case BookmarkContentType.code:
         icon = Icons.code_rounded;
-        label = 'Code';
+        label = l10n?.badgeCode ?? 'Code';
         break;
       case BookmarkContentType.discussion:
-        icon = Icons.forum_outlined;
-        label = 'Forum';
+        final String host = (bookmark.normalizedHost ?? '').toLowerCase();
+        final bool isMicroblog = host == 'x.com' ||
+            host == 'twitter.com' ||
+            host == 'threads.net' ||
+            host == 'bsky.app';
+        icon = isMicroblog
+            ? Icons.chat_bubble_outline_rounded
+            : Icons.forum_outlined;
+        label = isMicroblog
+            ? (l10n?.badgePost ?? 'Post')
+            : (l10n?.badgeForum ?? 'Forum');
         break;
       case BookmarkContentType.document:
         icon = Icons.description_outlined;
-        label = 'Doc';
+        label = l10n?.badgeDoc ?? 'Doc';
         break;
       case BookmarkContentType.audio:
         icon = Icons.headphones_outlined;
-        label = 'Audio';
+        label = l10n?.badgeAudio ?? 'Audio';
         break;
       case BookmarkContentType.product:
         icon = Icons.shopping_bag_outlined;
-        label = 'Product';
+        label = l10n?.badgeProduct ?? 'Product';
         break;
       case BookmarkContentType.image:
         icon = Icons.image_outlined;
-        label = 'Image';
+        label = l10n?.badgeImage ?? 'Image';
         break;
       case BookmarkContentType.article:
       case BookmarkContentType.unknown:
@@ -384,11 +411,8 @@ class _StatusRow extends StatelessWidget {
     final int? minutes = bookmark.readingTimeMinutes;
     if (minutes == null || minutes <= 0) return null;
 
-    final bool isTurkish = Localizations.localeOf(context)
-        .languageCode
-        .toLowerCase()
-        .startsWith('tr');
-    final String label = isTurkish ? '$minutes dk' : '${minutes}m';
+    final String label =
+        AppLocalizations.of(context)?.readingTimeShort(minutes) ?? '${minutes}m';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),

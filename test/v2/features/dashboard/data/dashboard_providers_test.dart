@@ -81,12 +81,15 @@ void main() {
     expect(stats.archivedCount, 2);
   });
 
-  test('unread counts only items with isRead=false', () async {
+  test('unread counts only active items with isRead=false', () async {
     final ProviderContainer c = _container(
       active: <Bookmark>[
         _bm(),
         _bm(read: true),
         _bm(),
+      ],
+      archived: <Bookmark>[
+        _bm(archived: true),
       ],
     );
     addTearDown(c.dispose);
@@ -163,6 +166,23 @@ void main() {
 
     expect(stats.topHosts.first.host, 'unknown');
     expect(stats.topHosts.first.count, 2);
+  });
+
+  test('twitter.com and x.com hosts are unified under x.com', () async {
+    final ProviderContainer c = _container(
+      active: <Bookmark>[
+        _bm(host: 'twitter.com'),
+        _bm(host: 'x.com'),
+        _bm(host: 'mobile.twitter.com'),
+      ],
+    );
+    addTearDown(c.dispose);
+
+    final DashboardStats stats = await c.read(dashboardStatsProvider.future);
+
+    expect(stats.topHosts.length, 1);
+    expect(stats.topHosts.first.host, 'x.com');
+    expect(stats.topHosts.first.count, 3);
   });
 
   test('topTags ranks by visible bookmark tag references', () async {

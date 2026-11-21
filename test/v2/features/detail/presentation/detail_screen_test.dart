@@ -222,7 +222,7 @@ void main() {
     await tester.pump();
 
     // Verify video badge and play button are rendered
-    expect(find.text('VİDEO'), findsOneWidget);
+    expect(find.text('VIDEO'), findsOneWidget);
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     expect(find.text('Rick Astley - Never Gonna Give You Up'), findsOneWidget);
   });

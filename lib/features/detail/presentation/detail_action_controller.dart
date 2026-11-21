@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marky/app/settings/app_settings.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
@@ -18,6 +20,8 @@ import 'package:marky/features/reminders/domain/unread_reminder_scheduler.dart';
 import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/features/tags/domain/tag.dart';
 import 'package:marky/features/tags/domain/tag_repository.dart';
+import 'package:marky/features/widgets/data/widget_providers.dart';
+import 'package:marky/features/widgets/domain/widget_feed_snapshot_service.dart';
 
 enum DetailActionStatus { idle, loading, success, failure }
 
@@ -75,6 +79,15 @@ final AutoDisposeStateNotifierProvider<DetailActionController,
     readUnreadReminderScheduler: () =>
         ref.read(unreadReminderSchedulerProvider),
     readSettings: () => ref.read(appSettingsProvider),
+    onWidgetRefresh: () async {
+      try {
+        final WidgetFeedSnapshotService service =
+            await ref.read(widgetFeedSnapshotServiceProvider.future);
+        await service.refresh();
+      } on Object {
+        // Best-effort Android home widget refresh.
+      }
+    },
   );
 });
 
@@ -95,6 +108,7 @@ class DetailActionController extends StateNotifier<DetailActionState> {
     UnreadReminderScheduler? unreadReminderScheduler,
     UnreadReminderScheduler Function()? readUnreadReminderScheduler,
     required AppSettings Function() readSettings,
+    Future<void> Function()? onWidgetRefresh,
   })  : _bookmarkRepository = bookmarkRepository,
         _readBookmarkRepository = readBookmarkRepository,
         _tagRepository = tagRepository,
@@ -110,6 +124,7 @@ class DetailActionController extends StateNotifier<DetailActionState> {
         _unreadReminderScheduler = unreadReminderScheduler,
         _readUnreadReminderScheduler = readUnreadReminderScheduler,
         _readSettings = readSettings,
+        _onWidgetRefresh = onWidgetRefresh,
         super(const DetailActionState.idle());
 
   final BookmarkRepository? _bookmarkRepository;
@@ -118,6 +133,7 @@ class DetailActionController extends StateNotifier<DetailActionState> {
   final TagRepository Function()? _readTagRepository;
   final BookmarkCollectionRepository? _collectionRepository;
   final BookmarkCollectionRepository Function()? _readCollectionRepository;
+  final Future<void> Function()? _onWidgetRefresh;
   final NoteRepository? _noteRepository;
   final NoteRepository Function()? _readNoteRepository;
   final ScrapingOrchestrator? _scrapingOrchestrator;
@@ -203,12 +219,14 @@ class DetailActionController extends StateNotifier<DetailActionState> {
     return _runGuarded(() async {
       await _bookmarks
           .save(bookmark.copyWith(isArchived: !bookmark.isArchived));
+      _refreshWidgetBestEffort();
     });
   }
 
   Future<void> toggleRead(Bookmark bookmark) {
     return _runGuarded(() async {
       await _bookmarks.save(bookmark.copyWith(isRead: !bookmark.isRead));
+      _refreshWidgetBestEffort();
       final AppSettings settings = _readSettings();
       final UnreadReminderCadence cadence = settings.unreadReminderCadence;
       if (cadence != UnreadReminderCadence.off) {
@@ -281,9 +299,16 @@ class DetailActionController extends StateNotifier<DetailActionState> {
       () async {
         _scraper.cancel(bookmarkId);
         await _bookmarks.delete(bookmarkId);
+        _refreshWidgetBestEffort();
       },
       successFeedback: DetailActionFeedback.bookmarkDeleted,
     );
+  }
+
+  void _refreshWidgetBestEffort() {
+    final Future<void> Function()? callback = _onWidgetRefresh;
+    if (callback == null) return;
+    unawaited(callback());
   }
 
   Future<List<Tag>> loadAvailableTags(Bookmark bookmark) async {

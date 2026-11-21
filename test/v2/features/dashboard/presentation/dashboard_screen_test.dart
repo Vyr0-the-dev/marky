@@ -42,6 +42,7 @@ void main() {
             dashboardStatsProvider.overrideWith((_) async => stats),
           ],
           child: MaterialApp(
+            locale: const Locale('tr'),
             theme: ReadingRoomTheme.build(ReadingRoomVariant.light),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,

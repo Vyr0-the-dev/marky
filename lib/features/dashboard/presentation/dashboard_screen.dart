@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/database/enums/bookmark_source_type.dart';
 import 'package:marky/core/utils/l10n_extension.dart';
+import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/dashboard/data/dashboard_providers.dart';
 import 'package:marky/features/dashboard/domain/dashboard_stats.dart';
+import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/l10n/app_localizations.dart';
 
 /// Dashboard screen — library analytics and reading overview.
@@ -43,13 +47,13 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-class _DashboardBody extends StatelessWidget {
+class _DashboardBody extends ConsumerWidget {
   const _DashboardBody({required this.stats});
 
   final DashboardStats stats;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     final String topSource =
@@ -88,6 +92,16 @@ class _DashboardBody extends StatelessWidget {
                   count: stats.topHosts[i].count,
                   maxCount: stats.topHosts.first.count,
                   color: colors.primary,
+                  onTap: stats.topHosts[i].host == 'unknown'
+                      ? null
+                      : () {
+                          final String host = stats.topHosts[i].host;
+                          ref.read(feedNotifierProvider.notifier).applyQuery(
+                                BookmarkFeedQuery(host: host),
+                                filterLabel: host,
+                              );
+                          context.go(Routes.home);
+                        },
                 ),
               ],
             ],
@@ -106,7 +120,10 @@ class _DashboardBody extends StatelessWidget {
                 if (i > 0) const SizedBox(height: ReadingRoomSpacing.md),
                 _RankedBarRow(
                   leadingIcon: _sourceIcon(stats.sourceBreakdown[i].sourceType),
-                  label: stats.sourceBreakdown[i].label,
+                  label: _sourceLabel(
+                    context,
+                    stats.sourceBreakdown[i].sourceType,
+                  ),
                   count: stats.sourceBreakdown[i].count,
                   maxCount: stats.sourceBreakdown.first.count,
                   color: colors.secondary,
@@ -130,6 +147,16 @@ class _DashboardBody extends StatelessWidget {
                   count: stats.topTags[i].count,
                   maxCount: stats.topTags.first.count,
                   color: colors.tertiary,
+                  onTap: stats.topTags[i].tagId == null
+                      ? null
+                      : () {
+                          final TagCount tag = stats.topTags[i];
+                          ref.read(feedNotifierProvider.notifier).applyQuery(
+                                BookmarkFeedQuery(tagId: tag.tagId),
+                                filterLabel: '#${tag.tagName}',
+                              );
+                          context.go(Routes.home);
+                        },
                 ),
               ],
             ],
@@ -137,6 +164,17 @@ class _DashboardBody extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  static String _sourceLabel(BuildContext context, BookmarkSourceType type) {
+    final bool isTr = Localizations.localeOf(context).languageCode == 'tr';
+    return switch (type) {
+      BookmarkSourceType.manual => isTr ? 'Manuel' : 'Manual',
+      BookmarkSourceType.share => isTr ? 'Paylaşım' : 'Share',
+      BookmarkSourceType.clipboard => isTr ? 'Pano' : 'Clipboard',
+      BookmarkSourceType.import => isTr ? 'İçe Aktarma' : 'Import',
+      BookmarkSourceType.automation => isTr ? 'Otomasyon' : 'Automation',
+    };
   }
 
   static IconData _sourceIcon(BookmarkSourceType type) {
@@ -395,33 +433,9 @@ class _SummaryCards extends StatelessWidget {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final List<_StatCard> cards = <_StatCard>[
       _StatCard(
-        label: context.l10n.dashboardTotal,
-        value: stats.totalBookmarks.toString(),
-        icon: Icons.bookmark_outline_rounded,
-        color: colors.primary,
-      ),
-      _StatCard(
-        label: context.l10n.dashboardUnreadStats,
-        value: stats.unreadCount.toString(),
-        icon: Icons.visibility_off_outlined,
-        color: colors.error,
-      ),
-      _StatCard(
         label: context.l10n.dashboardThisWeek,
         value: stats.addedThisWeek.toString(),
         icon: Icons.calendar_today_rounded,
-        color: colors.tertiary,
-      ),
-      _StatCard(
-        label: context.l10n.dashboardReadRate,
-        value: '%${(stats.readRatio * 100).toStringAsFixed(0)}',
-        icon: Icons.pie_chart_outline_rounded,
-        color: colors.primary,
-      ),
-      _StatCard(
-        label: context.l10n.dashboardFavorites,
-        value: stats.favoritesCount.toString(),
-        icon: Icons.favorite_outline_rounded,
         color: colors.tertiary,
       ),
       _StatCard(
@@ -432,25 +446,12 @@ class _SummaryCards extends StatelessWidget {
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final int columns = constraints.maxWidth >= 720 ? 3 : 2;
-        const double gap = ReadingRoomSpacing.md;
-        final double width =
-            (constraints.maxWidth - (gap * (columns - 1))) / columns;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: cards
-              .map(
-                (_StatCard card) => SizedBox(
-                  width: width,
-                  child: card,
-                ),
-              )
-              .toList(growable: false),
-        );
-      },
+    return Row(
+      children: <Widget>[
+        Expanded(child: cards[0]),
+        const SizedBox(width: ReadingRoomSpacing.md),
+        Expanded(child: cards[1]),
+      ],
     );
   }
 }
@@ -753,6 +754,7 @@ class _RankedBarRow extends StatelessWidget {
     required this.color,
     this.rank,
     this.leadingIcon,
+    this.onTap,
   });
 
   final int? rank;
@@ -761,6 +763,7 @@ class _RankedBarRow extends StatelessWidget {
   final int count;
   final int maxCount;
   final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -769,7 +772,7 @@ class _RankedBarRow extends StatelessWidget {
     final double fraction =
         maxCount == 0 ? 0 : (count / maxCount).clamp(0.0, 1.0);
 
-    return Row(
+    final Widget row = Row(
       children: <Widget>[
         Container(
           width: 28,
@@ -829,6 +832,14 @@ class _RankedBarRow extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (onTap != null) ...<Widget>[
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 6),
@@ -845,6 +856,19 @@ class _RankedBarRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+
+    if (onTap == null) return row;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: row,
+        ),
+      ),
     );
   }
 }

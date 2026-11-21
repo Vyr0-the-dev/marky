@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marky/app/settings/app_settings.dart';
@@ -10,14 +12,17 @@ import 'package:marky/features/capture/data/capture_providers.dart';
 import 'package:marky/features/capture/domain/scraping_orchestrator.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/home/presentation/feed_state.dart';
+import 'package:marky/features/home/presentation/widgets/batch_taxonomy_sheet.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
+import 'package:marky/features/widgets/data/widget_providers.dart';
+import 'package:marky/features/widgets/domain/widget_feed_snapshot_service.dart';
 import 'package:marky/l10n/app_localizations.dart';
 
 /// Sticky bottom bar shown when selection mode is active.
 ///
-/// Provides quick batch actions: archive, favorite, mark-read, delete.
-/// Each action mutates the bookmarks via [BookmarkRepository], then
-/// exits selection mode.
+/// Provides batch actions: mark-read, tag, add to collection, archive,
+/// favorite, and delete. Mixed-state toggles apply uniformly (if any selected
+/// item is false, all are set to true; otherwise all are set to false).
 class BatchActionBar extends ConsumerWidget {
   const BatchActionBar({super.key});
 
@@ -27,6 +32,8 @@ class BatchActionBar extends ConsumerWidget {
     if (!feedState.selectionMode) return const SizedBox.shrink();
 
     final ThemeData theme = Theme.of(context);
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final Set<int> selectedIds = feedState.selectedIds;
 
     return Container(
       decoration: BoxDecoration(
@@ -36,69 +43,155 @@ class BatchActionBar extends ConsumerWidget {
         ),
       ),
       padding: EdgeInsets.only(
-        left: ReadingRoomSpacing.lg,
-        right: ReadingRoomSpacing.lg,
+        left: ReadingRoomSpacing.sm,
+        right: ReadingRoomSpacing.sm,
         top: ReadingRoomSpacing.sm,
         bottom: MediaQuery.paddingOf(context).bottom + ReadingRoomSpacing.sm,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          _ActionButton(
-            icon: Icons.archive_outlined,
-            label: 'Archive',
-            onTap: () => _batchToggle(
-              ref,
-              feedState.selectedIds,
-              (Bookmark b) => b.copyWith(isArchived: !b.isArchived),
-              resyncUnreadReminder: true,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  _ActionButton(
+                    icon: Icons.check_circle_outline,
+                    label: l10n?.batchActionRead ?? 'Read',
+                    onTap: () => _batchUniformToggle(
+                      context,
+                      ref,
+                      selectedIds,
+                      selector: (Bookmark b) => b.isRead,
+                      apply: (Bookmark b, {required bool target}) =>
+                          b.copyWith(isRead: target),
+                      resyncUnreadReminder: true,
+                      refreshWidget: true,
+                    ),
+                  ),
+                  _ActionButton(
+                    icon: Icons.label_outline_rounded,
+                    label: l10n?.batchActionTag ?? 'Tag',
+                    onTap: () => _openTaxonomySheet(
+                      context,
+                      BatchTaxonomyMode.tags,
+                      selectedIds,
+                    ),
+                  ),
+                  _ActionButton(
+                    icon: Icons.create_new_folder_outlined,
+                    label: l10n?.batchActionCollection ?? 'Collection',
+                    onTap: () => _openTaxonomySheet(
+                      context,
+                      BatchTaxonomyMode.collections,
+                      selectedIds,
+                    ),
+                  ),
+                  _ActionButton(
+                    icon: Icons.archive_outlined,
+                    label: l10n?.batchActionArchive ?? 'Archive',
+                    onTap: () => _batchUniformToggle(
+                      context,
+                      ref,
+                      selectedIds,
+                      selector: (Bookmark b) => b.isArchived,
+                      apply: (Bookmark b, {required bool target}) =>
+                          b.copyWith(isArchived: target),
+                      resyncUnreadReminder: true,
+                      refreshWidget: true,
+                    ),
+                  ),
+                  _ActionButton(
+                    icon: Icons.favorite_outline,
+                    label: l10n?.batchActionFavorite ?? 'Favorite',
+                    onTap: () => _batchUniformToggle(
+                      context,
+                      ref,
+                      selectedIds,
+                      selector: (Bookmark b) => b.isFavorite,
+                      apply: (Bookmark b, {required bool target}) =>
+                          b.copyWith(isFavorite: target),
+                    ),
+                  ),
+                  _ActionButton(
+                    icon: Icons.delete_outline,
+                    label: l10n?.batchActionDelete ?? 'Delete',
+                    color: theme.colorScheme.error,
+                    onTap: () => _batchDelete(context, ref, selectedIds),
+                  ),
+                ],
+              ),
             ),
-          ),
-          _ActionButton(
-            icon: Icons.favorite_outline,
-            label: 'Favorite',
-            onTap: () => _batchToggle(
-              ref,
-              feedState.selectedIds,
-              (Bookmark b) => b.copyWith(isFavorite: !b.isFavorite),
-            ),
-          ),
-          _ActionButton(
-            icon: Icons.check_circle_outline,
-            label: 'Read',
-            onTap: () => _batchToggle(
-              ref,
-              feedState.selectedIds,
-              (Bookmark b) => b.copyWith(isRead: !b.isRead),
-              resyncUnreadReminder: true,
-            ),
-          ),
-          _ActionButton(
-            icon: Icons.delete_outline,
-            label: 'Delete',
-            color: theme.colorScheme.error,
-            onTap: () => _batchDelete(context, ref, feedState.selectedIds),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Future<void> _batchToggle(
+  Future<void> _openTaxonomySheet(
+    BuildContext context,
+    BatchTaxonomyMode mode,
+    Set<int> selectedIds,
+  ) async {
+    final int? count = await BatchTaxonomySheet.show(
+      context,
+      mode: mode,
+      selectedBookmarkIds: selectedIds,
+    );
+    if (!context.mounted || count == null || count <= 0) return;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.batchUpdatedCount(count) ?? 'Updated $count bookmarks',
+          ),
+        ),
+      );
+  }
+
+  Future<void> _batchUniformToggle(
+    BuildContext context,
     WidgetRef ref,
-    Set<int> ids,
-    Bookmark Function(Bookmark) transform, {
+    Set<int> ids, {
+    required bool Function(Bookmark) selector,
+    required Bookmark Function(Bookmark, {required bool target}) apply,
     bool resyncUnreadReminder = false,
+    bool refreshWidget = false,
   }) async {
     final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
     final List<Bookmark> bookmarks = await repo.getByIds(ids.toList());
-    final List<Bookmark> updated =
-        bookmarks.map(transform).toList(growable: false);
+    if (bookmarks.isEmpty) {
+      ref.read(feedNotifierProvider.notifier).exitSelectionMode();
+      return;
+    }
+    final bool target = bookmarks.any((Bookmark b) => !selector(b));
+    final List<Bookmark> updated = bookmarks
+        .map((Bookmark b) => apply(b, target: target))
+        .toList(growable: false);
     await repo.saveAll(updated);
     if (resyncUnreadReminder) {
       await _syncUnreadReminder(ref);
     }
+    if (refreshWidget) {
+      _refreshWidgetBestEffort(ref);
+    }
     ref.read(feedNotifierProvider.notifier).exitSelectionMode();
+    if (!context.mounted) return;
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.batchUpdatedCount(updated.length) ??
+                'Updated ${updated.length} bookmarks',
+          ),
+        ),
+      );
   }
 
   Future<void> _batchDelete(
@@ -139,6 +232,7 @@ class BatchActionBar extends ConsumerWidget {
     final BookmarkRepository repo = ref.read(bookmarkRepositoryProvider);
     await repo.deleteAll(ids.toList());
     await _syncUnreadReminder(ref);
+    _refreshWidgetBestEffort(ref);
     ref.read(feedNotifierProvider.notifier).exitSelectionMode();
   }
 
@@ -156,6 +250,20 @@ class BatchActionBar extends ConsumerWidget {
     } on Object {
       return;
     }
+  }
+
+  static void _refreshWidgetBestEffort(WidgetRef ref) {
+    unawaited(
+      Future<void>(() async {
+        try {
+          final WidgetFeedSnapshotService service =
+              await ref.read(widgetFeedSnapshotServiceProvider.future);
+          await service.refresh();
+        } on Object {
+          // Best-effort Android home widget refresh.
+        }
+      }),
+    );
   }
 }
 
@@ -182,7 +290,7 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: ReadingRoomSpacing.md,
+          horizontal: ReadingRoomSpacing.sm,
           vertical: ReadingRoomSpacing.sm,
         ),
         child: Column(
