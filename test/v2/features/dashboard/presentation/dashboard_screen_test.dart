@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/core/database/enums/bookmark_source_type.dart';
 import 'package:marky/features/dashboard/data/dashboard_providers.dart';

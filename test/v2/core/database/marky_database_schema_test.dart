@@ -13,7 +13,6 @@ void main() {
         'CollectionEntity',
         'ReminderEntity',
         'AutomationRuleEntity',
-        'BackupMetaEntity',
         'NoteEntity',
         'SearchQueryEntity',
       ],

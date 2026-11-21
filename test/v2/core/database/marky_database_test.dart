@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 import 'package:marky/core/database/entities/automation_rule_entity.dart';
-import 'package:marky/core/database/entities/backup_meta_entity.dart';
 import 'package:marky/core/database/entities/bookmark_entity.dart';
 import 'package:marky/core/database/entities/collection_entity.dart';
 import 'package:marky/core/database/entities/reminder_entity.dart';
@@ -242,31 +241,6 @@ void main() {
       ],
     );
     expect(loaded?.actionArgs, <String>['42', 'true']);
-  });
-
-  test('BackupMetaEntity persists as a singleton at id=0', () async {
-    await isar.writeTxn(() async {
-      await isar.backupMeta.put(BackupMetaEntity(
-        autoBackupEnabled: true,
-        backupIntervalHours: 12,
-        googleDriveAccountEmail: 'user@example.com',
-      ));
-    });
-
-    final BackupMetaEntity? loaded = await isar.backupMeta.get(0);
-    expect(loaded, isNotNull);
-    expect(loaded!.id, 0);
-    expect(loaded.autoBackupEnabled, isTrue);
-    expect(loaded.backupIntervalHours, 12);
-    expect(loaded.googleDriveAccountEmail, 'user@example.com');
-
-    // Saving again with the default ctor (id = 0) overwrites in
-    // place — the row stays a singleton.
-    await isar.writeTxn(() async {
-      await isar.backupMeta.put(BackupMetaEntity());
-    });
-    final int count = await isar.backupMeta.count();
-    expect(count, 1);
   });
 
   test('cross-entity write txn keeps consistency on rollback', () async {

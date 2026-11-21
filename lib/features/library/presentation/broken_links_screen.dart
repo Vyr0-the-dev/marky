@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/bookmarks/domain/bookmark.dart';

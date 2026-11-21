@@ -20,7 +20,7 @@ internal class ShareOverlayFlutterHost(
     private val onFlutterReady: () -> Unit,
     private val onFinishOverlay: () -> Unit,
     private val onOpenMainApp: () -> Unit,
-) : ShareOverlayHost {
+) {
     companion object {
         const val ENGINE_CACHE_ID = "marky_share_overlay_engine"
 
@@ -50,7 +50,7 @@ internal class ShareOverlayFlutterHost(
     private var flutterUiDisplayListener: FlutterUiDisplayListener? = null
     private var methodChannel: MethodChannel? = null
 
-    override fun attach() {
+    fun attach() {
         if (flutterEngine != null) return
 
         val cache = FlutterEngineCache.getInstance()
@@ -115,19 +115,19 @@ internal class ShareOverlayFlutterHost(
         flutterView = view
     }
 
-    override fun onResume() {
+    fun onResume() {
         flutterEngine?.lifecycleChannel?.appIsResumed()
     }
 
-    override fun onPause() {
+    fun onPause() {
         flutterEngine?.lifecycleChannel?.appIsInactive()
     }
 
-    override fun onStop() {
+    fun onStop() {
         flutterEngine?.lifecycleChannel?.appIsPaused()
     }
 
-    override fun destroy() {
+    fun destroy() {
         flutterUiDisplayListener?.let { listener ->
             flutterView?.removeOnFirstFrameRenderedListener(listener)
         }
@@ -150,7 +150,7 @@ internal class ShareOverlayFlutterHost(
         }
     }
 
-    override fun onNewPayload(payload: String?) {
+    fun onNewPayload(payload: String?) {
         flutterEngine?.let { engine ->
             MethodChannel(
                 engine.dartExecutor.binaryMessenger,

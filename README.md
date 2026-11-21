@@ -65,7 +65,7 @@ Browsers bury bookmarks, read-later services want an account, and "send to self"
 | 🏠 **Home screen widget** | Latest unread links with Quick Add and Search shortcuts. |
 | 🎨 **Themes** | Warm dark, light and true-black OLED. English and Turkish. |
 | 💾 **Backup** | Full JSON backup and browser-compatible Netscape HTML import/export. |
-| 🔒 **Privacy** | Optional biometric lock and `FLAG_SECURE`. No analytics, no telemetry. |
+| 🔒 **Privacy** | 100% local Isar database. No accounts, no analytics, no telemetry. |
 
 ---
 

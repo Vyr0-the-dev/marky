@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/database/enums/bookmark_content_type.dart';

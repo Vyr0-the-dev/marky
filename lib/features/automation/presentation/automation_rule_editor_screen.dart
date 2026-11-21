@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/database/enums/automation_action_type.dart';
 import 'package:marky/core/database/enums/automation_trigger_type.dart';

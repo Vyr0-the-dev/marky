@@ -9,7 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 import 'package:marky/core/database/entities/automation_rule_entity.dart';
-import 'package:marky/core/database/entities/backup_meta_entity.dart';
 import 'package:marky/core/database/entities/bookmark_entity.dart';
 import 'package:marky/core/database/entities/collection_entity.dart';
 import 'package:marky/core/database/entities/reminder_entity.dart';
@@ -74,7 +73,6 @@ void main() {
         CollectionEntitySchema,
         ReminderEntitySchema,
         AutomationRuleEntitySchema,
-        BackupMetaEntitySchema,
       ],
       directory: tempDir.path,
     );

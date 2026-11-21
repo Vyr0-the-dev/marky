@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';

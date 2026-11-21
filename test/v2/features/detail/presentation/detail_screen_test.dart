@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/app/theme/reading_room_theme.dart';
 import 'package:marky/core/database/enums/bookmark_content_type.dart';

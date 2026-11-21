@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-
 import 'package:marky/app/routing/routes.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/utils/color_contrast_utils.dart';

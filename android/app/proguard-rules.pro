@@ -1,5 +1,4 @@
-# Marky ProGuard Rules
-# Generated for reflection-heavy libraries: Isar, Dio, Freezed
+# Marky ProGuard / R8 Rules
 
 # Flutter
 -keep class io.flutter.app.** { *; }
@@ -21,30 +20,8 @@
 -keep class isar.** { *; }
 -dontwarn isar.**
 
-# Freezed / JSON Serializable
--keepclassmembers class * {
-    *** fromJson(...);
-    *** toJson();
-}
--keepclassmembers class * {
-    @com.google.gson.annotations.SerializedName <fields>;
-}
-
-# Dio / OkHttp / Okio
--keep class com.squareup.okhttp3.** { *; }
--keep interface com.squareup.okhttp3.** { *; }
--dontwarn com.squareup.okhttp3.**
--keep class okio.** { *; }
--dontwarn okio.**
--keep class retrofit2.** { *; }
--dontwarn retrofit2.**
-
-# General reflection
+# General reflection attributes
 -keepattributes Signature
 -keepattributes Exceptions
 -keepattributes InnerClasses
 -keepattributes EnclosingMethod
--keepattributes *Annotation*
-
-# R8: Missing class javax.xml.stream.XMLStreamException (Apache Tika metadata extraction)
--dontwarn javax.xml.stream.XMLStreamException

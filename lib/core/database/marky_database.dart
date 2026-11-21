@@ -1,7 +1,6 @@
 import 'package:isar/isar.dart';
 
 import 'package:marky/core/database/entities/automation_rule_entity.dart';
-import 'package:marky/core/database/entities/backup_meta_entity.dart';
 import 'package:marky/core/database/entities/bookmark_entity.dart';
 import 'package:marky/core/database/entities/collection_entity.dart';
 import 'package:marky/core/database/entities/note_entity.dart';
@@ -33,7 +32,6 @@ abstract final class MarkyDatabase {
     'CollectionEntity',
     'ReminderEntity',
     'AutomationRuleEntity',
-    'BackupMetaEntity',
     'NoteEntity',
     'SearchQueryEntity',
   ];
@@ -41,7 +39,7 @@ abstract final class MarkyDatabase {
   /// All Isar collections registered for the v2 schema.
   ///
   /// Keep this list in sync with the entity files in
-  /// `lib/v2/core/database/entities/`. Adding a new entity is a
+  /// `lib/core/database/entities/`. Adding a new entity is a
   /// three-step ritual: create the file, add the schema here, run
   /// `dart run build_runner build`.
   ///
@@ -55,7 +53,6 @@ abstract final class MarkyDatabase {
     CollectionEntitySchema,
     ReminderEntitySchema,
     AutomationRuleEntitySchema,
-    BackupMetaEntitySchema,
     NoteEntitySchema,
     SearchQueryEntitySchema,
   ];

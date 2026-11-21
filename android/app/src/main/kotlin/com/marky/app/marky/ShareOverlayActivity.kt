@@ -17,7 +17,7 @@ class ShareOverlayActivity : Activity() {
     private var startupOverlay: View? = null
     private var rootLayout: FrameLayout? = null
     private var flutterContainer: FrameLayout? = null
-    private var flutterHost: ShareOverlayHost? = null
+    private var flutterHost: ShareOverlayFlutterHost? = null
     private var flutterAttached = false
     private val attachFlutterRunnable = Runnable {
         if (!isFinishing && !isDestroyed) {
@@ -105,26 +105,14 @@ class ShareOverlayActivity : Activity() {
         }
     }
 
-    private fun createFlutterHost(container: FrameLayout): ShareOverlayHost {
-        val hostClass = Class.forName("com.marky.app.marky.ShareOverlayFlutterHost")
-        val constructor = hostClass.getDeclaredConstructor(
-            Activity::class.java,
-            FrameLayout::class.java,
-            kotlin.jvm.functions.Function0::class.java,
-            kotlin.jvm.functions.Function0::class.java,
-            kotlin.jvm.functions.Function0::class.java,
-            kotlin.jvm.functions.Function0::class.java,
-        )
-        constructor.isAccessible = true
-        return constructor.newInstance(
-            this,
-            container,
-            { initialPayload },
-            { hideStartupOverlay() },
-            {
-                finishOverlayNow()
-            },
-            {
+    private fun createFlutterHost(container: FrameLayout): ShareOverlayFlutterHost {
+        return ShareOverlayFlutterHost(
+            activity = this,
+            container = container,
+            initialPayloadProvider = { initialPayload },
+            onFlutterReady = { hideStartupOverlay() },
+            onFinishOverlay = { finishOverlayNow() },
+            onOpenMainApp = {
                 val openIntent = Intent(this, MainActivity::class.java).apply {
                     action = Intent.ACTION_MAIN
                     addCategory(Intent.CATEGORY_LAUNCHER)
@@ -135,7 +123,7 @@ class ShareOverlayActivity : Activity() {
                 startActivity(openIntent)
                 finishOverlayNow()
             },
-        ) as ShareOverlayHost
+        )
     }
 
     private fun attachFlutterAfterFirstNativeDraw(root: View) {

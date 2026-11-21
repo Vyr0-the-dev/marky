@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:marky/core/scraping/favicon_service.dart';
 import 'package:marky/core/scraping/metadata_scraper_service.dart';
 import 'package:marky/core/scraping/parsers/generic_html_parser.dart';
 import 'package:marky/core/scraping/parsers/github_parser.dart';
@@ -36,10 +35,4 @@ final Provider<MetadataScraperService> metadataScraperServiceProvider =
 final Provider<ThumbnailService> thumbnailServiceProvider =
     Provider<ThumbnailService>((Ref ref) {
   return ThumbnailService();
-});
-
-/// Favicon download + local cache service.
-final Provider<FaviconService> faviconServiceProvider =
-    Provider<FaviconService>((Ref ref) {
-  return FaviconService();
 });

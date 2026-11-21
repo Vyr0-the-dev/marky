@@ -18,7 +18,7 @@
 2. **Instant Ingress (Zero-Friction Capture):** Saving a link must never interrupt the user's workflow. Marky provides a native transparent Android overlay window (`ShareOverlayActivity`) that captures, normalizes, and enriches links in milliseconds without switching away from the host application.
 3. **Deterministic URL Intelligence:** Incoming URLs are sanitized of tracking surveillance vectors, unshortened through redirect resolvers, canonicalized, and checked against a 4-tier duplicate engine before database insertion.
 4. **100% Offline-First & Zero Telemetry:** Marky contains no third-party tracker SDKs, analytics beacons, or remote cloud databases. The only network requests issued are client-to-target HTTP calls to scrape page metadata and download favicons/hero media.
-5. **Native Android Synergy:** Marky acts as a first-class citizen of Android, utilizing exact alarms, home screen app widgets, quick launcher shortcuts, and biometrics.
+5. **Native Android Synergy:** Marky acts as a first-class citizen of Android, utilizing exact alarms, home screen app widgets, and quick launcher shortcuts.
 
 ---
 

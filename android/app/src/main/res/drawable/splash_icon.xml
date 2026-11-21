@@ -4,15 +4,12 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Warm archival cream dog-eared bookmark page silhouette -->
     <path
-        android:fillColor="@android:color/transparent"
-        android:pathData="M54,54m-34,0a34,34 0,1 1,68 0a34,34 0,1 1,-68 0"
-        android:strokeWidth="3"
-        android:strokeColor="#E6C46A" />
+        android:fillColor="#FAF6F0"
+        android:pathData="M34,26 H60 L74,40 V74 C74,78.4 70.4,82 66,82 H59 L54,76 L49,82 H42 C37.6,82 34,78.4 34,74 V34 C34,29.6 37.6,26 42,26 Z" />
+    <!-- Subtle terracotta-tinted folded dog-ear flap -->
     <path
-        android:fillColor="@android:color/transparent"
-        android:pathData="M62,31 L46,77"
-        android:strokeWidth="3"
-        android:strokeColor="#E6C46A"
-        android:strokeLineCap="square" />
+        android:fillColor="#D84A32"
+        android:pathData="M60,26 V36 C60,38.2 61.8,40 64,40 H74 L60,26 Z" />
 </vector>

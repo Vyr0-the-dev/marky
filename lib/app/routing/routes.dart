@@ -30,16 +30,13 @@ abstract final class Routes {
   /// Settings root — theme, language, backup, automation.
   static const String settings = '/settings';
 
-  /// Dashboard / statistics — reached from Settings.
+  /// Dashboard / statistics — reached from Settings or Library.
   static const String stats = '/settings/stats';
-
-  /// Backup + restore + Google Drive config — reached from Settings.
-  static const String backup = '/settings/backup';
 
   /// Automation rules list — reached from Settings.
   static const String automationRules = '/settings/automation';
 
-  /// Broken link checker — reached from Settings.
+  /// Broken link checker — reached from Settings or Library.
   static const String brokenLinks = '/settings/broken-links';
 
   /// Automation rule editor (create).
@@ -48,13 +45,8 @@ abstract final class Routes {
   /// Automation rule editor (edit). Use [automationRuleEditPath].
   static const String automationRuleEdit = '/settings/automation/:id';
 
+  /// Active reminders overview — reached from Library or Settings.
   static const String reminders = '/reminders';
-
-  /// Tag manager.
-  static const String tags = '/library/tags';
-
-  /// Collection manager.
-  static const String collections = '/library/collections';
 
   // ─── Path builders ─────────────────────────────────────────────────
   /// Builds a concrete detail path: `/detail/42`.
