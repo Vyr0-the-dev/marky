@@ -164,59 +164,59 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
               isCollapsed: _isHeroCollapsed,
             ),
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: ReadingRoomSpacing.lg,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const SizedBox(height: ReadingRoomSpacing.lg),
-
-                  // ── Title ────────────────────────────────────
-                  Text(
-                    bookmark.displayTitle,
-                    style: theme.textTheme.headlineSmall,
-                  ),
-
-                  const SizedBox(height: ReadingRoomSpacing.sm),
-
-                  // ── Domain + source chip ─────────────────────
-                  _DomainRow(bookmark: bookmark),
-
-                  // ── Description ──────────────────────────────
-                  if (bookmark.description != null &&
-                      bookmark.description!.isNotEmpty) ...<Widget>[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ReadingRoomSpacing.lg,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                     const SizedBox(height: ReadingRoomSpacing.lg),
+
+                    // ── Title ────────────────────────────────────
                     Text(
-                      bookmark.description!,
-                      style: theme.textTheme.bodyMedium,
+                      bookmark.displayTitle,
+                      style: theme.textTheme.headlineSmall,
                     ),
+
+                    const SizedBox(height: ReadingRoomSpacing.sm),
+
+                    // ── Domain + source chip ─────────────────────
+                    _DomainRow(bookmark: bookmark),
+
+                    // ── Description ──────────────────────────────
+                    if (bookmark.description != null &&
+                        bookmark.description!.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: ReadingRoomSpacing.lg),
+                      Text(
+                        bookmark.description!,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+
+                    // ── Tags ─────────────────────────────────────
+                    const SizedBox(height: ReadingRoomSpacing.xl),
+                    _TagsSection(bookmark: bookmark),
+
+                    // ── Collections ──────────────────────────────
+                    const SizedBox(height: ReadingRoomSpacing.xl),
+                    _CollectionsSection(bookmark: bookmark),
+
+                    // ── Notes ────────────────────────────────────
+                    const SizedBox(height: ReadingRoomSpacing.xl),
+                    _NotesSection(bookmark: bookmark),
+
+                    // ── Reminders ────────────────────────────────
+                    const SizedBox(height: ReadingRoomSpacing.xl),
+                    _RemindersSection(bookmark: bookmark),
+
+                    const SizedBox(height: ReadingRoomSpacing.huge),
                   ],
-
-                  // ── Tags ─────────────────────────────────────
-                  const SizedBox(height: ReadingRoomSpacing.xl),
-                  _TagsSection(bookmark: bookmark),
-
-                  // ── Collections ──────────────────────────────
-                  const SizedBox(height: ReadingRoomSpacing.xl),
-                  _CollectionsSection(bookmark: bookmark),
-
-                  // ── Notes ────────────────────────────────────
-                  const SizedBox(height: ReadingRoomSpacing.xl),
-                  _NotesSection(bookmark: bookmark),
-
-                  // ── Reminders ────────────────────────────────
-                  const SizedBox(height: ReadingRoomSpacing.xl),
-                  _RemindersSection(bookmark: bookmark),
-
-                  const SizedBox(height: ReadingRoomSpacing.huge),
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );

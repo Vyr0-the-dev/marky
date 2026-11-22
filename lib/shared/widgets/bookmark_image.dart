@@ -103,8 +103,9 @@ class BookmarkImage extends StatelessWidget {
             !header.contains('svg');
         if (isRasterBase64) {
           try {
-            final String payload =
-                trimmed.substring(commaIndex + 1).replaceAll(RegExp(r'\s+'), '');
+            final String payload = trimmed
+                .substring(commaIndex + 1)
+                .replaceAll(RegExp(r'\s+'), '');
             final Uint8List bytes = base64Decode(payload);
             if (bytes.isNotEmpty) {
               decoded = bytes;

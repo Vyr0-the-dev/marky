@@ -11,7 +11,8 @@ void main() {
 
   group('BookmarkImage helpers', () {
     test('decodeDataImageUri decodes valid raster base64 data URI', () {
-      final Uint8List? bytes = BookmarkImage.decodeDataImageUri(validPngDataUri);
+      final Uint8List? bytes =
+          BookmarkImage.decodeDataImageUri(validPngDataUri);
       expect(bytes, isNotNull);
       expect(bytes!.length, greaterThan(10));
     });

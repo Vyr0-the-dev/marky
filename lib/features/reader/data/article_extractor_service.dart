@@ -429,8 +429,7 @@ class ArticleExtractorService {
     Uri baseUri, {
     String? articleTitle,
   }) {
-    final String normalizedTitle =
-        (articleTitle ?? '').trim().toLowerCase();
+    final String normalizedTitle = (articleTitle ?? '').trim().toLowerCase();
 
     for (final dom.Element child in container.children) {
       final String tag = child.localName?.toLowerCase() ?? '';
@@ -624,7 +623,8 @@ class ArticleExtractorService {
         _bestSrcFromSrcset(img.attributes['data-srcset']),
         _bestSrcFromSrcset(img.attributes['srcset']),
       ],
-      for (final dom.Element source in element.querySelectorAll('source')) ...<String?>[
+      for (final dom.Element source
+          in element.querySelectorAll('source')) ...<String?>[
         _bestSrcFromSrcset(source.attributes['data-srcset']),
         _bestSrcFromSrcset(source.attributes['srcset']),
       ],
@@ -659,8 +659,11 @@ class ArticleExtractorService {
     String? bestUrl;
     double bestWeight = -1;
     for (final String entry in srcset.split(',')) {
-      final List<String> parts =
-          entry.trim().split(RegExp(r'\s+')).where((String s) => s.isNotEmpty).toList();
+      final List<String> parts = entry
+          .trim()
+          .split(RegExp(r'\s+'))
+          .where((String s) => s.isNotEmpty)
+          .toList();
       if (parts.isEmpty) continue;
       final String? candidate = _validImageCandidate(parts.first);
       if (candidate == null) continue;
@@ -668,9 +671,14 @@ class ArticleExtractorService {
       if (parts.length > 1) {
         final String descriptor = parts[1].toLowerCase();
         if (descriptor.endsWith('w')) {
-          weight = double.tryParse(descriptor.substring(0, descriptor.length - 1)) ?? 1;
+          weight =
+              double.tryParse(descriptor.substring(0, descriptor.length - 1)) ??
+                  1;
         } else if (descriptor.endsWith('x')) {
-          weight = (double.tryParse(descriptor.substring(0, descriptor.length - 1)) ?? 1) * 1000;
+          weight = (double.tryParse(
+                      descriptor.substring(0, descriptor.length - 1)) ??
+                  1) *
+              1000;
         }
       }
       if (weight > bestWeight) {
@@ -766,7 +774,8 @@ class ArticleExtractorService {
     final List<ArticleBlock> blocks = <ArticleBlock>[];
     if (body.contains('<p') || body.contains('<div') || body.contains('<br')) {
       final dom.DocumentFragment frag = html_parser.parseFragment(body);
-      final dom.Element wrapper = dom.Element.tag('div')..nodes.addAll(frag.nodes.toList());
+      final dom.Element wrapper = dom.Element.tag('div')
+        ..nodes.addAll(frag.nodes.toList());
       _extractBlocksFromElement(wrapper, blocks, baseUri);
       if (blocks.isNotEmpty) return blocks;
     }

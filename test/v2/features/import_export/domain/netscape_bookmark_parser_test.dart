@@ -69,7 +69,9 @@ void main() {
       expect(entries[1].title, 'Example Two');
     });
 
-    test('extracts Firefox base64 ICON, ICON_URI fallback, and skips SVG data URI when ICON_URI exists', () {
+    test(
+        'extracts Firefox base64 ICON, ICON_URI fallback, and skips SVG data URI when ICON_URI exists',
+        () {
       const String html = '''
 <!DOCTYPE NETSCAPE-Bookmark-file-1>
 <DL><p>

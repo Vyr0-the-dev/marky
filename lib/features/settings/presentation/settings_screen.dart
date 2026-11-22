@@ -199,8 +199,7 @@ class SettingsScreen extends ConsumerWidget {
             leading: const Icon(Icons.auto_fix_high),
             title: Text(l10n?.settingsAutomationLabel ?? 'Automation rules'),
             subtitle: Text(
-              l10n?.settingsAutomationSubtitle ??
-                  'Auto-tag, archive, and more',
+              l10n?.settingsAutomationSubtitle ?? 'Auto-tag, archive, and more',
             ),
             trailing: const Icon(Icons.chevron_right_rounded, size: 20),
             onTap: () => context.push(Routes.automationRules),
@@ -1044,9 +1043,7 @@ class SettingsScreen extends ConsumerWidget {
                     label: l10n?.settingsImportViewAction ?? 'View',
                     onPressed: () {
                       if (!context.mounted) return;
-                      ref
-                          .read(feedNotifierProvider.notifier)
-                          .clearNarrowing();
+                      ref.read(feedNotifierProvider.notifier).clearNarrowing();
                       context.go(Routes.home);
                     },
                   )

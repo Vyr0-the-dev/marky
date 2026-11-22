@@ -114,8 +114,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     BuildContext context,
     EditableTextState editableTextState,
   ) {
-    final List<ContextMenuButtonItem> items =
-        List<ContextMenuButtonItem>.of(editableTextState.contextMenuButtonItems);
+    final List<ContextMenuButtonItem> items = List<ContextMenuButtonItem>.of(
+        editableTextState.contextMenuButtonItems);
     final TextEditingValue value = editableTextState.textEditingValue;
     final TextSelection selection = value.selection;
     final String selected = selection.isValid && !selection.isCollapsed
@@ -281,7 +281,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: GestureDetector(
-                              onTap: () => unawaited(notifier.setThemeMode(mode)),
+                              onTap: () =>
+                                  unawaited(notifier.setThemeMode(mode)),
                               child: Container(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 10),
@@ -466,7 +467,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   IconButton(
                     icon: Icon(Icons.arrow_back_rounded, color: themeMode.text),
                     onPressed: () => Navigator.of(context).pop(),
-                    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                    tooltip:
+                        MaterialLocalizations.of(context).backButtonTooltip,
                   ),
                   const Spacer(),
                   articleAsync.when(

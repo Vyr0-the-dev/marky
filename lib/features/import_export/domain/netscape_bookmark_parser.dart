@@ -136,15 +136,14 @@ class NetscapeBookmarkParser {
 
     final String? rawIcon = a.attributes['icon']?.trim();
     final String? rawIconUri = a.attributes['icon_uri']?.trim();
-    final bool iconIsSvgData = rawIcon != null &&
-        rawIcon.toLowerCase().startsWith('data:image/svg');
-    final String? icon = (rawIcon != null &&
-            rawIcon.isNotEmpty &&
-            !iconIsSvgData)
-        ? rawIcon
-        : (rawIconUri != null && rawIconUri.isNotEmpty)
-            ? rawIconUri
-            : (rawIcon != null && rawIcon.isNotEmpty ? rawIcon : null);
+    final bool iconIsSvgData =
+        rawIcon != null && rawIcon.toLowerCase().startsWith('data:image/svg');
+    final String? icon =
+        (rawIcon != null && rawIcon.isNotEmpty && !iconIsSvgData)
+            ? rawIcon
+            : (rawIconUri != null && rawIconUri.isNotEmpty)
+                ? rawIconUri
+                : (rawIcon != null && rawIcon.isNotEmpty ? rawIcon : null);
 
     return NetscapeBookmarkEntry(
       url: url,

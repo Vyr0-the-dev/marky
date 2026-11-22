@@ -106,7 +106,8 @@ class _AutomationRulesScreenState extends ConsumerState<AutomationRulesScreen> {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: ReadingRoomSpacing.sm),
+            padding:
+                const EdgeInsets.symmetric(vertical: ReadingRoomSpacing.sm),
             itemCount: rules.length,
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (BuildContext context, int index) {
@@ -225,8 +226,8 @@ class _AutomationGuideCard extends StatelessWidget {
               runSpacing: ReadingRoomSpacing.xs,
               children: <Widget>[
                 _TemplateChip(
-                  label:
-                      l10n?.automationTemplateYoutube ?? 'YouTube → Watch later',
+                  label: l10n?.automationTemplateYoutube ??
+                      'YouTube → Watch later',
                 ),
                 _TemplateChip(
                   label: l10n?.automationTemplateGithub ?? 'GitHub → Code tag',

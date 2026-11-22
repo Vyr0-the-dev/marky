@@ -549,7 +549,8 @@ void main() {
 
           await tester.tap(find.text('D2 Scale Link').first);
           await tester.pumpAndSettle();
-          expect(find.byIcon(Icons.chrome_reader_mode_outlined), findsOneWidget);
+          expect(
+              find.byIcon(Icons.chrome_reader_mode_outlined), findsOneWidget);
           expect(tester.takeException(), isNull);
 
           await tester.binding.handlePopRoute();

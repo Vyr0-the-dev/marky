@@ -24,7 +24,8 @@ class BulkRefetchCancellationToken {
   void cancel() {
     if (_isCancelled) return;
     _isCancelled = true;
-    for (final void Function() listener in List<void Function()>.of(_listeners)) {
+    for (final void Function() listener
+        in List<void Function()>.of(_listeners)) {
       listener();
     }
     _listeners.clear();
@@ -102,8 +103,7 @@ class BulkMetadataRefetchService {
     }
     final String? hero = bookmark.heroImageUrl?.trim();
     final String? favicon = bookmark.faviconUrl?.trim();
-    final bool hasRealHero =
-        hero != null && hero.isNotEmpty && hero != favicon;
+    final bool hasRealHero = hero != null && hero.isNotEmpty && hero != favicon;
     final bool hasDescription =
         (bookmark.description?.trim().isNotEmpty ?? false) ||
             (bookmark.snippet?.trim().isNotEmpty ?? false);

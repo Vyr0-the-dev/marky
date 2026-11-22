@@ -86,7 +86,8 @@ void main() {
   });
 
   group('BulkMetadataRefetchService batch execution', () {
-    test('findIncompleteBookmarkIds paginates and filters only incomplete items',
+    test(
+        'findIncompleteBookmarkIds paginates and filters only incomplete items',
         () async {
       final _InMemoryBookmarkRepo repo = _InMemoryBookmarkRepo(<Bookmark>[
         makeBookmark(id: 1),
@@ -176,8 +177,7 @@ void main() {
         bookmarkRepository: repo,
         scrapingOrchestrator: orchestrator,
       );
-      final BulkRefetchCancellationToken token =
-          BulkRefetchCancellationToken();
+      final BulkRefetchCancellationToken token = BulkRefetchCancellationToken();
 
       final Future<BulkRefetchResult> future = service.runBatch(
         bookmarkIds: <int>[20, 21, 22],
@@ -322,8 +322,7 @@ class _InMemoryBookmarkRepo implements BookmarkRepository {
       Stream<List<Bookmark>>.value(_store.values.toList(growable: false));
 
   @override
-  Stream<Bookmark?> watchById(int id) =>
-      Stream<Bookmark?>.value(_store[id]);
+  Stream<Bookmark?> watchById(int id) => Stream<Bookmark?>.value(_store[id]);
 
   @override
   Future<List<Bookmark>> search(String query, {int limit = 50}) async =>

@@ -339,7 +339,8 @@ void main() {
     expect(result.bookmarksImported, 2);
   });
 
-  test('v2 remaps tag and collection IDs by slug and restores smart collections',
+  test(
+      'v2 remaps tag and collection IDs by slug and restores smart collections',
       () async {
     final String body = json.encode(<String, dynamic>{
       'version': 2,
@@ -353,8 +354,7 @@ void main() {
           'title': 'Smart Flutter',
           'slug': 'smart-flutter',
           'isSmart': true,
-          'smartRuleJson':
-              const SmartCollectionRule(tagId: 55).encode(),
+          'smartRuleJson': const SmartCollectionRule(tagId: 55).encode(),
           'smartRuleTagSlug': 'flutter',
         },
       ],

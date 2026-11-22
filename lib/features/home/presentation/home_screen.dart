@@ -115,8 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     final List<Bookmark>? displayBookmarks = liveData ?? _cachedBookmarks;
-    final bool isLoadingMore =
-        feedAsync.isLoading && _cachedBookmarks != null;
+    final bool isLoadingMore = feedAsync.isLoading && _cachedBookmarks != null;
 
     Widget feedBody;
     if (feedAsync.hasError && displayBookmarks == null) {
@@ -665,40 +664,40 @@ class _BookmarkGrid extends ConsumerWidget {
                 ReadingRoomSpacing.md,
                 88,
               ),
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: ReadingRoomSpacing.md,
-            crossAxisSpacing: ReadingRoomSpacing.md,
-            itemCount: bookmarks.length,
-            itemBuilder: (BuildContext context, int index) {
-              final Bookmark bookmark = bookmarks[index];
-              return RepaintBoundary(
-                child: EditorialGridCard(
-                  bookmark: bookmark,
-                  isSelected: bookmark.id != null &&
-                      feedState.selectedIds.contains(bookmark.id),
-                  selectionMode: feedState.selectionMode,
-                  onTap: () {
-                    if (feedState.selectionMode && bookmark.id != null) {
-                      ref
-                          .read(feedNotifierProvider.notifier)
-                          .toggleSelection(bookmark.id!);
-                      return;
-                    }
-                    if (bookmark.id != null) {
-                      context.push(Routes.bookmarkDetailPath(bookmark.id!));
-                    }
-                  },
-                  onLongPress: () {
-                    if (!feedState.selectionMode && bookmark.id != null) {
-                      ref
-                          .read(feedNotifierProvider.notifier)
-                          .enterSelectionMode(bookmark.id!);
-                    }
-                  },
-                ),
-              );
-            },
-          ),
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: ReadingRoomSpacing.md,
+              crossAxisSpacing: ReadingRoomSpacing.md,
+              itemCount: bookmarks.length,
+              itemBuilder: (BuildContext context, int index) {
+                final Bookmark bookmark = bookmarks[index];
+                return RepaintBoundary(
+                  child: EditorialGridCard(
+                    bookmark: bookmark,
+                    isSelected: bookmark.id != null &&
+                        feedState.selectedIds.contains(bookmark.id),
+                    selectionMode: feedState.selectionMode,
+                    onTap: () {
+                      if (feedState.selectionMode && bookmark.id != null) {
+                        ref
+                            .read(feedNotifierProvider.notifier)
+                            .toggleSelection(bookmark.id!);
+                        return;
+                      }
+                      if (bookmark.id != null) {
+                        context.push(Routes.bookmarkDetailPath(bookmark.id!));
+                      }
+                    },
+                    onLongPress: () {
+                      if (!feedState.selectionMode && bookmark.id != null) {
+                        ref
+                            .read(feedNotifierProvider.notifier)
+                            .enterSelectionMode(bookmark.id!);
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
           ),
         );
       },

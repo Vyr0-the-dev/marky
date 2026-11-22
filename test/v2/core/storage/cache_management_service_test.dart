@@ -5,7 +5,8 @@ import 'package:marky/core/storage/cache_management_service.dart';
 
 void main() {
   group('CacheManagementService', () {
-    test('computes combined disk size across reader cache and thumbnails and clears them',
+    test(
+        'computes combined disk size across reader cache and thumbnails and clears them',
         () async {
       final Directory docDir =
           await Directory.systemTemp.createTemp('marky_cache_doc_');
@@ -23,9 +24,12 @@ void main() {
       final Directory legacyDir = Directory('${tempDir.path}/reader_cache')
         ..createSync(recursive: true);
 
-      File('${readerDir.path}/a.json').writeAsBytesSync(List<int>.filled(500, 1));
-      File('${thumbDir.path}/b.jpg').writeAsBytesSync(List<int>.filled(1500, 2));
-      File('${legacyDir.path}/c.json').writeAsBytesSync(List<int>.filled(250, 3));
+      File('${readerDir.path}/a.json')
+          .writeAsBytesSync(List<int>.filled(500, 1));
+      File('${thumbDir.path}/b.jpg')
+          .writeAsBytesSync(List<int>.filled(1500, 2));
+      File('${legacyDir.path}/c.json')
+          .writeAsBytesSync(List<int>.filled(250, 3));
 
       final CacheManagementService service = CacheManagementService(
         documentsDirProvider: () async => docDir,

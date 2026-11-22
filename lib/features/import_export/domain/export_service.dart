@@ -251,9 +251,8 @@ class ExportService {
         .whereType<String>()
         .where((String s) => s.isNotEmpty)
         .toList();
-    final String tagsAttr = tagNames.isEmpty
-        ? ''
-        : ' TAGS="${_escapeHtml(tagNames.join(','))}"';
+    final String tagsAttr =
+        tagNames.isEmpty ? '' : ' TAGS="${_escapeHtml(tagNames.join(','))}"';
     return '$indent<DT><A HREF="$href" ADD_DATE="$addDate"$tagsAttr>$title</A>';
   }
 
@@ -270,10 +269,8 @@ class ExportService {
     required Map<int, String> tagIdToSlug,
     required Map<int, String> collectionIdToSlug,
   }) {
-    final List<String> tagSlugs = b.tagIds
-        .map((int id) => tagIdToSlug[id])
-        .whereType<String>()
-        .toList();
+    final List<String> tagSlugs =
+        b.tagIds.map((int id) => tagIdToSlug[id]).whereType<String>().toList();
     final List<String> collectionSlugs = b.collectionIds
         .map((int id) => collectionIdToSlug[id])
         .whereType<String>()

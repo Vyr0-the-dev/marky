@@ -205,8 +205,7 @@ final Provider<SwipeAction> rightSwipeActionProvider = Provider<SwipeAction>(
 
 final Provider<bool> clipboardDetectionEnabledProvider = Provider<bool>(
   (Ref ref) => ref.watch(
-    appSettingsProvider
-        .select((AppSettings s) => s.clipboardDetectionEnabled),
+    appSettingsProvider.select((AppSettings s) => s.clipboardDetectionEnabled),
   ),
 );
 

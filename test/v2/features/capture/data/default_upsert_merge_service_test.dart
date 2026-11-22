@@ -313,7 +313,8 @@ void main() {
   });
 
   group('placeholder metadata upgrades on refetch', () {
-    test('upgrades raw URL title to scraped title while preserving custom titles',
+    test(
+        'upgrades raw URL title to scraped title while preserving custom titles',
         () {
       final Bookmark upgraded = merger.merge(
         existing(title: 'https://tr.wikipedia.org/wiki/Yapay_zek%C3%A2'),

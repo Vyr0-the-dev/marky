@@ -152,7 +152,8 @@ void main() {
     expect(bookmarkRepo.feedQueries.any((q) => q.limit > 10000), isFalse);
   });
 
-  test('collections include archived ones and smart collection metadata', () async {
+  test('collections include archived ones and smart collection metadata',
+      () async {
     final DateTime now = DateTime.utc(2026);
     collectionRepo.allCollections = <BookmarkCollection>[
       BookmarkCollection(
@@ -179,10 +180,16 @@ void main() {
     expect(col['smartRuleJson'], isNotEmpty);
   });
 
-  test('exportNetscapeHtml outputs browser-compatible folders and tags', () async {
+  test('exportNetscapeHtml outputs browser-compatible folders and tags',
+      () async {
     final DateTime now = DateTime.utc(2026, 5);
     tagRepo.allTags = <Tag>[
-      Tag(id: 3, name: 'Flutter', slug: 'flutter', createdAt: now, updatedAt: now),
+      Tag(
+          id: 3,
+          name: 'Flutter',
+          slug: 'flutter',
+          createdAt: now,
+          updatedAt: now),
     ];
     collectionRepo.allCollections = <BookmarkCollection>[
       BookmarkCollection(

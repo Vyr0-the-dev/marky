@@ -288,8 +288,7 @@ class _BrokenLinksScreenState extends ConsumerState<BrokenLinksScreen> {
           ),
           const SizedBox(height: ReadingRoomSpacing.sm),
           Text(
-            l10n?.brokenLinksSubtitle ??
-                'Audit and clean up 404/dead links',
+            l10n?.brokenLinksSubtitle ?? 'Audit and clean up 404/dead links',
             style: theme.textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
               height: 1.4,
@@ -383,7 +382,8 @@ class _BrokenLinkTile extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       color: colors.error.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(ReadingRoomRadii.chip),
+                      borderRadius:
+                          BorderRadius.circular(ReadingRoomRadii.chip),
                       border: Border.all(
                         color: colors.error.withValues(alpha: 0.3),
                         width: 0.5,

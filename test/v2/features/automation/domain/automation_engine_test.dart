@@ -732,7 +732,8 @@ void main() {
   });
 
   group('applyRuleToExisting', () {
-    test('matches active bookmarks, applies actions idempotently, and records execution',
+    test(
+        'matches active bookmarks, applies actions idempotently, and records execution',
         () async {
       bookmarkRepo.feedItems = <Bookmark>[
         _bm(host: 'github.com', url: 'https://github.com/a/b'),

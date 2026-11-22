@@ -83,9 +83,8 @@ class _BatchTaxonomySheetState extends ConsumerState<BatchTaxonomySheet> {
     if (_bookmarks.isEmpty) return false;
     int matches = 0;
     for (final Bookmark b in _bookmarks) {
-      final List<int> ids = widget.mode == BatchTaxonomyMode.tags
-          ? b.tagIds
-          : b.collectionIds;
+      final List<int> ids =
+          widget.mode == BatchTaxonomyMode.tags ? b.tagIds : b.collectionIds;
       if (ids.contains(itemId)) matches++;
     }
     if (matches == 0) return false;
@@ -218,8 +217,7 @@ class _BatchTaxonomySheetState extends ConsumerState<BatchTaxonomySheet> {
                   ),
                   const SizedBox(width: ReadingRoomSpacing.sm),
                   FilledButton(
-                    onPressed:
-                        _saving || _loadingBookmarks ? null : _apply,
+                    onPressed: _saving || _loadingBookmarks ? null : _apply,
                     child: Text(l10n?.actionSave ?? 'Save'),
                   ),
                 ],

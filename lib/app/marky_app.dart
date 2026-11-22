@@ -152,9 +152,8 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
         (themeMode == AppThemeMode.dark || themeMode == AppThemeMode.oled)
             ? _themeFor(darkVariant)
             : _themeFor(ReadingRoomVariant.light);
-    final ThemeData darkTheme = themeMode == AppThemeMode.light
-        ? lightTheme
-        : _themeFor(darkVariant);
+    final ThemeData darkTheme =
+        themeMode == AppThemeMode.light ? lightTheme : _themeFor(darkVariant);
 
     return MaterialApp.router(
       builder: (BuildContext context, Widget? child) {

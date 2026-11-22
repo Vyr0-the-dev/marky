@@ -112,7 +112,8 @@ class _TagEditorSheetState extends ConsumerState<TagEditorSheet> {
                 foregroundColor: Theme.of(context).colorScheme.error,
               ),
               icon: const Icon(Icons.delete_outline, size: 18),
-              label: Text(AppLocalizations.of(context)?.actionDelete ?? 'Delete'),
+              label:
+                  Text(AppLocalizations.of(context)?.actionDelete ?? 'Delete'),
             ),
           ],
         ],

@@ -219,18 +219,16 @@ class _Thumbnail extends StatelessWidget {
       bookmark.normalizedHost ?? bookmark.originalUrl,
     );
 
-    final bool hasDistinctHero =
-        (localHero != null && localHero.isNotEmpty) ||
-            (heroUrl != null &&
-                heroUrl.isNotEmpty &&
-                heroUrl != faviconUrl &&
-                !BookmarkImage.isDataImageUri(heroUrl));
+    final bool hasDistinctHero = (localHero != null && localHero.isNotEmpty) ||
+        (heroUrl != null &&
+            heroUrl.isNotEmpty &&
+            heroUrl != faviconUrl &&
+            !BookmarkImage.isDataImageUri(heroUrl));
 
     Widget buildIconTile() {
-      final String? primaryIcon =
-          (faviconUrl != null && faviconUrl.isNotEmpty)
-              ? faviconUrl
-              : fallbackFavicon;
+      final String? primaryIcon = (faviconUrl != null && faviconUrl.isNotEmpty)
+          ? faviconUrl
+          : fallbackFavicon;
       if (primaryIcon == null || primaryIcon.isEmpty) {
         return _Placeholder(bookmark: bookmark, isLoading: isActivelyScraping);
       }
@@ -491,7 +489,8 @@ class _StatusRow extends StatelessWidget {
     if (minutes == null || minutes <= 0) return null;
 
     final String label =
-        AppLocalizations.of(context)?.readingTimeShort(minutes) ?? '${minutes}m';
+        AppLocalizations.of(context)?.readingTimeShort(minutes) ??
+            '${minutes}m';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),

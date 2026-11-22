@@ -86,8 +86,7 @@ class SharedPreferencesAppSettingsRepository implements AppSettingsRepository {
         _prefs.getString(keyRightSwipeAction),
         fallback: SwipeAction.toggleRead,
       ),
-      clipboardDetectionEnabled:
-          _prefs.getBool(keyClipboardDetection) ?? true,
+      clipboardDetectionEnabled: _prefs.getBool(keyClipboardDetection) ?? true,
     );
     return _current;
   }

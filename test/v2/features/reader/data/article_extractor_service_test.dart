@@ -245,7 +245,8 @@ void main() {
       expect(content.author, equals('Yazar Adı'));
     });
 
-    test('preserves spaces between adjacent inline elements in headings & paragraphs',
+    test(
+        'preserves spaces between adjacent inline elements in headings & paragraphs',
         () async {
       const String html = '''
         <html><body>
@@ -271,7 +272,8 @@ void main() {
       expect(
         article.blocks.any(
           (ArticleBlock b) =>
-              b.type == ArticleBlockType.heading && b.text == '01 Büyük Yanılgı',
+              b.type == ArticleBlockType.heading &&
+              b.text == '01 Büyük Yanılgı',
         ),
         isTrue,
       );
@@ -285,7 +287,8 @@ void main() {
       );
     });
 
-    test('skips base64 placeholder src and extracts lazy data-src / srcset images inside p & figure',
+    test(
+        'skips base64 placeholder src and extracts lazy data-src / srcset images inside p & figure',
         () async {
       const String html = '''
         <html><body>
@@ -318,12 +321,14 @@ void main() {
           .toList();
 
       expect(images.length, 2);
-      expect(images[0].imageUrl, 'https://news.example.com/media/real-photo.jpg');
+      expect(
+          images[0].imageUrl, 'https://news.example.com/media/real-photo.jpg');
       expect(images[1].imageUrl, 'https://cdn.example.com/large.webp');
       expect(images[1].caption, 'Diagram overview');
     });
 
-    test('chooses main article over small promo sidebar <article> and preserves noisy-class wrapper',
+    test(
+        'chooses main article over small promo sidebar <article> and preserves noisy-class wrapper',
         () async {
       const String html = '''
         <html><body>
@@ -352,17 +357,20 @@ void main() {
 
       expect(
         article.blocks.any(
-          (ArticleBlock b) => b.text.contains('distributed offline-first storage'),
+          (ArticleBlock b) =>
+              b.text.contains('distributed offline-first storage'),
         ),
         isTrue,
       );
       expect(
-        article.blocks.any((ArticleBlock b) => b.text.contains('Subscribe now')),
+        article.blocks
+            .any((ArticleBlock b) => b.text.contains('Subscribe now')),
         isFalse,
       );
     });
 
-    test('extracts GitHub README markdown-body and strips Copy button from code blocks',
+    test(
+        'extracts GitHub README markdown-body and strips Copy button from code blocks',
         () async {
       const String html = '''
         <html><body>
@@ -393,9 +401,11 @@ void main() {
       expect(code.language, equals('dart'));
     });
 
-    test('uses JSON-LD articleBody when DOM body is truncated and caches persistently on disk',
+    test(
+        'uses JSON-LD articleBody when DOM body is truncated and caches persistently on disk',
         () async {
-      final Directory tempDir = await Directory.systemTemp.createTemp('marky_reader_test_');
+      final Directory tempDir =
+          await Directory.systemTemp.createTemp('marky_reader_test_');
       addTearDown(() => tempDir.delete(recursive: true));
 
       final String longBody = List<String>.filled(
@@ -421,7 +431,8 @@ void main() {
       final Dio dio = Dio()
         ..interceptors.add(
           InterceptorsWrapper(
-            onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+            onRequest:
+                (RequestOptions options, RequestInterceptorHandler handler) {
               networkCalls++;
               handler.resolve(
                 Response<dynamic>(
