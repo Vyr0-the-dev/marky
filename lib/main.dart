@@ -44,9 +44,13 @@ Future<void> main() async {
     ),
   );
 
-  unawaited(
-    container
-        .read(appStartupCoordinatorProvider)
-        .runPostLaunchStartup(settingsRepository.current),
-  );
+  // Defer timezone, notification, and reminder bootstrap until after the first
+  // frame paints so Android dismisses the splash screen immediately.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(
+      container
+          .read(appStartupCoordinatorProvider)
+          .runPostLaunchStartup(settingsRepository.current),
+    );
+  });
 }

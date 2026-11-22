@@ -69,6 +69,10 @@ android {
             // sessions never overwrite or conflict with the user's installed library.
             applicationIdSuffix = ".preview"
         }
+        getByName("profile") {
+            // Keep AOT profile builds side-by-side with release Marky too.
+            applicationIdSuffix = ".preview"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

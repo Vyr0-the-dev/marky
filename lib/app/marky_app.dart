@@ -52,6 +52,15 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
   bool _coldStartShareHandled = false;
   ErrorWidgetBuilder? _previousErrorWidgetBuilder;
   AppStartupCoordinator? _startupCoordinator;
+  final Map<ReadingRoomVariant, ThemeData> _themeCache =
+      <ReadingRoomVariant, ThemeData>{};
+
+  ThemeData _themeFor(ReadingRoomVariant variant) {
+    return _themeCache.putIfAbsent(
+      variant,
+      () => ReadingRoomTheme.build(variant),
+    );
+  }
 
   @override
   void initState() {
@@ -139,6 +148,14 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
         ? ReadingRoomVariant.oled
         : ReadingRoomVariant.dark;
 
+    final ThemeData lightTheme =
+        (themeMode == AppThemeMode.dark || themeMode == AppThemeMode.oled)
+            ? _themeFor(darkVariant)
+            : _themeFor(ReadingRoomVariant.light);
+    final ThemeData darkTheme = themeMode == AppThemeMode.light
+        ? lightTheme
+        : _themeFor(darkVariant);
+
     return MaterialApp.router(
       builder: (BuildContext context, Widget? child) {
         final MediaQueryData mediaQuery = MediaQuery.of(context);
@@ -159,8 +176,8 @@ class _MarkyAppState extends ConsumerState<MarkyApp>
       },
       title: 'Marky',
       debugShowCheckedModeBanner: false,
-      theme: ReadingRoomTheme.build(ReadingRoomVariant.light),
-      darkTheme: ReadingRoomTheme.build(darkVariant),
+      theme: lightTheme,
+      darkTheme: darkTheme,
       themeMode: _toFlutterThemeMode(themeMode),
       locale: localeChoice.toLocale(),
       localeResolutionCallback:
