@@ -93,13 +93,15 @@ jobs:
           Download the `.apk` below and open it on your Android device (allow installs from unknown sources).
 
           ### Highlights
-          - Reading Room UI with warm dark, light and OLED themes
-          - Home screen widget with Quick Add and Search
-          - Cover image controls: view, change URL, remove
-          - Reader mode with clean typography
-          - Search operators: `tag:`, `domain:`, `source:`, `is:favorite`
-          - 100% local Isar database, no cloud
-          - JSON backup and Netscape HTML import/export
+          - New Terracotta dog-ear app icon and high-res Android 12+ splash art
+          - ~3× faster cold start (deferred ShareOverlay engine warm-up & cached themes)
+          - Refined typography (Plus Jakarta Sans + Inter tabular numerals) and WCAG AAA dark/OLED contrast
+          - Upgraded Reader Mode with offline article cache, font/spacing controls, and Highlight-to-Note
+          - Batch actions: multi-select tagging, collections, and cancellable bulk metadata refetch
+          - Faster Firefox/Chrome HTML import with inline base64 icon & high-res favicon support
+          - Broken Link Checker with parallel scanning and 1-tap Wayback Machine recovery
+          - Run automation rules on existing bookmarks & complete Turkish/English localization
+          - JSON v2 full backup (including tags, collections, notes, reminders, rules) and Netscape HTML export
           EOF
 
           if gh release view "$TAG" > /dev/null 2>&1; then

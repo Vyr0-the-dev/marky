@@ -18,7 +18,7 @@ void main() {
       pubspec,
       contains('description: Marky - Offline-first personal link manager'),
     );
-    expect(pubspec, contains('version: 1.0.0+1'));
+    expect(pubspec, contains('version: 1.1.0+2'));
     expect(buildGradle, contains('namespace = "com.marky.app.marky"'));
     expect(buildGradle, contains('applicationId = "com.marky.app.marky"'));
     expect(manifest, contains('android:label="@string/app_name"'));
