@@ -10,6 +10,7 @@ import 'package:marky/features/capture/data/capture_service_impl.dart';
 import 'package:marky/features/capture/data/default_scraping_orchestrator.dart';
 import 'package:marky/features/capture/data/default_upsert_merge_service.dart';
 import 'package:marky/features/capture/data/isar_duplicate_detector.dart';
+import 'package:marky/features/capture/domain/bulk_metadata_refetch_service.dart';
 import 'package:marky/features/capture/domain/capture_service.dart';
 import 'package:marky/features/capture/domain/duplicate_detector.dart';
 import 'package:marky/features/capture/domain/scraping_orchestrator.dart';
@@ -48,6 +49,16 @@ final Provider<ScrapingOrchestrator> scrapingOrchestratorProvider =
     scraper: ref.watch(metadataScraperServiceProvider),
     merger: ref.watch(upsertMergeServiceProvider),
     thumbnailService: ref.watch(thumbnailServiceProvider),
+  );
+});
+
+/// Provides [BulkMetadataRefetchService] for controlled, cancellable
+/// batch metadata completion across incomplete or selected bookmarks.
+final Provider<BulkMetadataRefetchService> bulkMetadataRefetchServiceProvider =
+    Provider<BulkMetadataRefetchService>((Ref ref) {
+  return BulkMetadataRefetchService(
+    bookmarkRepository: ref.watch(bookmarkRepositoryProvider),
+    scrapingOrchestrator: ref.watch(scrapingOrchestratorProvider),
   );
 });
 

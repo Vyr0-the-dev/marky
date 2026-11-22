@@ -1769,4 +1769,58 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsImportViewAction => 'Görüntüle';
+
+  @override
+  String get batchActionRefetch => 'Yenile';
+
+  @override
+  String get settingsBulkRefetchTitle => 'Eksik meta verileri tamamla';
+
+  @override
+  String get settingsBulkRefetchSubtitle =>
+      'Eksik kapak görseli, özet ve okuma sürelerini indir';
+
+  @override
+  String get bulkRefetchTitle => 'Meta veriler yenileniyor';
+
+  @override
+  String get bulkRefetchScanning => 'Kütüphane taranıyor…';
+
+  @override
+  String get bulkRefetchAllComplete =>
+      'Tüm yer imlerinin meta verileri zaten eksiksiz.';
+
+  @override
+  String get bulkRefetchConfirmTitle => 'Eksik meta veriler tamamlansın mı?';
+
+  @override
+  String bulkRefetchConfirmBody(int count) {
+    return '$count yer iminin kapak görseli, özeti veya başlığı eksik. Mevcut başlıkların, etiketlerin ve notların korunur.';
+  }
+
+  @override
+  String get bulkRefetchStartAction => 'Başlat';
+
+  @override
+  String get bulkRefetchStopAction => 'Durdur';
+
+  @override
+  String bulkRefetchProgressLabel(int processed, int total) {
+    return '$processed / $total';
+  }
+
+  @override
+  String bulkRefetchStatsLabel(int succeeded, int failed) {
+    return '$succeeded güncellendi · $failed değişmedi';
+  }
+
+  @override
+  String bulkRefetchSummary(int succeeded, int total) {
+    return '$total yer iminden $succeeded tanesinin meta verisi güncellendi.';
+  }
+
+  @override
+  String bulkRefetchCancelledSummary(int succeeded, int processed) {
+    return 'Durduruldu — kontrol edilen $processed kayıttan $succeeded tanesi güncellendi.';
+  }
 }

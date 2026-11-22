@@ -15,6 +15,7 @@ import 'package:marky/core/utils/l10n_extension.dart';
 import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
 import 'package:marky/features/capture/data/capture_providers.dart';
 import 'package:marky/features/capture/domain/scraping_orchestrator.dart';
+import 'package:marky/features/capture/presentation/bulk_refetch_dialog.dart';
 import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
 import 'package:marky/features/dashboard/data/dashboard_providers.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';
@@ -224,6 +225,21 @@ class SettingsScreen extends ConsumerWidget {
             ),
             trailing: const Icon(Icons.chevron_right_rounded, size: 20),
             onTap: () => context.push(Routes.brokenLinks),
+          ),
+          ListTile(
+            leading: const Icon(Icons.sync_rounded),
+            title: Text(
+              l10n?.settingsBulkRefetchTitle ?? 'Complete missing metadata',
+            ),
+            subtitle: Text(
+              l10n?.settingsBulkRefetchSubtitle ??
+                  'Fetch missing covers, summaries, and reading times',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+            onTap: () => runIncompleteLibraryRefetchFlow(
+              context: context,
+              ref: ref,
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.upload_file),

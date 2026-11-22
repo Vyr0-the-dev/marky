@@ -31,7 +31,7 @@ class DefaultUpsertMergeService implements UpsertMergeService {
           existing.externalContentId ?? incoming.externalContentId,
 
       // ── Content metadata ───────────────────────────────────────
-      title: existing.title ?? incoming.title,
+      title: _mergeTitle(existing.title, incoming.title),
       description: existing.description ?? incoming.description,
       snippet: existing.snippet ?? incoming.snippet,
       author: existing.author ?? incoming.author,
@@ -48,7 +48,12 @@ class DefaultUpsertMergeService implements UpsertMergeService {
           : existing.contentType,
 
       // ── Media ──────────────────────────────────────────────────
-      heroImageUrl: existing.heroImageUrl ?? incoming.heroImageUrl,
+      heroImageUrl: _mergeHeroImageUrl(
+        existingHero: existing.heroImageUrl,
+        existingFavicon: existing.faviconUrl,
+        incomingHero: incoming.heroImageUrl,
+        incomingFavicon: incoming.faviconUrl,
+      ),
       heroImageLocalPath:
           existing.heroImageLocalPath ?? incoming.heroImageLocalPath,
       faviconUrl: existing.faviconUrl ?? incoming.faviconUrl,
@@ -77,6 +82,57 @@ class DefaultUpsertMergeService implements UpsertMergeService {
   }
 
   // ─── Helpers ───────────────────────────────────────────────────
+
+  /// Preserves user/existing titles, except when [existing] is empty or still
+  /// a raw `http(s)://` URL placeholder and [incoming] supplies a real title.
+  static String? _mergeTitle(String? existing, String? incoming) {
+    final String? trimmedExisting = existing?.trim();
+    if (trimmedExisting == null || trimmedExisting.isEmpty) {
+      return incoming;
+    }
+    final String lower = trimmedExisting.toLowerCase();
+    final bool existingIsRawUrl =
+        lower.startsWith('http://') || lower.startsWith('https://');
+    if (existingIsRawUrl) {
+      final String? trimmedIncoming = incoming?.trim();
+      if (trimmedIncoming != null && trimmedIncoming.isNotEmpty) {
+        final String incomingLower = trimmedIncoming.toLowerCase();
+        final bool incomingIsRawUrl = incomingLower.startsWith('http://') ||
+            incomingLower.startsWith('https://');
+        if (!incomingIsRawUrl) {
+          return incoming;
+        }
+      }
+    }
+    return existing;
+  }
+
+  /// Preserves an existing distinct hero image, but upgrades when [existingHero]
+  /// is null/empty or merely duplicates [existingFavicon] and [incomingHero]
+  /// provides a real cover image.
+  static String? _mergeHeroImageUrl({
+    required String? existingHero,
+    required String? existingFavicon,
+    required String? incomingHero,
+    required String? incomingFavicon,
+  }) {
+    final String? trimmedExisting = existingHero?.trim();
+    if (trimmedExisting == null || trimmedExisting.isEmpty) {
+      return incomingHero;
+    }
+    final bool existingIsFaviconPlaceholder =
+        existingFavicon != null && trimmedExisting == existingFavicon.trim();
+    if (existingIsFaviconPlaceholder) {
+      final String? trimmedIncoming = incomingHero?.trim();
+      if (trimmedIncoming != null &&
+          trimmedIncoming.isNotEmpty &&
+          trimmedIncoming != incomingFavicon?.trim() &&
+          trimmedIncoming != existingFavicon.trim()) {
+        return incomingHero;
+      }
+    }
+    return existingHero;
+  }
 
   /// Union two id-lists without duplicates, preserving existing order
   /// first, then appending new entries.

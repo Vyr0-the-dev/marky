@@ -848,5 +848,66 @@
   "automationLogicAnd": "VE",
   "automationLogicOr": "VEYA",
   "settingsImportingProgress": "Yer imleri içe aktarılıyor…",
-  "settingsImportViewAction": "Görüntüle"
+  "settingsImportViewAction": "Görüntüle",
+  "batchActionRefetch": "Yenile",
+  "settingsBulkRefetchTitle": "Eksik meta verileri tamamla",
+  "settingsBulkRefetchSubtitle": "Eksik kapak görseli, özet ve okuma sürelerini indir",
+  "bulkRefetchTitle": "Meta veriler yenileniyor",
+  "bulkRefetchScanning": "Kütüphane taranıyor…",
+  "bulkRefetchAllComplete": "Tüm yer imlerinin meta verileri zaten eksiksiz.",
+  "bulkRefetchConfirmTitle": "Eksik meta veriler tamamlansın mı?",
+  "bulkRefetchConfirmBody": "{count} yer iminin kapak görseli, özeti veya başlığı eksik. Mevcut başlıkların, etiketlerin ve notların korunur.",
+  "@bulkRefetchConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkRefetchStartAction": "Başlat",
+  "bulkRefetchStopAction": "Durdur",
+  "bulkRefetchProgressLabel": "{processed} / {total}",
+  "@bulkRefetchProgressLabel": {
+    "placeholders": {
+      "processed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkRefetchStatsLabel": "{succeeded} güncellendi · {failed} değişmedi",
+  "@bulkRefetchStatsLabel": {
+    "placeholders": {
+      "succeeded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkRefetchSummary": "{total} yer iminden {succeeded} tanesinin meta verisi güncellendi.",
+  "@bulkRefetchSummary": {
+    "placeholders": {
+      "succeeded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkRefetchCancelledSummary": "Durduruldu — kontrol edilen {processed} kayıttan {succeeded} tanesi güncellendi.",
+  "@bulkRefetchCancelledSummary": {
+    "placeholders": {
+      "succeeded": {
+        "type": "int"
+      },
+      "processed": {
+        "type": "int"
+      }
+    }
+  }
 }

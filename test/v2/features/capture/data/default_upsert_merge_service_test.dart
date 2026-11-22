@@ -311,4 +311,35 @@ void main() {
       expect(result.readingTimeMinutes, 3);
     });
   });
+
+  group('placeholder metadata upgrades on refetch', () {
+    test('upgrades raw URL title to scraped title while preserving custom titles',
+        () {
+      final Bookmark upgraded = merger.merge(
+        existing(title: 'https://tr.wikipedia.org/wiki/Yapay_zek%C3%A2'),
+        incoming(title: 'Yapay zekâ - Vikipedi'),
+      );
+      expect(upgraded.title, 'Yapay zekâ - Vikipedi');
+
+      final Bookmark preserved = merger.merge(
+        existing(title: 'My custom title'),
+        incoming(title: 'Scraped title'),
+      );
+      expect(preserved.title, 'My custom title');
+    });
+
+    test('upgrades favicon-placeholder heroImageUrl to real cover image', () {
+      final Bookmark upgraded = merger.merge(
+        existing(
+          heroImageUrl: 'https://example.com/favicon.ico',
+          faviconUrl: 'https://example.com/favicon.ico',
+        ),
+        incoming(
+          heroImageUrl: 'https://example.com/cover.jpg',
+          faviconUrl: 'https://example.com/favicon.ico',
+        ),
+      );
+      expect(upgraded.heroImageUrl, 'https://example.com/cover.jpg');
+    });
+  });
 }

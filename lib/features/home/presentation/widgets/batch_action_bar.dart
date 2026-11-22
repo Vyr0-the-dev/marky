@@ -10,6 +10,7 @@ import 'package:marky/features/bookmarks/domain/bookmark.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
 import 'package:marky/features/capture/data/capture_providers.dart';
 import 'package:marky/features/capture/domain/scraping_orchestrator.dart';
+import 'package:marky/features/capture/presentation/bulk_refetch_dialog.dart';
 import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/home/presentation/feed_state.dart';
 import 'package:marky/features/home/presentation/widgets/batch_taxonomy_sheet.dart';
@@ -116,6 +117,11 @@ class BatchActionBar extends ConsumerWidget {
                     ),
                   ),
                   _ActionButton(
+                    icon: Icons.refresh_rounded,
+                    label: l10n?.batchActionRefetch ?? 'Refetch',
+                    onTap: () => _batchRefetch(context, ref, selectedIds),
+                  ),
+                  _ActionButton(
                     icon: Icons.delete_outline,
                     label: l10n?.batchActionDelete ?? 'Delete',
                     color: theme.colorScheme.error,
@@ -192,6 +198,24 @@ class BatchActionBar extends ConsumerWidget {
           ),
         ),
       );
+  }
+
+  Future<void> _batchRefetch(
+    BuildContext context,
+    WidgetRef ref,
+    Set<int> ids,
+  ) async {
+    if (ids.isEmpty) {
+      ref.read(feedNotifierProvider.notifier).exitSelectionMode();
+      return;
+    }
+    final List<int> targetIds = ids.toList(growable: false);
+    await runBulkMetadataRefetchWithDialog(
+      context: context,
+      ref: ref,
+      bookmarkIds: targetIds,
+    );
+    ref.read(feedNotifierProvider.notifier).exitSelectionMode();
   }
 
   Future<void> _batchDelete(

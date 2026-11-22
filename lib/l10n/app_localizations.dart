@@ -3284,6 +3284,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View'**
   String get settingsImportViewAction;
+
+  /// No description provided for @batchActionRefetch.
+  ///
+  /// In en, this message translates to:
+  /// **'Refetch'**
+  String get batchActionRefetch;
+
+  /// No description provided for @settingsBulkRefetchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete missing metadata'**
+  String get settingsBulkRefetchTitle;
+
+  /// No description provided for @settingsBulkRefetchSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch missing covers, summaries, and reading times'**
+  String get settingsBulkRefetchSubtitle;
+
+  /// No description provided for @bulkRefetchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refetching metadata'**
+  String get bulkRefetchTitle;
+
+  /// No description provided for @bulkRefetchScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning library…'**
+  String get bulkRefetchScanning;
+
+  /// No description provided for @bulkRefetchAllComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'All bookmarks already have complete metadata.'**
+  String get bulkRefetchAllComplete;
+
+  /// No description provided for @bulkRefetchConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete missing metadata?'**
+  String get bulkRefetchConfirmTitle;
+
+  /// No description provided for @bulkRefetchConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} bookmarks are missing covers, summaries, or titles. Your existing titles, tags, and notes will not be overwritten.'**
+  String bulkRefetchConfirmBody(int count);
+
+  /// No description provided for @bulkRefetchStartAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get bulkRefetchStartAction;
+
+  /// No description provided for @bulkRefetchStopAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get bulkRefetchStopAction;
+
+  /// No description provided for @bulkRefetchProgressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{processed} / {total}'**
+  String bulkRefetchProgressLabel(int processed, int total);
+
+  /// No description provided for @bulkRefetchStatsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{succeeded} updated · {failed} unchanged'**
+  String bulkRefetchStatsLabel(int succeeded, int failed);
+
+  /// No description provided for @bulkRefetchSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated metadata for {succeeded} of {total} bookmarks.'**
+  String bulkRefetchSummary(int succeeded, int total);
+
+  /// No description provided for @bulkRefetchCancelledSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped — updated {succeeded} of {processed} checked bookmarks.'**
+  String bulkRefetchCancelledSummary(int succeeded, int processed);
 }
 
 class _AppLocalizationsDelegate

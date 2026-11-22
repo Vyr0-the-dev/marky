@@ -848,5 +848,66 @@
   "automationLogicAnd": "AND",
   "automationLogicOr": "OR",
   "settingsImportingProgress": "Importing bookmarks…",
-  "settingsImportViewAction": "View"
+  "settingsImportViewAction": "View",
+  "batchActionRefetch": "Refetch",
+  "settingsBulkRefetchTitle": "Complete missing metadata",
+  "settingsBulkRefetchSubtitle": "Fetch missing covers, summaries, and reading times",
+  "bulkRefetchTitle": "Refetching metadata",
+  "bulkRefetchScanning": "Scanning library…",
+  "bulkRefetchAllComplete": "All bookmarks already have complete metadata.",
+  "bulkRefetchConfirmTitle": "Complete missing metadata?",
+  "bulkRefetchConfirmBody": "{count} bookmarks are missing covers, summaries, or titles. Your existing titles, tags, and notes will not be overwritten.",
+  "@bulkRefetchConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkRefetchStartAction": "Start",
+  "bulkRefetchStopAction": "Stop",
+  "bulkRefetchProgressLabel": "{processed} / {total}",
+  "@bulkRefetchProgressLabel": {
+    "placeholders": {
+      "processed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkRefetchStatsLabel": "{succeeded} updated · {failed} unchanged",
+  "@bulkRefetchStatsLabel": {
+    "placeholders": {
+      "succeeded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkRefetchSummary": "Updated metadata for {succeeded} of {total} bookmarks.",
+  "@bulkRefetchSummary": {
+    "placeholders": {
+      "succeeded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkRefetchCancelledSummary": "Stopped — updated {succeeded} of {processed} checked bookmarks.",
+  "@bulkRefetchCancelledSummary": {
+    "placeholders": {
+      "succeeded": {
+        "type": "int"
+      },
+      "processed": {
+        "type": "int"
+      }
+    }
+  }
 }

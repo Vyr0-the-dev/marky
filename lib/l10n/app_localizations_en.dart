@@ -1759,4 +1759,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsImportViewAction => 'View';
+
+  @override
+  String get batchActionRefetch => 'Refetch';
+
+  @override
+  String get settingsBulkRefetchTitle => 'Complete missing metadata';
+
+  @override
+  String get settingsBulkRefetchSubtitle =>
+      'Fetch missing covers, summaries, and reading times';
+
+  @override
+  String get bulkRefetchTitle => 'Refetching metadata';
+
+  @override
+  String get bulkRefetchScanning => 'Scanning library…';
+
+  @override
+  String get bulkRefetchAllComplete =>
+      'All bookmarks already have complete metadata.';
+
+  @override
+  String get bulkRefetchConfirmTitle => 'Complete missing metadata?';
+
+  @override
+  String bulkRefetchConfirmBody(int count) {
+    return '$count bookmarks are missing covers, summaries, or titles. Your existing titles, tags, and notes will not be overwritten.';
+  }
+
+  @override
+  String get bulkRefetchStartAction => 'Start';
+
+  @override
+  String get bulkRefetchStopAction => 'Stop';
+
+  @override
+  String bulkRefetchProgressLabel(int processed, int total) {
+    return '$processed / $total';
+  }
+
+  @override
+  String bulkRefetchStatsLabel(int succeeded, int failed) {
+    return '$succeeded updated · $failed unchanged';
+  }
+
+  @override
+  String bulkRefetchSummary(int succeeded, int total) {
+    return 'Updated metadata for $succeeded of $total bookmarks.';
+  }
+
+  @override
+  String bulkRefetchCancelledSummary(int succeeded, int processed) {
+    return 'Stopped — updated $succeeded of $processed checked bookmarks.';
+  }
 }
