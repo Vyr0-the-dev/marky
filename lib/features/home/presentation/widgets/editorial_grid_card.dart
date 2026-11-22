@@ -160,9 +160,10 @@ class _EditorialGridCardState extends State<EditorialGridCard> {
                                 bookmark.displayTitle,
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.sourceSerif4(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.15,
                                   height: 1.28,
                                   color: titleColor,
                                 ),
@@ -348,6 +349,16 @@ class TypographicEditorialCover extends StatelessWidget {
 
     final String monogram = monogramFor(bookmark);
 
+    final String? primaryFavicon =
+        (bookmark.faviconUrl?.trim().isNotEmpty ?? false)
+            ? bookmark.faviconUrl!.trim()
+            : BookmarkImage.faviconFallbackUrlForHost(
+                bookmark.normalizedHost ?? bookmark.originalUrl,
+              );
+    final String? fallbackFavicon = BookmarkImage.faviconFallbackUrlForHost(
+      bookmark.normalizedHost ?? bookmark.originalUrl,
+    );
+
     return Container(
       height: 92,
       decoration: BoxDecoration(
@@ -364,9 +375,9 @@ class TypographicEditorialCover extends StatelessWidget {
             bottom: -10,
             child: Text(
               monogram,
-              style: GoogleFonts.sourceSerif4(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 64,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 height: 1,
                 color: watermarkColor,
               ),
@@ -382,22 +393,47 @@ class TypographicEditorialCover extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
-                    vertical: 2,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
                     color: badgeBg,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: badgeBorder, width: 0.8),
                   ),
-                  child: Text(
-                    host,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 10,
-                      color: badgeText,
-                      height: 1.2,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (primaryFavicon != null &&
+                          primaryFavicon.isNotEmpty) ...<Widget>[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: BookmarkImage(
+                            imageUrl: primaryFavicon,
+                            fallbackImageUrl: fallbackFavicon,
+                            width: 14,
+                            height: 14,
+                            cacheWidth: 32,
+                            cacheHeight: 32,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_) => const SizedBox.shrink(),
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                      ],
+                      Flexible(
+                        child: Text(
+                          host,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: badgeText,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -449,8 +485,10 @@ class _EditorialMetaFooter extends StatelessWidget {
             metaText,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.jetBrainsMono(
-              fontSize: 10.5,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
+              fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
               color: EditorialGridCard.metaColor,
               height: 1.2,
             ),

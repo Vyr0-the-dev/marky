@@ -12,10 +12,17 @@ import 'package:marky/app/settings/app_settings_providers.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/storage/cache_management_service.dart';
 import 'package:marky/core/utils/l10n_extension.dart';
+import 'package:marky/features/bookmarks/data/bookmark_providers.dart';
+import 'package:marky/features/capture/data/capture_providers.dart';
+import 'package:marky/features/capture/domain/scraping_orchestrator.dart';
+import 'package:marky/features/collections/data/bookmark_collection_providers.dart';
+import 'package:marky/features/dashboard/data/dashboard_providers.dart';
+import 'package:marky/features/home/presentation/feed_notifier.dart';
 import 'package:marky/features/import_export/data/import_export_providers.dart';
 import 'package:marky/features/import_export/domain/import_service.dart';
 import 'package:marky/features/reminders/data/reminder_providers.dart';
 import 'package:marky/features/reminders/domain/reminder_scheduler.dart';
+import 'package:marky/features/tags/data/tag_providers.dart';
 import 'package:marky/l10n/app_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -910,7 +917,11 @@ class SettingsScreen extends ConsumerWidget {
 
   // ── Import ──────────────────────────────────────────────────────
 
+  static const int _maxImmediateEnrichCount = 24;
+  static const int _importEnrichConcurrency = 4;
+
   Future<void> _import(BuildContext context, WidgetRef ref) async {
+    bool progressDialogOpen = false;
     try {
       final FilePickerResult? picked = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -920,6 +931,38 @@ class SettingsScreen extends ConsumerWidget {
 
       final String? path = picked.files.single.path;
       if (path == null) return;
+
+      if (context.mounted) {
+        progressDialogOpen = true;
+        final AppLocalizations? l10n = AppLocalizations.of(context);
+        unawaited(
+          showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext dialogContext) => PopScope(
+              canPop: false,
+              child: AlertDialog(
+                content: Row(
+                  children: <Widget>[
+                    const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                    const SizedBox(width: ReadingRoomSpacing.lg),
+                    Expanded(
+                      child: Text(
+                        l10n?.settingsImportingProgress ??
+                            'Importing bookmarks…',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
 
       final String content = await File(path).readAsString();
       final String trimmed = content.trim().toLowerCase();
@@ -934,13 +977,40 @@ class SettingsScreen extends ConsumerWidget {
           ? await ref.read(importServiceProvider).importHtmlBookmarks(content)
           : await ref.read(importServiceProvider).importAll(content);
 
+      // Force-refresh all feed, library, and dashboard providers so newly
+      // imported bookmarks and folders appear immediately with zero lag.
+      ref.invalidate(bookmarkFeedProvider);
+      ref.invalidate(bookmarkCountProvider);
+      ref.invalidate(dashboardStatsProvider);
+      ref.invalidate(tagsProvider);
+      ref.invalidate(bookmarkCollectionsProvider);
+      ref.invalidate(bookmarkCollectionsWithArchivedProvider);
+
+      if (result.importedBookmarkIds.isNotEmpty) {
+        final ScrapingOrchestrator orchestrator =
+            ref.read(scrapingOrchestratorProvider);
+        unawaited(
+          _enrichImportedBookmarks(
+            orchestrator,
+            result.importedBookmarkIds,
+          ),
+        );
+      }
+
+      if (progressDialogOpen && context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        progressDialogOpen = false;
+      }
+
       if (!context.mounted) return;
+      final AppLocalizations? l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
+            duration: const Duration(seconds: 5),
             content: Text(
-              AppLocalizations.of(context)?.settingsImportSummary(
+              l10n?.settingsImportSummary(
                     result.bookmarksImported,
                     result.bookmarksMerged,
                     result.bookmarksSkipped,
@@ -953,9 +1023,25 @@ class SettingsScreen extends ConsumerWidget {
                       '${result.tagsImported} tags, '
                       '${result.collectionsImported} collections.',
             ),
+            action: (result.bookmarksImported > 0 || result.bookmarksMerged > 0)
+                ? SnackBarAction(
+                    label: l10n?.settingsImportViewAction ?? 'View',
+                    onPressed: () {
+                      if (!context.mounted) return;
+                      ref
+                          .read(feedNotifierProvider.notifier)
+                          .clearNarrowing();
+                      context.go(Routes.home);
+                    },
+                  )
+                : null,
           ),
         );
     } catch (e) {
+      if (progressDialogOpen && context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        progressDialogOpen = false;
+      }
       if (context.mounted) {
         final AppLocalizations? l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context)
@@ -969,6 +1055,35 @@ class SettingsScreen extends ConsumerWidget {
           );
       }
     }
+  }
+
+  /// Background bounded-concurrency enrichment for freshly imported browser
+  /// bookmarks so hero images, descriptions, and reading times populate
+  /// smoothly without blocking the UI or saturating network sockets.
+  static Future<void> _enrichImportedBookmarks(
+    ScrapingOrchestrator orchestrator,
+    List<int> ids,
+  ) async {
+    final List<int> targets = ids.take(_maxImmediateEnrichCount).toList();
+    int cursor = 0;
+
+    Future<void> worker() async {
+      while (cursor < targets.length) {
+        final int id = targets[cursor++];
+        try {
+          await orchestrator.enrich(id);
+        } on Object {
+          // Best-effort enrichment; individual site failures must not halt batch.
+        }
+      }
+    }
+
+    final int workerCount = targets.length < _importEnrichConcurrency
+        ? targets.length
+        : _importEnrichConcurrency;
+    await Future.wait<void>(
+      List<Future<void>>.generate(workerCount, (_) => worker()),
+    );
   }
 
   // ── Reset ──────────────────────────────────────────────────────

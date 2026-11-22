@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:marky/core/database/enums/automation_action_type.dart';
 import 'package:marky/core/database/enums/automation_trigger_type.dart';
@@ -43,6 +44,7 @@ class ImportResult {
     this.automationRulesImported = 0,
     this.savedSearchesImported = 0,
     this.remindersImported = 0,
+    this.importedBookmarkIds = const <int>[],
   });
 
   final int bookmarksImported;
@@ -54,6 +56,7 @@ class ImportResult {
   final int automationRulesImported;
   final int savedSearchesImported;
   final int remindersImported;
+  final List<int> importedBookmarkIds;
 }
 
 /// Restores a Marky JSON backup (v1 or v2) or browser Netscape HTML file,
@@ -466,9 +469,18 @@ class ImportService {
   }
 
   /// Parses HTML bookmarks (Netscape Bookmark format) and inserts missing entities.
+  ///
+  /// Offloads DOM parsing of large browser exports (e.g. Firefox files with
+  /// inline base64 icons) to a background isolate and commits all bookmarks in
+  /// a single atomic batch transaction so reactive feeds update immediately.
   Future<ImportResult> importHtmlBookmarks(String htmlString) async {
-    const NetscapeBookmarkParser parser = NetscapeBookmarkParser();
-    final List<NetscapeBookmarkEntry> entries = parser.parse(htmlString);
+    const int isolateThresholdChars = 16 * 1024;
+    final List<NetscapeBookmarkEntry> entries =
+        htmlString.length > isolateThresholdChars
+            ? await Isolate.run<List<NetscapeBookmarkEntry>>(
+                () => const NetscapeBookmarkParser().parse(htmlString),
+              )
+            : const NetscapeBookmarkParser().parse(htmlString);
 
     int bookmarksImported = 0;
     int bookmarksMerged = 0;
@@ -478,6 +490,13 @@ class ImportService {
 
     final Map<String, int> folderToCollectionId = <String, int>{};
     final Map<String, int> tagNameToId = <String, int>{};
+    // Deduplicate identical URLs appearing in multiple folders within the same
+    // HTML file before committing so Isar's unique urlHash index never collides.
+    final Map<String, int> pendingIndexByHash = <String, int>{};
+    final List<Bookmark> toSave = <Bookmark>[];
+    final List<bool> isNewFlags = <bool>[];
+
+    final DateTime now = DateTime.now();
 
     for (final NetscapeBookmarkEntry entry in entries) {
       final String? canonicalUrl = _normalizer.normalize(entry.url);
@@ -533,7 +552,6 @@ class ImportService {
         if (tId != null && !tagIds.contains(tId)) tagIds.add(tId);
       }
 
-      final DateTime now = DateTime.now();
       final Bookmark incoming = Bookmark(
         originalUrl: entry.url,
         canonicalUrl: canonicalUrl,
@@ -549,6 +567,16 @@ class ImportService {
         updatedAt: now,
       );
 
+      final int? pendingIndex = pendingIndexByHash[urlHash];
+      if (pendingIndex != null) {
+        toSave[pendingIndex] = _mergeService.merge(
+          toSave[pendingIndex],
+          incoming,
+        );
+        bookmarksMerged++;
+        continue;
+      }
+
       final DuplicateCheckResult duplicate = await _duplicateDetector.check(
         urlHash: urlHash,
         canonicalUrl: canonicalUrl,
@@ -556,13 +584,26 @@ class ImportService {
       );
 
       if (duplicate.isNew) {
-        await _bookmarks.save(incoming);
+        pendingIndexByHash[urlHash] = toSave.length;
+        toSave.add(incoming);
+        isNewFlags.add(true);
         bookmarksImported++;
       } else {
         final Bookmark existing = duplicate.existingBookmark!;
         final Bookmark merged = _mergeService.merge(existing, incoming);
-        await _bookmarks.save(merged);
+        pendingIndexByHash[urlHash] = toSave.length;
+        toSave.add(merged);
+        isNewFlags.add(false);
         bookmarksMerged++;
+      }
+    }
+
+    final List<Bookmark> persisted = await _saveBatchBestEffort(toSave);
+    final List<int> importedIds = <int>[];
+    for (int i = 0; i < persisted.length; i++) {
+      final int? id = persisted[i].id;
+      if (id != null && i < isNewFlags.length && isNewFlags[i]) {
+        importedIds.add(id);
       }
     }
 
@@ -574,7 +615,21 @@ class ImportService {
       bookmarksSkipped: bookmarksSkipped,
       tagsImported: tagsImported,
       collectionsImported: collectionsImported,
+      importedBookmarkIds: importedIds,
     );
+  }
+
+  Future<List<Bookmark>> _saveBatchBestEffort(List<Bookmark> bookmarks) async {
+    if (bookmarks.isEmpty) return const <Bookmark>[];
+    try {
+      return await _bookmarks.saveAll(bookmarks);
+    } on UnimplementedError {
+      final List<Bookmark> saved = <Bookmark>[];
+      for (final Bookmark bookmark in bookmarks) {
+        saved.add(await _bookmarks.save(bookmark));
+      }
+      return saved;
+    }
   }
 
   Future<void> _recomputeCountsBestEffort() async {

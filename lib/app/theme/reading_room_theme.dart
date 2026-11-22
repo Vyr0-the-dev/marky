@@ -5,14 +5,12 @@ import 'package:marky/app/theme/reading_room_tokens.dart';
 
 /// Builds [ThemeData] for the **Reading Room** visual identity.
 ///
-/// Reading Room uses a tripartite type system:
-/// - **Source Serif 4** for headlines (body of the library)
-/// - **Inter** for body + UI (legibility at small sizes)
-/// - **JetBrains Mono** for metadata / timestamps / counters (data feel)
+/// Uses a clean, cohesive editorial sans pairing across the app shell:
+/// - **Plus Jakarta Sans** for brand wordmark, screen headings, and card titles
+/// - **Inter** (with tabular numerals for metadata/counters) for body and UI
 ///
-/// Fonts are currently pulled via `google_fonts` (runtime fetch, cached
-/// after first launch). Faz 12 will replace this with a local asset
-/// bundle so first-launch is fully offline-capable.
+/// Reader Mode separately exposes Source Serif 4 / Inter for long-form reading
+/// and JetBrains Mono strictly for article code blocks.
 ///
 /// Callers pick the palette via [ReadingRoomVariant]:
 /// - [ReadingRoomVariant.light] — warm off-white
@@ -142,9 +140,7 @@ abstract final class ReadingRoomTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: p.accent,
-          foregroundColor: variant == ReadingRoomVariant.light
-              ? ReadingRoomColors.lightSurfaceRaised
-              : ReadingRoomColors.darkInk,
+          foregroundColor: scheme.onPrimary,
           minimumSize: const Size(64, 44),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
@@ -200,9 +196,7 @@ abstract final class ReadingRoomTheme {
         secondarySelectedColor: p.accent,
         labelStyle: baseText.labelMedium,
         secondaryLabelStyle: baseText.labelMedium?.copyWith(
-          color: variant == ReadingRoomVariant.light
-              ? ReadingRoomColors.lightSurfaceRaised
-              : ReadingRoomColors.darkInk,
+          color: scheme.onPrimary,
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: ReadingRoomSpacing.sm,
@@ -266,68 +260,80 @@ abstract final class ReadingRoomTheme {
     );
   }
 
-  /// Builds the three-voice text theme.
+  /// Builds the unified modern editorial text theme.
   ///
-  /// - `headline*` → Source Serif 4 (500 weight)
-  /// - `title*` / `body*` / `label*` → Inter (400/500)
-  /// - `bodySmall` is Inter too, but feature code should use the
-  ///   exposed [ReadingRoomTextStyles.metadata] getter to reach mono
-  ///   (not part of Material's vocabulary).
+  /// - `display*` / `headline*` / `title*` → Plus Jakarta Sans (clean geometric editorial sans)
+  /// - `body*` / `label*` → Inter (benchmark UI legibility)
   static TextTheme _buildTextTheme(Color ink, Color muted) {
-    final TextTheme serif = GoogleFonts.sourceSerif4TextTheme();
+    final TextTheme display = GoogleFonts.plusJakartaSansTextTheme();
     final TextTheme sans = GoogleFonts.interTextTheme();
 
     return TextTheme(
       // Large display — rare, reserved for empty state hero copy.
-      displayLarge: serif.displayLarge?.copyWith(
+      displayLarge: display.displayLarge?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.6,
       ),
-      displayMedium: serif.displayMedium?.copyWith(
+      displayMedium: display.displayMedium?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.5,
       ),
-      displaySmall: serif.displaySmall?.copyWith(
+      displaySmall: display.displaySmall?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.4,
       ),
-      // Headlines — bookmark titles, screen titles in serif.
-      headlineLarge: serif.headlineLarge?.copyWith(
+      // Headlines — screen titles and section heroes.
+      headlineLarge: display.headlineLarge?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.4,
       ),
-      headlineMedium: serif.headlineMedium?.copyWith(
+      headlineMedium: display.headlineMedium?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.3,
       ),
-      headlineSmall: serif.headlineSmall?.copyWith(
+      headlineSmall: display.headlineSmall?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.25,
       ),
-      // Titles — card headings, sheet titles (serif, tighter).
-      titleLarge: serif.titleLarge?.copyWith(
+      // Titles — AppBar titles, sheet titles, bookmark card headings.
+      titleLarge: display.titleLarge?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.3,
       ),
-      titleMedium: sans.titleMedium?.copyWith(
+      titleMedium: display.titleMedium?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.15,
       ),
-      titleSmall: sans.titleSmall?.copyWith(
+      titleSmall: display.titleSmall?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.1,
       ),
-      // Body — sans for legibility at reading sizes.
+      // Body — Inter for clarity at small & reading sizes.
       bodyLarge: sans.bodyLarge?.copyWith(color: ink),
       bodyMedium: sans.bodyMedium?.copyWith(color: ink),
       bodySmall: sans.bodySmall?.copyWith(color: muted),
-      // Labels — sans, button + chip text.
+      // Labels — Inter, button + chip text.
       labelLarge: sans.labelLarge?.copyWith(
+        color: ink,
+        fontWeight: FontWeight.w600,
+      ),
+      labelMedium: sans.labelMedium?.copyWith(
         color: ink,
         fontWeight: FontWeight.w500,
       ),
-      labelMedium: sans.labelMedium?.copyWith(color: ink),
-      labelSmall: sans.labelSmall?.copyWith(color: muted),
+      labelSmall: sans.labelSmall?.copyWith(
+        color: muted,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 
@@ -370,29 +376,30 @@ abstract final class ReadingRoomTheme {
 /// Which Reading Room palette to render.
 enum ReadingRoomVariant { light, dark, oled }
 
-/// Exposes the monospace "metadata" text style that isn't part of the
-/// Material [TextTheme] vocabulary. Used for timestamps, domain names,
-/// counters, and any other data-feel copy.
+/// Exposes clean tabular metadata styles used for domains, timestamps,
+/// reading durations, and stat counters without jarring terminal monospace.
 abstract final class ReadingRoomTextStyles {
-  /// 12-13px JetBrains Mono, muted — for domain + time + counters.
+  /// 12px Inter with tabular numerals, muted — for domain + time + counters.
   static TextStyle metadata(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return GoogleFonts.jetBrainsMono(
+    return GoogleFonts.inter(
       fontSize: 12,
-      height: 1.4,
-      letterSpacing: 0,
+      height: 1.35,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 0.05,
+      fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
       color: theme.colorScheme.onSurfaceVariant,
     );
   }
 
-  /// 14px JetBrains Mono, ink-coloured — for emphasised mono (counter
-  /// value on top of [metadata] label).
+  /// 14px Plus Jakarta Sans with tabular numerals — for emphasised counters.
   static TextStyle monoValue(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return GoogleFonts.jetBrainsMono(
-      fontSize: 14,
-      height: 1.3,
-      fontWeight: FontWeight.w500,
+    return GoogleFonts.plusJakartaSans(
+      fontSize: 15,
+      height: 1.25,
+      fontWeight: FontWeight.w700,
+      fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
       color: theme.colorScheme.onSurface,
     );
   }

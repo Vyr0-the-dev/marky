@@ -1684,4 +1684,89 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get readerErrorSubtitle =>
       'Sayfa sunucusu isteği engellemiş olabilir veya internet bağlantınız kesilmiş olabilir.';
+
+  @override
+  String get automationTourTitle => 'Otomasyon Turu';
+
+  @override
+  String get automationTourFinish => 'Anladım';
+
+  @override
+  String get automationTourStep1Title => 'Otomasyonlara Hoş Geldin';
+
+  @override
+  String get automationTourStep1Body =>
+      'Marky bağlantılarını senin yerine düzenlesin. Yeni linkler geldiğinde otomatik etiketleyen, sınıflandıran ve sıralayan kurallar oluştur.';
+
+  @override
+  String get automationTourStep1Chip1 => 'Otomatik akış';
+
+  @override
+  String get automationTourStep1Chip2 => 'Akıllı kurallar';
+
+  @override
+  String get automationTourStep1Chip3 => 'Kayıt anında çalışır';
+
+  @override
+  String get automationTourStep2Title => 'Güçlü Tetikleyiciler';
+
+  @override
+  String get automationTourStep2Body =>
+      'Alan adlarına, URL içi anahtar kelimelere, içerik türlerine veya etiketlere göre belirli bağlantıları hedefle. Koşulları VE / VEYA mantığıyla birleştir.';
+
+  @override
+  String get automationTourStep2Chip4 => 'VE / VEYA';
+
+  @override
+  String get automationTourStep3Title => 'Anında Aksiyonlar';
+
+  @override
+  String get automationTourStep3Body =>
+      'Tek seferde birden fazla aksiyonu zincirle: otomatik etiketleme, koleksiyona ekleme, favorileme, arşivleme veya zamanlanmış hatırlatıcılar.';
+
+  @override
+  String get automationTourStep3Chip1 => '+ Etiket Ekle';
+
+  @override
+  String get automationTourStep3Chip2 => 'Koleksiyona Ekle';
+
+  @override
+  String get automationTourStep3Chip3 => 'Hatırlatıcı Kur';
+
+  @override
+  String get automationTourStep4Title => 'Öncelik ve Test';
+
+  @override
+  String get automationTourStep4Body =>
+      'Kurallar yeni bağlantı eklendiğinde yukarıdan aşağıya sırayla çalışır. İstediğin zaman tek bir linkle test edebilir ve çalışma günlüklerini inceleyebilirsin.';
+
+  @override
+  String get automationTourStep4Chip1 => 'Yukarıdan aşağıya';
+
+  @override
+  String get automationTourStep4Chip2 => 'Tek link testi';
+
+  @override
+  String get automationTourStep4Chip3 => 'Çalışma günlükleri';
+
+  @override
+  String get automationTemplateYoutube => 'YouTube → Sonra izle';
+
+  @override
+  String get automationTemplateGithub => 'GitHub → Kod etiketi';
+
+  @override
+  String get automationTemplatePricing => 'Fiyatlandırma → Arşiv';
+
+  @override
+  String get automationLogicAnd => 'VE';
+
+  @override
+  String get automationLogicOr => 'VEYA';
+
+  @override
+  String get settingsImportingProgress => 'Yer imleri içe aktarılıyor…';
+
+  @override
+  String get settingsImportViewAction => 'Görüntüle';
 }

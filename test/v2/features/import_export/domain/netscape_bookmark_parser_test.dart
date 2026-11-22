@@ -68,5 +68,22 @@ void main() {
       expect(entries[1].url, 'https://example.com/two');
       expect(entries[1].title, 'Example Two');
     });
+
+    test('extracts Firefox base64 ICON, ICON_URI fallback, and skips SVG data URI when ICON_URI exists', () {
+      const String html = '''
+<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<DL><p>
+  <DT><A HREF="https://mozilla.org" ICON="data:image/png;base64,iVBORw0KGgo=" ICON_URI="https://mozilla.org/favicon.ico">Mozilla</A>
+  <DT><A HREF="https://example.org" ICON_URI="https://example.org/icon.png">Example</A>
+  <DT><A HREF="https://svg-site.org" ICON="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=" ICON_URI="https://svg-site.org/favicon.png">SVG Site</A>
+</DL><p>
+''';
+
+      final List<NetscapeBookmarkEntry> entries = parser.parse(html);
+      expect(entries.length, 3);
+      expect(entries[0].iconUrl, 'data:image/png;base64,iVBORw0KGgo=');
+      expect(entries[1].iconUrl, 'https://example.org/icon.png');
+      expect(entries[2].iconUrl, 'https://svg-site.org/favicon.png');
+    });
   });
 }

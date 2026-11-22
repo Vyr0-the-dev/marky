@@ -220,13 +220,20 @@ class _AutomationGuideCard extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: ReadingRoomSpacing.md),
-            const Wrap(
+            Wrap(
               spacing: ReadingRoomSpacing.xs,
               runSpacing: ReadingRoomSpacing.xs,
               children: <Widget>[
-                _TemplateChip(label: 'YouTube → Watch later'),
-                _TemplateChip(label: 'GitHub → Code tag'),
-                _TemplateChip(label: 'Pricing → Archive'),
+                _TemplateChip(
+                  label:
+                      l10n?.automationTemplateYoutube ?? 'YouTube → Watch later',
+                ),
+                _TemplateChip(
+                  label: l10n?.automationTemplateGithub ?? 'GitHub → Code tag',
+                ),
+                _TemplateChip(
+                  label: l10n?.automationTemplatePricing ?? 'Pricing → Archive',
+                ),
               ],
             ),
             const SizedBox(height: ReadingRoomSpacing.md),
@@ -284,7 +291,7 @@ class _RuleTile extends ConsumerWidget {
     return SwitchListTile(
       title: Text(rule.name),
       subtitle: Text(
-        '${_logicLabel(rule)} ${rule.conditions.length}  •  '
+        '${_logicLabel(rule, l10n)} ${rule.conditions.length}  •  '
         '${rule.actions.length}',
         style: theme.textTheme.bodySmall,
       ),
@@ -337,10 +344,10 @@ class _RuleTile extends ConsumerWidget {
     );
   }
 
-  static String _logicLabel(AutomationRule rule) {
+  static String _logicLabel(AutomationRule rule, AppLocalizations? l10n) {
     return switch (rule.triggerLogic) {
-      AutomationTriggerLogic.all => 'AND',
-      AutomationTriggerLogic.any => 'OR',
+      AutomationTriggerLogic.all => l10n?.automationLogicAnd ?? 'AND',
+      AutomationTriggerLogic.any => l10n?.automationLogicOr ?? 'OR',
     };
   }
 

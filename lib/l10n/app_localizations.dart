@@ -3122,6 +3122,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The site may have blocked the request or your connection dropped.'**
   String get readerErrorSubtitle;
+
+  /// No description provided for @automationTourTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automation Tour'**
+  String get automationTourTitle;
+
+  /// No description provided for @automationTourFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get automationTourFinish;
+
+  /// No description provided for @automationTourStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Automations'**
+  String get automationTourStep1Title;
+
+  /// No description provided for @automationTourStep1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Let Marky organize your bookmarks hands-free. Set up rules to automatically categorize, tag, and sort your links as they arrive.'**
+  String get automationTourStep1Body;
+
+  /// No description provided for @automationTourStep1Chip1.
+  ///
+  /// In en, this message translates to:
+  /// **'Hands-free'**
+  String get automationTourStep1Chip1;
+
+  /// No description provided for @automationTourStep1Chip2.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get automationTourStep1Chip2;
+
+  /// No description provided for @automationTourStep1Chip3.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs on save'**
+  String get automationTourStep1Chip3;
+
+  /// No description provided for @automationTourStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Powerful Triggers'**
+  String get automationTourStep2Title;
+
+  /// No description provided for @automationTourStep2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Target specific bookmarks by matching domains, keywords in URLs, content types, or tags. Combine conditions with AND / OR logic.'**
+  String get automationTourStep2Body;
+
+  /// No description provided for @automationTourStep2Chip4.
+  ///
+  /// In en, this message translates to:
+  /// **'AND / OR'**
+  String get automationTourStep2Chip4;
+
+  /// No description provided for @automationTourStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant Actions'**
+  String get automationTourStep3Title;
+
+  /// No description provided for @automationTourStep3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Chain multiple actions in one go: auto-tagging, filing into collections, favorites, archive, or scheduled reminders.'**
+  String get automationTourStep3Body;
+
+  /// No description provided for @automationTourStep3Chip1.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add Tag'**
+  String get automationTourStep3Chip1;
+
+  /// No description provided for @automationTourStep3Chip2.
+  ///
+  /// In en, this message translates to:
+  /// **'File to Collection'**
+  String get automationTourStep3Chip2;
+
+  /// No description provided for @automationTourStep3Chip3.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Reminder'**
+  String get automationTourStep3Chip3;
+
+  /// No description provided for @automationTourStep4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority & Testing'**
+  String get automationTourStep4Title;
+
+  /// No description provided for @automationTourStep4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules execute in top-to-bottom order whenever bookmarks are added. Test with a single link and inspect Debug Logs anytime.'**
+  String get automationTourStep4Body;
+
+  /// No description provided for @automationTourStep4Chip1.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-to-bottom'**
+  String get automationTourStep4Chip1;
+
+  /// No description provided for @automationTourStep4Chip2.
+  ///
+  /// In en, this message translates to:
+  /// **'Single link test'**
+  String get automationTourStep4Chip2;
+
+  /// No description provided for @automationTourStep4Chip3.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug logs'**
+  String get automationTourStep4Chip3;
+
+  /// No description provided for @automationTemplateYoutube.
+  ///
+  /// In en, this message translates to:
+  /// **'YouTube → Watch later'**
+  String get automationTemplateYoutube;
+
+  /// No description provided for @automationTemplateGithub.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub → Code tag'**
+  String get automationTemplateGithub;
+
+  /// No description provided for @automationTemplatePricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing → Archive'**
+  String get automationTemplatePricing;
+
+  /// No description provided for @automationLogicAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'AND'**
+  String get automationLogicAnd;
+
+  /// No description provided for @automationLogicOr.
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
+  String get automationLogicOr;
+
+  /// No description provided for @settingsImportingProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing bookmarks…'**
+  String get settingsImportingProgress;
+
+  /// No description provided for @settingsImportViewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get settingsImportViewAction;
 }
 
 class _AppLocalizationsDelegate

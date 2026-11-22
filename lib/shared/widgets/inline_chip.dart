@@ -54,11 +54,8 @@ class InlineChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final Color fg = selected
-        ? (theme.brightness == Brightness.light
-            ? ReadingRoomColors.lightSurfaceRaised
-            : ReadingRoomColors.darkInk)
-        : theme.colorScheme.onSurface;
+    final Color fg =
+        selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface;
     final Color bg = selected
         ? theme.colorScheme.primary
         : theme.colorScheme.surfaceContainerHigh;

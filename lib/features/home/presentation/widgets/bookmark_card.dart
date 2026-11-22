@@ -195,12 +195,15 @@ class _Thumbnail extends StatelessWidget {
   final Bookmark bookmark;
 
   static const double _size = 64;
+  static const double _faviconSize = 30;
 
   @override
   Widget build(BuildContext context) {
-    final String? imageUrl = bookmark.heroImageUrl ?? bookmark.faviconUrl;
+    final ThemeData theme = Theme.of(context);
     final int cacheSize =
         (_size * MediaQuery.devicePixelRatioOf(context)).round();
+    final int faviconCacheSize =
+        (_faviconSize * MediaQuery.devicePixelRatioOf(context)).round();
 
     final bool isRecentlyCreated =
         DateTime.now().difference(bookmark.createdAt).inSeconds < 45;
@@ -209,28 +212,98 @@ class _Thumbnail extends StatelessWidget {
                 bookmark.scrapingStatus == BookmarkScrapingStatus.processing) &&
             isRecentlyCreated;
 
-    final bool hasAnyImage =
-        (bookmark.heroImageLocalPath?.trim().isNotEmpty ?? false) ||
-            (imageUrl != null && imageUrl.isNotEmpty);
+    final String? localHero = bookmark.heroImageLocalPath?.trim();
+    final String? heroUrl = bookmark.heroImageUrl?.trim();
+    final String? faviconUrl = bookmark.faviconUrl?.trim();
+    final String? fallbackFavicon = BookmarkImage.faviconFallbackUrlForHost(
+      bookmark.normalizedHost ?? bookmark.originalUrl,
+    );
+
+    final bool hasDistinctHero =
+        (localHero != null && localHero.isNotEmpty) ||
+            (heroUrl != null &&
+                heroUrl.isNotEmpty &&
+                heroUrl != faviconUrl &&
+                !BookmarkImage.isDataImageUri(heroUrl));
+
+    Widget buildIconTile() {
+      final String? primaryIcon =
+          (faviconUrl != null && faviconUrl.isNotEmpty)
+              ? faviconUrl
+              : fallbackFavicon;
+      if (primaryIcon == null || primaryIcon.isEmpty) {
+        return _Placeholder(bookmark: bookmark, isLoading: isActivelyScraping);
+      }
+
+      final String domain = bookmark.normalizedHost ?? bookmark.originalUrl;
+      final String letter = domain.isNotEmpty ? domain[0].toUpperCase() : '?';
+
+      Widget buildMonogram() => Center(
+            child: Text(
+              letter,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+        child: Center(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: BookmarkImage(
+              imageUrl: primaryIcon,
+              fallbackImageUrl: fallbackFavicon,
+              fit: BoxFit.contain,
+              width: _faviconSize,
+              height: _faviconSize,
+              cacheWidth: faviconCacheSize,
+              cacheHeight: faviconCacheSize,
+              placeholder: (_) => isActivelyScraping
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    )
+                  : buildMonogram(),
+              errorBuilder: (_) => buildMonogram(),
+            ),
+          ),
+        ),
+      );
+    }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(ReadingRoomRadii.standard),
       child: SizedBox(
         width: _size,
         height: _size,
-        child: hasAnyImage
-            ? BookmarkImage(
-                localPath: bookmark.heroImageLocalPath,
-                imageUrl: imageUrl,
-                cacheWidth: cacheSize,
-                cacheHeight: cacheSize,
-                placeholder: (_) => _Placeholder(
-                  bookmark: bookmark,
-                  isLoading: isActivelyScraping,
+        child: hasDistinctHero
+            ? ColoredBox(
+                color: theme.colorScheme.surfaceContainerHigh,
+                child: BookmarkImage(
+                  localPath: localHero,
+                  imageUrl: heroUrl,
+                  cacheWidth: cacheSize,
+                  cacheHeight: cacheSize,
+                  placeholder: (_) => _Placeholder(
+                    bookmark: bookmark,
+                    isLoading: isActivelyScraping,
+                  ),
+                  errorBuilder: (_) => buildIconTile(),
                 ),
-                errorBuilder: (_) => _Placeholder(bookmark: bookmark),
               )
-            : _Placeholder(bookmark: bookmark, isLoading: isActivelyScraping),
+            : buildIconTile(),
       ),
     );
   }

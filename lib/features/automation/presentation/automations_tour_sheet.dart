@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:marky/app/theme/reading_room_tokens.dart';
 import 'package:marky/core/utils/l10n_extension.dart';
+import 'package:marky/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// SharedPreferences key that tracks whether the automations tour has been seen.
@@ -24,7 +25,7 @@ Future<void> markAutomationsTourSeen() async {
 Future<void> showAutomationsTour(
   BuildContext context, {
   bool markAsSeen = true,
-  String finishLabel = 'Got it',
+  String? finishLabel,
 }) async {
   if (markAsSeen) {
     await markAutomationsTourSeen();
@@ -70,51 +71,67 @@ class AutomationsTourSheet extends StatefulWidget {
   const AutomationsTourSheet({
     super.key,
     this.onFinish,
-    this.finishLabel = 'Got it',
+    this.finishLabel,
   });
 
   final VoidCallback? onFinish;
-  final String finishLabel;
+  final String? finishLabel;
 
   @override
   State<AutomationsTourSheet> createState() => _AutomationsTourSheetState();
 }
 
 class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
+  static const int _stepCount = 4;
+
   late final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  static const List<_TourStepData> _steps = <_TourStepData>[
-    _TourStepData(
-      icon: Icons.auto_awesome_rounded,
-      title: 'Welcome to Automations',
-      body: 'Let Marky organize your bookmarks hands-free. Set up rules to '
-          'automatically categorize, tag, and sort your links as they arrive.',
-      chips: <String>['Hands-free', 'Automatic', 'Runs on save'],
-    ),
-    _TourStepData(
-      icon: Icons.travel_explore_rounded,
-      title: 'Powerful Triggers',
-      body: 'Target specific bookmarks by matching domains, keywords in URLs, '
-          'content types, or tags. Combine conditions with AND / OR logic.',
-      chips: <String>['youtube.com', 'github.com', '/articles/', 'AND / OR'],
-    ),
-    _TourStepData(
-      icon: Icons.bolt_rounded,
-      title: 'Instant Actions',
-      body: 'Chain multiple actions in one go: auto-tagging, filing into '
-          'collections, favorites, archive, or scheduled reminders.',
-      chips: <String>['+ Add Tag', 'File to Collection', 'Set Reminder'],
-    ),
-    _TourStepData(
-      icon: Icons.science_rounded,
-      title: 'Priority & Testing',
-      body:
-          'Rules execute in top-to-bottom order whenever bookmarks are added. '
-          'Test with a single link and inspect Debug Logs anytime.',
-      chips: <String>['Top-to-bottom', 'Single link test', 'Debug logs'],
-    ),
-  ];
+  static List<_TourStepData> _buildSteps(AppLocalizations l10n) {
+    return <_TourStepData>[
+      _TourStepData(
+        icon: Icons.auto_awesome_rounded,
+        title: l10n.automationTourStep1Title,
+        body: l10n.automationTourStep1Body,
+        chips: <String>[
+          l10n.automationTourStep1Chip1,
+          l10n.automationTourStep1Chip2,
+          l10n.automationTourStep1Chip3,
+        ],
+      ),
+      _TourStepData(
+        icon: Icons.travel_explore_rounded,
+        title: l10n.automationTourStep2Title,
+        body: l10n.automationTourStep2Body,
+        chips: <String>[
+          'youtube.com',
+          'github.com',
+          '/articles/',
+          l10n.automationTourStep2Chip4,
+        ],
+      ),
+      _TourStepData(
+        icon: Icons.bolt_rounded,
+        title: l10n.automationTourStep3Title,
+        body: l10n.automationTourStep3Body,
+        chips: <String>[
+          l10n.automationTourStep3Chip1,
+          l10n.automationTourStep3Chip2,
+          l10n.automationTourStep3Chip3,
+        ],
+      ),
+      _TourStepData(
+        icon: Icons.science_rounded,
+        title: l10n.automationTourStep4Title,
+        body: l10n.automationTourStep4Body,
+        chips: <String>[
+          l10n.automationTourStep4Chip1,
+          l10n.automationTourStep4Chip2,
+          l10n.automationTourStep4Chip3,
+        ],
+      ),
+    ];
+  }
 
   @override
   void dispose() {
@@ -132,7 +149,7 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
   }
 
   void _nextPage() {
-    if (_currentPage < _steps.length - 1) {
+    if (_currentPage < _stepCount - 1) {
       _pageController.nextPage(
         duration: ReadingRoomMotion.standard,
         curve: ReadingRoomMotion.standardCurve,
@@ -152,6 +169,10 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final List<_TourStepData> steps = _buildSteps(l10n);
+    final String resolvedFinishLabel =
+        widget.finishLabel ?? l10n.automationTourFinish;
 
     return SafeArea(
       child: SizedBox(
@@ -166,7 +187,7 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
               child: Row(
                 children: <Widget>[
                   Text(
-                    'Automation Tour',
+                    l10n.automationTourTitle,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,
@@ -176,7 +197,7 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
                   IconButton(
                     key: const Key('automations_tour_close_button'),
                     icon: const Icon(Icons.close_rounded, size: 20),
-                    tooltip: 'Close',
+                    tooltip: l10n.actionClose,
                     onPressed: _finish,
                   ),
                 ],
@@ -193,9 +214,9 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
                     });
                   }
                 },
-                itemCount: _steps.length,
+                itemCount: steps.length,
                 itemBuilder: (BuildContext context, int index) {
-                  final _TourStepData step = _steps[index];
+                  final _TourStepData step = steps[index];
                   return SingleChildScrollView(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -270,18 +291,18 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
                     TextButton(
                       key: const Key('automations_tour_back_button'),
                       onPressed: _prevPage,
-                      child: Text(context.l10n.automationTourBack),
+                      child: Text(l10n.automationTourBack),
                     )
                   else
                     TextButton(
                       key: const Key('automations_tour_skip_button'),
                       onPressed: _finish,
-                      child: Text(context.l10n.automationTourSkip),
+                      child: Text(l10n.automationTourSkip),
                     ),
                   const Spacer(),
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: List<Widget>.generate(_steps.length, (int index) {
+                    children: List<Widget>.generate(steps.length, (int index) {
                       final bool active = index == _currentPage;
                       return AnimatedContainer(
                         duration: ReadingRoomMotion.standard,
@@ -299,17 +320,17 @@ class _AutomationsTourSheetState extends State<AutomationsTourSheet> {
                     }),
                   ),
                   const Spacer(),
-                  if (_currentPage < _steps.length - 1)
+                  if (_currentPage < steps.length - 1)
                     FilledButton(
                       key: const Key('automations_tour_next_button'),
                       onPressed: _nextPage,
-                      child: Text(context.l10n.automationTourNext),
+                      child: Text(l10n.automationTourNext),
                     )
                   else
                     FilledButton(
                       key: const Key('automations_tour_finish_button'),
                       onPressed: _finish,
-                      child: Text(widget.finishLabel),
+                      child: Text(resolvedFinishLabel),
                     ),
                 ],
               ),

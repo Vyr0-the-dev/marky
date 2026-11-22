@@ -227,5 +227,35 @@ void main() {
       expect(find.byType(AutomationsTourSheet), findsOneWidget);
       expect(find.text('Welcome to Automations'), findsOneWidget);
     });
+
+    testWidgets('renders localized Turkish copy when locale is tr', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: AutomationsTourSheet()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Otomasyon Turu'), findsOneWidget);
+      expect(find.text('Otomasyonlara Hoş Geldin'), findsOneWidget);
+      expect(find.text('Geç'), findsOneWidget);
+      expect(find.text('İleri'), findsOneWidget);
+
+      // Advance to the final step and verify Turkish finish label.
+      for (int i = 0; i < 3; i++) {
+        await tester.tap(find.byKey(const Key('automations_tour_next_button')));
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.text('Öncelik ve Test'), findsOneWidget);
+      expect(find.text('Anladım'), findsOneWidget);
+    });
   });
 }

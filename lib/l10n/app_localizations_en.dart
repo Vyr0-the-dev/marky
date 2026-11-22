@@ -1674,4 +1674,89 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get readerErrorSubtitle =>
       'The site may have blocked the request or your connection dropped.';
+
+  @override
+  String get automationTourTitle => 'Automation Tour';
+
+  @override
+  String get automationTourFinish => 'Got it';
+
+  @override
+  String get automationTourStep1Title => 'Welcome to Automations';
+
+  @override
+  String get automationTourStep1Body =>
+      'Let Marky organize your bookmarks hands-free. Set up rules to automatically categorize, tag, and sort your links as they arrive.';
+
+  @override
+  String get automationTourStep1Chip1 => 'Hands-free';
+
+  @override
+  String get automationTourStep1Chip2 => 'Automatic';
+
+  @override
+  String get automationTourStep1Chip3 => 'Runs on save';
+
+  @override
+  String get automationTourStep2Title => 'Powerful Triggers';
+
+  @override
+  String get automationTourStep2Body =>
+      'Target specific bookmarks by matching domains, keywords in URLs, content types, or tags. Combine conditions with AND / OR logic.';
+
+  @override
+  String get automationTourStep2Chip4 => 'AND / OR';
+
+  @override
+  String get automationTourStep3Title => 'Instant Actions';
+
+  @override
+  String get automationTourStep3Body =>
+      'Chain multiple actions in one go: auto-tagging, filing into collections, favorites, archive, or scheduled reminders.';
+
+  @override
+  String get automationTourStep3Chip1 => '+ Add Tag';
+
+  @override
+  String get automationTourStep3Chip2 => 'File to Collection';
+
+  @override
+  String get automationTourStep3Chip3 => 'Set Reminder';
+
+  @override
+  String get automationTourStep4Title => 'Priority & Testing';
+
+  @override
+  String get automationTourStep4Body =>
+      'Rules execute in top-to-bottom order whenever bookmarks are added. Test with a single link and inspect Debug Logs anytime.';
+
+  @override
+  String get automationTourStep4Chip1 => 'Top-to-bottom';
+
+  @override
+  String get automationTourStep4Chip2 => 'Single link test';
+
+  @override
+  String get automationTourStep4Chip3 => 'Debug logs';
+
+  @override
+  String get automationTemplateYoutube => 'YouTube → Watch later';
+
+  @override
+  String get automationTemplateGithub => 'GitHub → Code tag';
+
+  @override
+  String get automationTemplatePricing => 'Pricing → Archive';
+
+  @override
+  String get automationLogicAnd => 'AND';
+
+  @override
+  String get automationLogicOr => 'OR';
+
+  @override
+  String get settingsImportingProgress => 'Importing bookmarks…';
+
+  @override
+  String get settingsImportViewAction => 'View';
 }
