@@ -56,6 +56,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _initialFilterApplied = false;
+  BookmarkFeedQuery? _cachedBaseQuery;
+  List<Bookmark>? _cachedBookmarks;
+  int _lastRequestedLimit = 0;
 
   @override
   void initState() {
@@ -82,13 +85,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  void _requestLoadMore(int currentLimit) {
+    if (_lastRequestedLimit >= currentLimit) return;
+    _lastRequestedLimit = currentLimit;
+    ref.read(feedNotifierProvider.notifier).loadMore();
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppLocalizations? l10n = AppLocalizations.of(context);
     final FeedState feedState = ref.watch(feedNotifierProvider);
     final BookmarkFeedQuery query = feedState.query;
+    final BookmarkFeedQuery baseQuery = query.copyWith(limit: 0);
     final AsyncValue<List<Bookmark>> feedAsync =
         ref.watch(bookmarkFeedProvider(query));
+
+    if (_cachedBaseQuery != baseQuery) {
+      _cachedBaseQuery = baseQuery;
+      _cachedBookmarks = null;
+      _lastRequestedLimit = 0;
+    }
+
+    final List<Bookmark>? liveData = feedAsync.valueOrNull;
+    if (liveData != null) {
+      _cachedBookmarks = liveData;
+      if (_lastRequestedLimit < query.limit) {
+        _lastRequestedLimit = 0;
+      }
+    }
+
+    final List<Bookmark>? displayBookmarks = liveData ?? _cachedBookmarks;
+    final bool isLoadingMore =
+        feedAsync.isLoading && _cachedBookmarks != null;
+
+    Widget feedBody;
+    if (feedAsync.hasError && displayBookmarks == null) {
+      feedBody = MarkyErrorState(
+        title: l10n?.errorGenericTitle ?? 'Something went wrong',
+        body: l10n?.errorLoadFeedMessage ?? 'Could not load feed.',
+        detail: debugOnlyErrorDetails(feedAsync.error),
+        onRetry: () => ref.invalidate(bookmarkFeedProvider(query)),
+      );
+    } else if (displayBookmarks == null) {
+      feedBody = const FeedSkeleton();
+    } else if (displayBookmarks.isEmpty) {
+      feedBody = _emptyState(context, ref, feedState.query.filter);
+    } else {
+      feedBody = _BookmarkList(
+        bookmarks: displayBookmarks,
+        feedState: feedState,
+        isLoadingMore: isLoadingMore,
+        onLoadMore: () => _requestLoadMore(query.limit),
+      );
+    }
 
     return Scaffold(
       appBar: _buildAppBar(context, ref, feedState),
@@ -107,26 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const _UnreadReminderNudge(),
 
           // ── Feed body ──────────────────────────────────────
-          Expanded(
-            child: feedAsync.when(
-              data: (List<Bookmark> bookmarks) {
-                if (bookmarks.isEmpty) {
-                  return _emptyState(context, ref, feedState.query.filter);
-                }
-                return _BookmarkList(
-                  bookmarks: bookmarks,
-                  feedState: feedState,
-                );
-              },
-              loading: () => const FeedSkeleton(),
-              error: (Object error, _) => MarkyErrorState(
-                title: l10n?.errorGenericTitle ?? 'Something went wrong',
-                body: l10n?.errorLoadFeedMessage ?? 'Could not load feed.',
-                detail: debugOnlyErrorDetails(error),
-                onRetry: () => ref.invalidate(bookmarkFeedProvider(query)),
-              ),
-            ),
-          ),
+          Expanded(child: feedBody),
 
           // ── Batch action bar (selection mode) ──────────
           const BatchActionBar(),
@@ -476,10 +506,14 @@ class _BookmarkList extends ConsumerWidget {
   const _BookmarkList({
     required this.bookmarks,
     required this.feedState,
+    required this.isLoadingMore,
+    required this.onLoadMore,
   });
 
   final List<Bookmark> bookmarks;
   final FeedState feedState;
+  final bool isLoadingMore;
+  final VoidCallback onLoadMore;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -494,34 +528,49 @@ class _BookmarkList extends ConsumerWidget {
               key: const ValueKey<FeedViewMode>(FeedViewMode.grid),
               bookmarks: bookmarks,
               feedState: feedState,
+              isLoadingMore: isLoadingMore,
+              onLoadMore: onLoadMore,
             )
           : NotificationListener<ScrollNotification>(
               key: const ValueKey<FeedViewMode>(FeedViewMode.list),
-              onNotification: (ScrollNotification notification) =>
-                  _maybeLoadMore(notification, ref),
+              onNotification: _maybeLoadMore,
               child: Scrollbar(
                 interactive: true,
                 child: ListView.separated(
                   padding: const EdgeInsets.only(bottom: 88),
                   // ignore: deprecated_member_use
                   cacheExtent: 360,
-                  itemCount: bookmarks.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (BuildContext context, int index) {
-                  final Bookmark bookmark = bookmarks[index];
-                  final Widget card = BookmarkCard(
-                    bookmark: bookmark,
-                    selectionMode: feedState.selectionMode,
-                    isSelected: bookmark.id != null &&
-                        feedState.selectedIds.contains(bookmark.id),
-                    onTap: () => _onTap(context, ref, bookmark),
-                    onLongPress: () => _onLongPress(ref, bookmark),
-                  );
+                  itemCount: bookmarks.length + (isLoadingMore ? 1 : 0),
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index >= bookmarks.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: ReadingRoomSpacing.lg,
+                        ),
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+                    final Bookmark bookmark = bookmarks[index];
+                    final Widget card = BookmarkCard(
+                      bookmark: bookmark,
+                      selectionMode: feedState.selectionMode,
+                      isSelected: bookmark.id != null &&
+                          feedState.selectedIds.contains(bookmark.id),
+                      onTap: () => _onTap(context, ref, bookmark),
+                      onLongPress: () => _onLongPress(ref, bookmark),
+                    );
 
-                  // Swipe disabled in selection mode.
-                  if (feedState.selectionMode || bookmark.id == null) {
-                    return RepaintBoundary(child: card);
-                  }
+                    // Swipe disabled in selection mode.
+                    if (feedState.selectionMode || bookmark.id == null) {
+                      return RepaintBoundary(child: card);
+                    }
 
                     return RepaintBoundary(
                       child: _SwipeableCard(
@@ -536,11 +585,13 @@ class _BookmarkList extends ConsumerWidget {
     );
   }
 
-  bool _maybeLoadMore(ScrollNotification notification, WidgetRef ref) {
-    if (bookmarks.length < feedState.query.limit) return false;
+  bool _maybeLoadMore(ScrollNotification notification) {
+    if (isLoadingMore || bookmarks.length < feedState.query.limit) {
+      return false;
+    }
     if (notification.metrics.pixels >=
         notification.metrics.maxScrollExtent - 300) {
-      ref.read(feedNotifierProvider.notifier).loadMore();
+      onLoadMore();
     }
     return false;
   }
@@ -568,11 +619,15 @@ class _BookmarkGrid extends ConsumerWidget {
   const _BookmarkGrid({
     required this.bookmarks,
     required this.feedState,
+    required this.isLoadingMore,
+    required this.onLoadMore,
     super.key,
   });
 
   final List<Bookmark> bookmarks;
   final FeedState feedState;
+  final bool isLoadingMore;
+  final VoidCallback onLoadMore;
 
   static int columnCountForWidth(double width) {
     if (width < 600) return 2;
@@ -591,10 +646,11 @@ class _BookmarkGrid extends ConsumerWidget {
 
         return NotificationListener<ScrollNotification>(
           onNotification: (ScrollNotification notification) {
-            if (bookmarks.length >= feedState.query.limit &&
+            if (!isLoadingMore &&
+                bookmarks.length >= feedState.query.limit &&
                 notification.metrics.pixels >=
                     notification.metrics.maxScrollExtent - 300) {
-              ref.read(feedNotifierProvider.notifier).loadMore();
+              onLoadMore();
             }
             return false;
           },

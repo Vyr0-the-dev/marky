@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +12,7 @@ import 'package:marky/features/bookmarks/domain/bookmark_feed_query.dart';
 import 'package:marky/features/bookmarks/domain/bookmark_repository.dart';
 import 'package:marky/features/home/presentation/home_screen.dart';
 import 'package:marky/features/home/presentation/widgets/bookmark_card.dart';
+import 'package:marky/features/home/presentation/widgets/feed_skeleton.dart';
 
 void main() {
   testWidgets('home feed keeps first render bounded at scale',
@@ -55,6 +58,58 @@ void main() {
       }
     }
   });
+
+  testWidgets('loadMore preserves scroll position without flashing skeleton',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final Completer<List<Bookmark>> secondPageGate =
+        Completer<List<Bookmark>>();
+    final List<Bookmark> allItems = _bookmarks(250);
+    final _ScaleBookmarkRepository repository = _ScaleBookmarkRepository(
+      allItems,
+      secondPageGate: secondPageGate,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: <Override>[
+          ...testAppSettingsOverrides(),
+          bookmarkRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final ScrollableState scrollable =
+        tester.state<ScrollableState>(find.byType(Scrollable).first);
+    final double targetOffset = scrollable.position.maxScrollExtent;
+    scrollable.position.jumpTo(targetOffset);
+    await tester.pump();
+
+    // Second page (limit 200) is still loading — must NOT unmount list or jump!
+    expect(
+      repository.requestedQueries.any((BookmarkFeedQuery q) => q.limit == 200),
+      isTrue,
+    );
+    expect(find.byType(FeedSkeleton), findsNothing);
+    expect(scrollable.position.pixels, greaterThan(targetOffset - 200));
+
+    // Complete second page and confirm scroll position stayed preserved.
+    secondPageGate.complete(allItems.take(200).toList(growable: false));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(FeedSkeleton), findsNothing);
+    expect(scrollable.position.pixels, greaterThan(targetOffset - 200));
+  });
 }
 
 List<Bookmark> _bookmarks(int count) {
@@ -75,9 +130,13 @@ List<Bookmark> _bookmarks(int count) {
 }
 
 class _ScaleBookmarkRepository implements BookmarkRepository {
-  _ScaleBookmarkRepository(this._bookmarks);
+  _ScaleBookmarkRepository(
+    this._bookmarks, {
+    this.secondPageGate,
+  });
 
   final List<Bookmark> _bookmarks;
+  final Completer<List<Bookmark>>? secondPageGate;
   final List<BookmarkFeedQuery> requestedQueries = <BookmarkFeedQuery>[];
 
   @override
@@ -129,6 +188,9 @@ class _ScaleBookmarkRepository implements BookmarkRepository {
   @override
   Stream<List<Bookmark>> watchFeed(BookmarkFeedQuery query) {
     requestedQueries.add(query);
+    if (query.limit > 100 && secondPageGate != null) {
+      return Stream<List<Bookmark>>.fromFuture(secondPageGate!.future);
+    }
     return Stream<List<Bookmark>>.value(_page(query));
   }
 

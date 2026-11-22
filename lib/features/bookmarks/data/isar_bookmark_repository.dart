@@ -20,7 +20,7 @@ class IsarBookmarkRepository implements BookmarkRepository {
   IsarBookmarkRepository(this._isar);
 
   final Isar _isar;
-  static const int _maxFeedPageSize = 500;
+  static const int _maxFeedPageSize = 50000;
   static const int _maxSearchLimit = 100;
 
   // ─── CRUD ───────────────────────────────────────────────────────
